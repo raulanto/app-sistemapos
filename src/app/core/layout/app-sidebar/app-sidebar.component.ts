@@ -1,76 +1,87 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { 
-  lucideLayoutDashboard, 
-  lucideShoppingCart, 
-  lucidePackage, 
-  lucideUsers, 
-  lucideBarChart3, 
-  lucideShieldCheck 
-} from '@ng-icons/lucide';
+
 import { ZardSidebarImports } from '../../../shared/components/sidebar/sidebar.imports';
+import { NavMainComponent, type Sidebar07NavItem } from './nav-main.component';
+import { NavUserComponent } from './nav-user.component';
+import { TeamSwitcherComponent, type Sidebar07Team } from './team-switcher.component';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterLink, RouterLinkActive, NgIcon, ...ZardSidebarImports],
-  viewProviders: [
-    provideIcons({ 
-      lucideLayoutDashboard, 
-      lucideShoppingCart, 
-      lucidePackage, 
-      lucideUsers, 
-      lucideBarChart3, 
-      lucideShieldCheck 
-    })
+  standalone: true,
+  imports: [
+    ...ZardSidebarImports,
+    TeamSwitcherComponent,
+    NavMainComponent,
+    NavUserComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <z-sidebar zVariant="sidebar">
-      <z-sidebar-header>
-        <div class="flex items-center gap-2 px-4 py-4 font-bold text-lg">
-          <div class="bg-primary text-primary-foreground p-1.5 rounded-md flex items-center justify-center">
-            <ng-icon name="lucideShoppingCart" class="size-5"></ng-icon>
-          </div>
-          <span>Sistema POS</span>
-        </div>
-      </z-sidebar-header>
-      
+    <z-sidebar zCollapsible="icon">
+      <div z-sidebar-header>
+        <lib-sidebar-07-team-switcher [teams]="teams" />
+      </div>
+
       <z-sidebar-content>
-        <z-sidebar-group>
-          <z-sidebar-group-label>Módulos</z-sidebar-group-label>
-          <z-sidebar-group-content>
-            <ul z-sidebar-menu>
-              @for (item of navItems; track item.path) {
-                <li z-sidebar-menu-item>
-                  <a z-sidebar-menu-button
-                    [routerLink]="item.path" 
-                    routerLinkActive="bg-accent text-accent-foreground font-medium" 
-                    [routerLinkActiveOptions]="{exact: item.path === '/'}"
-                  >
-                    <ng-icon [name]="item.icon" class="size-4"></ng-icon>
-                    <span>{{ item.label }}</span>
-                  </a>
-                </li>
-              }
-            </ul>
-          </z-sidebar-group-content>
-        </z-sidebar-group>
+        <lib-sidebar-07-nav-main [items]="navMain" />
       </z-sidebar-content>
-      <z-sidebar-footer>
-         <div class="px-4 py-2 text-xs text-muted-foreground font-medium text-center opacity-60">v1.0.0</div>
-      </z-sidebar-footer>
+
+      <div z-sidebar-footer>
+        <lib-sidebar-07-nav-user />
+      </div>
+
+      <button z-sidebar-rail aria-label="Toggle Sidebar"></button>
     </z-sidebar>
-  `
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'contents' },
 })
 export class AppSidebarComponent {
-  navItems = [
-    { label: 'Dashboard', path: '/', icon: 'lucideLayoutDashboard' },
-    { label: 'Ventas', path: '/ventas', icon: 'lucideShoppingCart' },
-    { label: 'Inventario', path: '/inventario', icon: 'lucidePackage' },
-    { label: 'Clientes', path: '/clientes', icon: 'lucideUsers' },
-    { label: 'Usuarios', path: '/usuarios', icon: 'lucideUsers' },
-    { label: 'Reportes', path: '/reportes', icon: 'lucideBarChart3' },
-    { label: 'Auditoría', path: '/auditoria', icon: 'lucideShieldCheck' },
+  protected readonly teams: readonly Sidebar07Team[] = [
+    { name: 'Sucursal Principal', logo: 'lucideGalleryVerticalEnd', plan: 'HQ' },
+    { name: 'Sucursal Norte', logo: 'lucideAudioWaveform', plan: 'Tienda' },
+    { name: 'Bodega Central', logo: 'lucideCommand', plan: 'Almacén' },
+  ];
+
+  protected readonly navMain: readonly Sidebar07NavItem[] = [
+    {
+      title: 'Dashboard',
+      url: '/',
+      icon: 'lucideLayoutDashboard',
+      isActive: true,
+    },
+    {
+      title: 'Ventas',
+      url: '/ventas',
+      icon: 'lucideShoppingCart',
+    },
+    {
+      title: 'Inventario',
+      url: '/inventario',
+      icon: 'lucidePackage',
+      items: [
+        { title: 'Productos', url: '/inventario/productos' },
+        { title: 'Nuevo Producto', url: '/inventario/productos/nuevo' },
+        { title: 'Categorías', url: '/inventario/categorias' },
+      ],
+    },
+    {
+      title: 'Clientes',
+      url: '/clientes',
+      icon: 'lucideUsers',
+    },
+    {
+      title: 'Usuarios',
+      url: '/usuarios',
+      icon: 'lucideUsers',
+    },
+    {
+      title: 'Reportes',
+      url: '/reportes',
+      icon: 'lucideBarChart3',
+    },
+    {
+      title: 'Auditoría',
+      url: '/auditoria',
+      icon: 'lucideShieldCheck',
+    },
   ];
 }

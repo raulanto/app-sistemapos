@@ -85,9 +85,37 @@ export interface MovimientoResponse {
   usuario?: any;
 }
 
+export interface PaginationMeta {
+  page: number;
+  page_size: number;
+  total_items: number;
+  total_pages: number;
+  has_next: boolean;
+  has_prev: boolean;
+}
+
+export interface ProductoQuery {
+  categoria_id?: string[] | null;
+  activo?: boolean | null;
+  q?: string | null;
+  page?: number;
+  page_size?: number;
+  sort?: string;
+  include?: string | null;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
-  meta?: any;
-  links?: any;
+  meta?: {
+    pagination?: PaginationMeta;
+    sort?: string;
+    filters?: any;
+    summary?: any;
+  };
+  links?: {
+    self?: string;
+    next?: string;
+    prev?: string;
+  };
 }
