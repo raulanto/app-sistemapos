@@ -1,9 +1,9 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { catchError, map, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
-import { LoginRequest, TokenResponse, UsuarioResponse, ApiResponse } from './models/auth.models';
+import { catchError, finalize, map, tap, switchMap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { ApiResponse, LoginRequest, TokenResponse, UsuarioResponse } from './models/auth.models';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -18,13 +18,14 @@ export class AuthService {
   readonly accessToken = signal<string | null>(null);
   readonly currentUser = signal<UsuarioResponse | null>(null);
   readonly isAuthenticated = signal<boolean>(false);
+  
+  readonly sessionResolved = signal<boolean>(false);
+  readonly isReady = computed(() => this.sessionResolved());
 
   login(credentials: LoginRequest): Observable<TokenResponse> {
     return this.http.post<TokenResponse>(`${this.API_URL}/usuarios/login`, credentials, { withCredentials: true }).pipe(
-      tap(response => {
-        this.accessToken.set(response.access_token);
-        this.loadCurrentUser().subscribe();
-      })
+      tap(response => this.accessToken.set(response.access_token)),
+      switchMap(response => this.loadCurrentUser().pipe(map(() => response)))
     );
   }
 
@@ -33,6 +34,7 @@ export class AuthService {
     // Idealmente el backend debe limpiar la cookie httpOnly en un endpoint /auth/logout
     this.accessToken.set(null);
     this.currentUser.set(null);
+    this.isAuthenticated.set(false);
     this.router.navigate(['/auth/login']);
   }
 
@@ -55,9 +57,10 @@ export class AuthService {
         this.accessToken.set(response.access_token);
         this.isAuthenticated.set(true);
       }),
+      finalize(() => this.sessionResolved.set(true)),
       catchError(error => {
         this.clearSession();
-        throw error;
+        return throwError(() => error);
       })
     );
   }

@@ -1,0 +1,93 @@
+export interface ProductoResponse {
+  id: string;
+  sku: string;
+  codigo_barras?: string | null;
+  nombre: string;
+  descripcion?: string | null;
+  categoria_id: string;
+  unidad_medida: string;
+  precio_venta: string;
+  costo: string;
+  impuesto_tasa: string;
+  permite_stock_negativo: boolean;
+  activo: boolean;
+  categoria?: any;
+  existencias?: any;
+}
+
+export interface CrearProductoRequest {
+  sku: string;
+  codigo_barras?: string | null;
+  nombre: string;
+  descripcion?: string | null;
+  categoria_id: string;
+  unidad_medida: string;
+  precio_venta: string;
+  costo: string;
+  impuesto_tasa: string;
+  permite_stock_negativo: boolean;
+  activo?: boolean;
+}
+
+export interface ActualizarProductoRequest {
+  sku?: string;
+  codigo_barras?: string | null;
+  nombre?: string;
+  descripcion?: string | null;
+  categoria_id?: string;
+  unidad_medida?: string;
+  precio_venta?: string;
+  costo?: string;
+  impuesto_tasa?: string;
+  permite_stock_negativo?: boolean;
+  activo?: boolean;
+}
+
+export interface CategoriaResponse {
+  id: string;
+  nombre: string;
+  categoria_padre_id?: string | null;
+  activo: boolean;
+  padre?: any;
+}
+
+export interface CrearCategoriaRequest {
+  nombre: string;
+  categoria_padre_id?: string | null;
+  activo?: boolean;
+}
+
+export interface ActualizarCategoriaRequest {
+  nombre?: string;
+  categoria_padre_id?: string | null;
+  activo?: boolean;
+}
+
+export interface TipoMovimiento {
+  // Define enum based on OpenAPI values, assuming common inventory types
+  // e.g. ENTRADA_COMPRA, SALIDA_VENTA, AJUSTE_POSITIVO, AJUSTE_NEGATIVO
+  [key: string]: any; 
+}
+
+export interface MovimientoResponse {
+  id: string;
+  producto_id: string;
+  sucursal_id: string;
+  tipo: TipoMovimiento | string;
+  cantidad: string;
+  costo_unitario?: string | null;
+  referencia_tipo: string;
+  referencia_id?: string | null;
+  usuario_id: string;
+  motivo?: string | null;
+  created_at: string;
+  producto?: any;
+  usuario?: any;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  meta?: any;
+  links?: any;
+}
