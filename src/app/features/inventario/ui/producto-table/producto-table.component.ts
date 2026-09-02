@@ -3,12 +3,14 @@ import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucidePencil, lucideTrash } from '@ng-icons/lucide';
+import { lucidePencil, lucideTrash, lucideCircleCheck, lucideX } from '@ng-icons/lucide';
 import { ProductoResponse } from '../../data-access/inventario.models';
 import { ZardTableImports } from '../../../../shared/components/table/table.imports';
+import { ZardPaginationImports } from '../../../../shared/components/pagination/pagination.imports';
+import { ZardSelectImports } from '../../../../shared/components/select/select.imports';
 import { ZardCheckboxComponent } from '../../../../shared/components/checkbox/checkbox.component';
 import { ZardButtonComponent } from '../../../../shared/components/button/button.component';
-
+import { ZardBadgeComponent } from '@/shared/components/badge';
 @Component({
   selector: 'app-producto-table',
   standalone: true,
@@ -17,11 +19,14 @@ import { ZardButtonComponent } from '../../../../shared/components/button/button
     NgIcon,
     DecimalPipe,
     ...ZardTableImports,
+    ...ZardPaginationImports,
+    ...ZardSelectImports,
     ZardCheckboxComponent,
-    ZardButtonComponent
+    ZardButtonComponent,
+    ZardBadgeComponent
   ],
   viewProviders: [
-    provideIcons({ lucidePencil, lucideTrash })
+    provideIcons({ lucidePencil, lucideTrash, lucideCircleCheck, lucideX })
   ],
   templateUrl: './producto-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -33,10 +38,14 @@ export class ProductoTableComponent {
   allSelected = input<boolean>(false);
   sort = input<string>('');
   canEditar = input<boolean>(false);
-
-  
+  totalItems = input<number>(0);
+  totalPages = input<number>(0);
+  page = input<number>(1);
+  pageSize = input<number>(10);
 
   sortChange = output<string>();
+  pageChange = output<number>();
+  pageSizeChange = output<string>();
   toggleSelection = output<{id: string, checked: boolean}>();
   toggleAll = output<boolean>();
   desactivar = output<ProductoResponse>();

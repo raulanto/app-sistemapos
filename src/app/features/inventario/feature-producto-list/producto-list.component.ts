@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -26,7 +25,6 @@ import { ProductoFormSheetComponent } from '../ui/producto-form-sheet/producto-f
   selector: 'app-producto-list',
   standalone: true,
   imports: [
-    RouterLink, 
     FormsModule,
     NgIcon, 
     ...ZardCardImports, 
