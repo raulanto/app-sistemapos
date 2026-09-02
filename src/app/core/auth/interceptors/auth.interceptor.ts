@@ -42,9 +42,17 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             });
             return next(retryReq);
           }),
-          catchError((refreshError) => {
-            authService.clearSession();
-            router.navigate(['/auth/login']);
+          catchError((refreshError: unknown) => {
+            // Expulsamos al login si el refresh falla por falta de autenticación
+            // (401/403) o porque no hay refresh token almacenado. Un error de red
+            // (status 0) o un 5xx transitorio NO cierra la sesión.
+            const isTransient =
+              refreshError instanceof HttpErrorResponse &&
+              (refreshError.status === 0 || refreshError.status >= 500);
+            if (!isTransient) {
+              authService.clearSession();
+              router.navigate(['/auth/login']);
+            }
             return throwError(() => refreshError);
           })
         );
