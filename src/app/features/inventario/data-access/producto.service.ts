@@ -29,6 +29,11 @@ export class ProductoService {
           params = params.append('categoria_id', id);
         });
       }
+      if (query.sucursal_id && query.sucursal_id.length > 0) {
+        query.sucursal_id.forEach(id => {
+          params = params.append('sucursal_id', id);
+        });
+      }
       if (query.activo !== undefined && query.activo !== null) params = params.set('activo', query.activo);
       if (query.page) params = params.set('page', query.page);
       if (query.page_size) params = params.set('page_size', query.page_size);

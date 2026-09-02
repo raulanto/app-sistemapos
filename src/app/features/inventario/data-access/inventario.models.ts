@@ -98,6 +98,7 @@ export interface ProductoQuery {
   categoria_id?: string[] | null;
   activo?: boolean | null;
   q?: string | null;
+  sucursal_id?: string[] | null;
   page?: number;
   page_size?: number;
   sort?: string;

@@ -17,6 +17,7 @@ import { ZardSonnerService } from '../../../shared/components/sonner/sonner.serv
 import { ZardSheetService } from '../../../shared/components/sheet/sheet.service';
 import { AuthService } from '@/core/auth/api/auth.service';
 import { PERMISOS } from '@/core/auth/permissions';
+import { SucursalService } from '@/core/sucursal/sucursal.service';
 import { ProductoFiltrosComponent } from '../ui/producto-filtros/producto-filtros.component';
 import { ProductoTableComponent } from '../ui/producto-table/producto-table.component';
 import { ProductoFormSheetComponent } from '../ui/producto-form-sheet/producto-form-sheet.component';
@@ -48,6 +49,7 @@ export class ProductoListComponent implements OnInit {
   private readonly sonner = inject(ZardSonnerService);
   private readonly sheetService = inject(ZardSheetService);
   private readonly authService = inject(AuthService);
+  private readonly sucursalService = inject(SucursalService);
 
   readonly canCrear = computed(() => this.authService.hasPermission(...PERMISOS.inventario.crear));
   readonly canEditar = computed(() => this.authService.hasPermission(...PERMISOS.inventario.editar));
@@ -60,6 +62,7 @@ export class ProductoListComponent implements OnInit {
   readonly q = signal<string>('');
   readonly categoriaId = signal<string[]>([]);
   readonly activo = signal<string[]>([]);
+  readonly todasLasSucursales = signal(false);
   readonly page = signal(1);
   readonly pageSize = signal(10);
   readonly sort = signal<string>('created_at:desc');
@@ -79,10 +82,14 @@ export class ProductoListComponent implements OnInit {
       activoVal = this.activo()[0] === 'true';
     }
 
+    const currentSucursalId = this.sucursalService.selectedSucursalId();
+    const sucursal_id = this.todasLasSucursales() || !currentSucursalId ? null : [currentSucursalId];
+
     return {
       q: this.q() || null,
       categoria_id: this.categoriaId().length > 0 ? this.categoriaId() : null,
       activo: activoVal,
+      sucursal_id,
       page: this.page(),
       page_size: this.pageSize(),
       sort: this.sort(),
@@ -133,8 +140,13 @@ export class ProductoListComponent implements OnInit {
     this.page.set(1);
   }
 
-  updateActivo(val: string[]) {
-    this.activo.set(val);
+  updateActivo(activo: string[]) {
+    this.activo.set(activo);
+    this.page.set(1);
+  }
+
+  updateTodasLasSucursales(val: boolean) {
+    this.todasLasSucursales.set(val);
     this.page.set(1);
   }
 

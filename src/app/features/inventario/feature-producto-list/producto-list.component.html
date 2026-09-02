@@ -18,9 +18,11 @@
     [categorias]="categorias()"
     [categoriaId]="categoriaId()"
     [activo]="activo()"
+    [todasLasSucursales]="todasLasSucursales()"
     (qChange)="updateSearch($event)"
     (categoriaIdChange)="updateCategoria($event)"
     (activoChange)="updateActivo($event)"
+    (todasLasSucursalesChange)="updateTodasLasSucursales($event)"
   ></app-producto-filtros>
 
   <div z-card class="mt-4">

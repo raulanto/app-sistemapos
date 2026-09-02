@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CategoriaResponse } from '../../data-access/inventario.models';
 import { ZardInputComponent } from '../../../../shared/components/input/input.component';
 import { ZardSelectImports } from '../../../../shared/components/select/select.imports';
+import { ZardCheckboxComponent } from '../../../../shared/components/checkbox/checkbox.component';
 
 @Component({
   selector: 'app-producto-filtros',
@@ -10,7 +11,8 @@ import { ZardSelectImports } from '../../../../shared/components/select/select.i
   imports: [
     FormsModule,
     ZardInputComponent,
-    ...ZardSelectImports
+    ...ZardSelectImports,
+    ZardCheckboxComponent
   ],
   templateUrl: './producto-filtros.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -20,8 +22,10 @@ export class ProductoFiltrosComponent {
   categorias = input<CategoriaResponse[]>([]);
   categoriaId = input<string[]>([]);
   activo = input<string[]>([]);
+  todasLasSucursales = input<boolean>(false);
 
   qChange = output<string>();
   categoriaIdChange = output<string[]>();
   activoChange = output<string[]>();
+  todasLasSucursalesChange = output<boolean>();
 }

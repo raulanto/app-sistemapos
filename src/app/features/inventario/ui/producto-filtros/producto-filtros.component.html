@@ -12,4 +12,11 @@
     <z-select-item [zValue]="'true'">Activos</z-select-item>
     <z-select-item [zValue]="'false'">Inactivos</z-select-item>
   </z-select>
+
+  <div class="flex items-center gap-2">
+    <z-checkbox id="todasSucursales" [ngModel]="todasLasSucursales()" (ngModelChange)="todasLasSucursalesChange.emit($event)"></z-checkbox>
+    <label for="todasSucursales" class="text-sm font-medium leading-none cursor-pointer">
+      Todas las sucursales
+    </label>
+  </div>
 </div>
