@@ -83,7 +83,12 @@
                 </z-badge>
               </td>
               <td z-table-cell class="text-right">
-                {{ getTotalExistencias(producto) | number }}
+                <span class="font-medium">
+                  {{ getTotalExistencias(producto) | number }}
+                </span>
+                <span class="text-xs text-muted-foreground">{{
+                  producto.unidad_medida | lowercase
+                }}</span>
               </td>
               <td z-table-cell class="text-right space-x-2">
                 @if (canEditar()) {

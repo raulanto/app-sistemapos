@@ -1,21 +1,48 @@
-<div class="flex flex-col sm:flex-row items-center gap-4">
-  <input z-input type="text" placeholder="Buscar por SKU, Nombre..." class="w-full sm:max-w-xs"
-         [ngModel]="q()" (ngModelChange)="qChange.emit($event)" />
-  
-  <z-select [zMultiple]="true" [ngModel]="categoriaId()" (ngModelChange)="categoriaIdChange.emit($event)" placeholder="Categoría">
+<div class="flex flex-wrap items-center gap-3">
+  <input
+    z-input
+    type="text"
+    placeholder="Buscar producto..."
+    class="w-full sm:w-64"
+    [ngModel]="q()"
+    (ngModelChange)="qChange.emit($event)"
+  />
+
+  <z-select
+    [zMultiple]="true"
+    [ngModel]="categoriaId()"
+    (ngModelChange)="categoriaIdChange.emit($event)"
+    placeholder="Categoría"
+    class="w-full sm:w-56"
+  >
     @for (c of categorias(); track c.id) {
       <z-select-item [zValue]="c.id">{{ c.nombre }}</z-select-item>
     }
   </z-select>
 
-  <z-select [zMultiple]="true" [ngModel]="activo()" (ngModelChange)="activoChange.emit($event)" placeholder="Estado">
+  <z-select
+    [zMultiple]="true"
+    [ngModel]="activo()"
+    (ngModelChange)="activoChange.emit($event)"
+    placeholder="Estado"
+    class="w-full sm:w-32"
+  >
     <z-select-item [zValue]="'true'">Activos</z-select-item>
     <z-select-item [zValue]="'false'">Inactivos</z-select-item>
   </z-select>
 
-  <div class="flex items-center gap-2">
-    <z-checkbox id="todasSucursales" [ngModel]="todasLasSucursales()" (ngModelChange)="todasLasSucursalesChange.emit($event)"></z-checkbox>
-    <label for="todasSucursales" class="text-sm font-medium leading-none cursor-pointer">
+  <div
+    class="flex items-center gap-2 ml-auto bg-muted/50 px-3 py-1.5 rounded-md border border-border"
+  >
+    <z-checkbox
+      id="todasSucursales"
+      [ngModel]="todasLasSucursales()"
+      (ngModelChange)="todasLasSucursalesChange.emit($event)"
+    ></z-checkbox>
+    <label
+      for="todasSucursales"
+      class="text-sm font-medium leading-none cursor-pointer select-none"
+    >
       Todas las sucursales
     </label>
   </div>

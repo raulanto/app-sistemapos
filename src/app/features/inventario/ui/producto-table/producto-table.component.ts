@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, LowerCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -18,6 +18,7 @@ import { ZardBadgeComponent } from '@/shared/components/badge';
     FormsModule,
     NgIcon,
     DecimalPipe,
+    LowerCasePipe,
     ...ZardTableImports,
     ...ZardPaginationImports,
     ...ZardSelectImports,

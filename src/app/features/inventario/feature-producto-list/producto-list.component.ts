@@ -60,7 +60,7 @@ export class ProductoListComponent implements OnInit {
   readonly q = signal<string>('');
   readonly categoriaId = signal<string[]>([]);
   readonly activo = signal<string[]>([]);
-  readonly todasLasSucursales = signal(false);
+  readonly todasLasSucursales = signal(this.authService.currentUser()?.rol?.codigo === 'admin');
   readonly page = signal(1);
   readonly pageSize = signal(10);
   readonly sort = signal<string>('created_at:desc');
