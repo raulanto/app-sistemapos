@@ -83,7 +83,7 @@ export class ProductoListComponent implements OnInit {
       page: this.page(),
       page_size: this.pageSize(),
       sort: this.sort(),
-      include: 'categoria'
+      include: ['categoria', 'existencias']
     };
   });
 

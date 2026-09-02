@@ -33,7 +33,12 @@ export class ProductoService {
       if (query.page) params = params.set('page', query.page);
       if (query.page_size) params = params.set('page_size', query.page_size);
       if (query.sort) params = params.set('sort', query.sort);
-      if (query.include) params = params.set('include', query.include);
+      if (query.include?.length) {
+        const includeValues = query.include.map(item => 
+          typeof item === 'string' ? item : `${item.type}[sucursal_id]=${item.sucursal_id}`
+        );
+        params = params.set('include', includeValues.join(','));
+      }
     }
 
     return this.http.get<ApiResponse<ProductoResponse[]>>(this.API_URL, { params });

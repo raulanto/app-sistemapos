@@ -12,7 +12,7 @@ export interface ProductoResponse {
   permite_stock_negativo: boolean;
   activo: boolean;
   categoria?: any;
-  existencias?: any;
+  existencias?: ExistenciaResponse[] | null;
 }
 
 export interface CrearProductoRequest {
@@ -101,7 +101,7 @@ export interface ProductoQuery {
   page?: number;
   page_size?: number;
   sort?: string;
-  include?: string | null;
+  include: Array<'existencias' | 'categoria'  | { type: 'existencias'; sucursal_id: string }>;
 }
 
 export interface ApiResponse<T> {
@@ -118,4 +118,13 @@ export interface ApiResponse<T> {
     next?: string;
     prev?: string;
   };
+}
+
+
+export interface ExistenciaResponse {
+  id: string;
+  producto_id: string;
+  sucursal_id: string;
+  cantidad: string;
+  stock_minimo?: string | null;
 }

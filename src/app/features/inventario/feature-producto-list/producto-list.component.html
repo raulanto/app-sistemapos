@@ -21,21 +21,19 @@
     (activoChange)="updateActivo($event)"
   ></app-producto-filtros>
 
-  <div z-card>
-    <z-card-content class="p-0">
-      <app-producto-table
-        [productos]="productos()"
-        [loading]="loading()"
-        [selectedIds]="selectedIds()"
-        [allSelected]="allSelected()"
-        [sort]="sort()"
-        [canEditar]="canEditar()"
-        (sortChange)="toggleSort($event)"
-        (toggleSelection)="toggleSelection($event.id, $event.checked)"
-        (toggleAll)="toggleAll($event)"
-        (desactivar)="desactivar($event)"
-      ></app-producto-table>
-    </z-card-content>
+  <div z-card class="mt-4">
+    <app-producto-table
+      [productos]="productos()"
+      [loading]="loading()"
+      [selectedIds]="selectedIds()"
+      [allSelected]="allSelected()"
+      [sort]="sort()"
+      [canEditar]="canEditar()"
+      (sortChange)="toggleSort($event)"
+      (toggleSelection)="toggleSelection($event.id, $event.checked)"
+      (toggleAll)="toggleAll($event)"
+      (desactivar)="desactivar($event)"
+    ></app-producto-table>
 
     <!-- Paginación -->
     @if (totalItems() > 0) {
@@ -46,7 +44,7 @@
 
         <div class="flex items-center gap-6">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-medium">Filas por página</span>
+            <span class="text-sm font-medium">Filas</span>
             <z-select [ngModel]="pageSize().toString()" (ngModelChange)="updatePageSize($event)">
               <z-select-item [zValue]="'10'">10</z-select-item>
               <z-select-item [zValue]="'20'">20</z-select-item>
@@ -54,7 +52,7 @@
             </z-select>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 w-full">
             <span class="text-sm font-medium mr-4">Página {{ page() }} de {{ totalPages() }}</span>
             <z-pagination
               [zTotal]="totalPages()"
