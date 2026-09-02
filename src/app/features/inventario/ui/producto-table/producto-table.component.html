@@ -102,16 +102,29 @@
                   >
                     <ng-icon name="lucidePencil" class="size-4" />
                   </button>
-                  <button
-                    z-button
-                    zType="ghost"
-                    zSize="icon"
-                    class="text-muted-foreground hover:text-destructive h-8 w-8"
-                    title="Desactivar"
-                    (click)="desactivar.emit(producto)"
-                  >
-                    <ng-icon name="lucideTrash" class="size-4" />
-                  </button>
+                  @if (producto.activo) {
+                    <button
+                      z-button
+                      zType="ghost"
+                      zSize="icon"
+                      class="text-muted-foreground hover:text-destructive h-8 w-8"
+                      title="Desactivar"
+                      (click)="desactivar.emit(producto)"
+                    >
+                      <ng-icon name="lucideTrash" class="size-4" />
+                    </button>
+                  } @else {
+                    <button
+                      z-button
+                      zType="ghost"
+                      zSize="icon"
+                      class="text-muted-foreground hover:text-green-600 h-8 w-8"
+                      title="Activar"
+                      (click)="activar.emit(producto)"
+                    >
+                      <ng-icon name="lucideCircleCheck" class="size-4" />
+                    </button>
+                  }
                 }
               </td>
             </tr>

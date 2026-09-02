@@ -50,6 +50,7 @@ export class ProductoTableComponent {
   toggleSelection = output<{id: string, checked: boolean}>();
   toggleAll = output<boolean>();
   desactivar = output<ProductoResponse>();
+  activar = output<ProductoResponse>();
   editar = output<ProductoResponse>();
 
   getSortIcon(field: string): string {

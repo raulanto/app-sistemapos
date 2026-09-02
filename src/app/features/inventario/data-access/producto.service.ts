@@ -70,4 +70,8 @@ export class ProductoService {
   desactivar(id: string): Observable<void> {
     return this.http.patch<void>(`${this.API_URL}/${id}/desactivar`, {});
   }
+
+  activar(id: string): Observable<void> {
+    return this.http.patch<void>(`${this.API_URL}/${id}/activar`, {});
+  }
 }

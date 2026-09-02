@@ -1607,6 +1607,40 @@
         }
       }
     },
+    "/api/v1/inventario/productos/{producto_id}/activar": {
+      "patch": {
+        "tags": ["inventario"],
+        "summary": "Activar Producto",
+        "operationId": "activar_producto_api_v1_inventario_productos__producto_id__activar_patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "producto_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Producto Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ProductoResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/inventario/existencias": {
       "get": {
         "tags": ["inventario"],

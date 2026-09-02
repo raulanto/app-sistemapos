@@ -20,6 +20,7 @@ import { SucursalService } from '@/core/sucursal/sucursal.service';
 import { ProductoFiltrosComponent } from '../ui/producto-filtros/producto-filtros.component';
 import { ProductoTableComponent } from '../ui/producto-table/producto-table.component';
 import { ProductoFormSheetComponent } from '../ui/producto-form-sheet/producto-form-sheet.component';
+import { InventarioActionService } from '../data-access/inventario-action.service';
 
 @Component({
   selector: 'app-producto-list',
@@ -48,6 +49,7 @@ export class ProductoListComponent implements OnInit {
   private readonly sheetService = inject(ZardSheetService);
   private readonly authService = inject(AuthService);
   private readonly sucursalService = inject(SucursalService);
+  private readonly inventarioAction = inject(InventarioActionService);
 
   readonly canCrear = computed(() => this.authService.hasPermission(...PERMISOS.inventario.crear));
   readonly canEditar = computed(() => this.authService.hasPermission(...PERMISOS.inventario.editar));
@@ -69,12 +71,16 @@ export class ProductoListComponent implements OnInit {
   // Metadatos
   readonly totalItems = signal(0);
   readonly totalPages = signal(0);
+  readonly refreshTrigger = signal(0);
   readonly allSelected = computed(() => {
     const p = this.productos();
     return p.length > 0 && p.every(prod => this.selectedIds().has(prod.id));
   });
 
   private readonly query = computed<ProductoQuery>(() => {
+    // Depend on refreshTrigger to force re-fetch
+    this.refreshTrigger();
+
     let activoVal: boolean | null = null;
     if (this.activo().length === 1) {
       activoVal = this.activo()[0] === 'true';
@@ -184,16 +190,29 @@ export class ProductoListComponent implements OnInit {
       zOkText: 'Desactivar',
       zOkDestructive: true,
       zOnOk: () => {
-        this.productoService.desactivar(producto.id).subscribe({
-          next: () => {
-            this.sonner.success('Producto desactivado correctamente');
-            this.page.set(this.page()); // Force refresh of the same page
-          },
-          error: (err) => {
-            this.sonner.error('Error al desactivar el producto');
-            console.error('Error desactivando:', err);
-          }
-        });
+        this.inventarioAction.handleAction(
+          this.productoService.desactivar(producto.id),
+          'Producto desactivado correctamente',
+          'Error al desactivar el producto',
+          () => this.refreshTrigger.update(v => v + 1)
+        );
+      }
+    });
+  }
+
+  activar(producto: ProductoResponse) {
+    this.alertDialog.confirm({
+      zTitle: `¿Activar producto ${producto.sku}?`,
+      zDescription: 'Esta acción cambiará el estado del producto a activo.',
+      zOkText: 'Activar',
+      zOkDestructive: false,
+      zOnOk: () => {
+        this.inventarioAction.handleAction(
+          this.productoService.activar(producto.id),
+          'Producto activado correctamente',
+          'Error al activar el producto',
+          () => this.refreshTrigger.update(v => v + 1)
+        );
       }
     });
   }
@@ -206,24 +225,12 @@ export class ProductoListComponent implements OnInit {
       zOkText: 'Guardar',
       zCancelText: 'Cancelar',
       zOnOk: (instance: any) => {
-        const obs = instance.save();
-        if (obs) {
-          return new Promise<void>((resolve, reject) => {
-            obs.subscribe({
-              next: () => {
-                this.sonner.success('Producto creado exitosamente');
-                this.page.set(this.page()); // Refresh table
-                resolve();
-              },
-              error: (err: any) => {
-                console.error(err);
-                this.sonner.error('Error al crear el producto');
-                reject(err);
-              }
-            });
-          });
-        }
-        return false;
+        return this.inventarioAction.handleSheetSave(
+          instance.save(),
+          'Producto creado exitosamente',
+          'Error al crear el producto',
+          () => this.refreshTrigger.update(v => v + 1)
+        );
       }
     });
   }
@@ -237,24 +244,12 @@ export class ProductoListComponent implements OnInit {
       zOkText: 'Guardar cambios',
       zCancelText: 'Cancelar',
       zOnOk: (instance: any) => {
-        const obs = instance.save();
-        if (obs) {
-          return new Promise<void>((resolve, reject) => {
-            obs.subscribe({
-              next: () => {
-                this.sonner.success('Producto actualizado exitosamente');
-                this.page.set(this.page()); // Refresh table
-                resolve();
-              },
-              error: (err: any) => {
-                console.error(err);
-                this.sonner.error('Error al actualizar el producto');
-                reject(err);
-              }
-            });
-          });
-        }
-        return false;
+        return this.inventarioAction.handleSheetSave(
+          instance.save(),
+          'Producto actualizado exitosamente',
+          'Error al actualizar el producto',
+          () => this.refreshTrigger.update(v => v + 1)
+        );
       }
     });
   }
