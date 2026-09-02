@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucidePencil, lucideTrash } from '@ng-icons/lucide';
 
@@ -9,6 +9,8 @@ import { ZardTableImports } from '../../../shared/components/table/table.imports
 import { ZardCardImports } from '../../../shared/components/card/card.imports';
 import { ZardButtonComponent } from '../../../shared/components/button/button.component';
 import { ZardBadgeComponent } from '../../../shared/components/badge/badge.component';
+import { AuthService } from '@/core/auth/api/auth.service';
+import { PERMISOS } from '@/core/auth/permissions';
 
 @Component({
   selector: 'app-categoria-list',
@@ -24,9 +26,11 @@ import { ZardBadgeComponent } from '../../../shared/components/badge/badge.compo
           <h1 class="text-2xl font-bold tracking-tight">Categorías</h1>
           <p class="text-muted-foreground">Agrupa tus productos de forma organizada.</p>
         </div>
-        <button z-button zType="default">
-          <ng-icon name="lucidePlus" class="mr-2" /> Nueva Categoría
-        </button>
+        @if (canCrear()) {
+          <button z-button zType="default">
+            <ng-icon name="lucidePlus" class="mr-2" /> Nueva Categoría
+          </button>
+        }
       </div>
 
       <div z-card>
@@ -49,10 +53,12 @@ import { ZardBadgeComponent } from '../../../shared/components/badge/badge.compo
                     </z-badge>
                   </td>
                   <td z-table-cell class="text-right space-x-2">
-                    <button z-button zType="ghost" zSize="icon" class="h-8 w-8 text-primary">
-                      <ng-icon name="lucidePencil" class="size-4" />
-                      <span class="sr-only">Editar</span>
-                    </button>
+                    @if (canEditar()) {
+                      <button z-button zType="ghost" zSize="icon" class="h-8 w-8 text-primary">
+                        <ng-icon name="lucidePencil" class="size-4" />
+                        <span class="sr-only">Editar</span>
+                      </button>
+                    }
                   </td>
                 </tr>
               } @empty {
@@ -72,7 +78,11 @@ import { ZardBadgeComponent } from '../../../shared/components/badge/badge.compo
 })
 export class CategoriaListComponent implements OnInit {
   private categoriaService = inject(CategoriaService);
-  
+  private authService = inject(AuthService);
+
+  readonly canCrear = computed(() => this.authService.hasPermission(...PERMISOS.inventario.crear));
+  readonly canEditar = computed(() => this.authService.hasPermission(...PERMISOS.inventario.editar));
+
   readonly categorias = signal<CategoriaResponse[]>([]);
 
   ngOnInit() {

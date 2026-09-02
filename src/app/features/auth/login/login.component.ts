@@ -9,7 +9,7 @@ import { ZardButtonComponent } from '../../../shared/components/button/button.co
 import { ZardFieldImports } from '../../../shared/components/field/field.imports';
 import { ZardInputComponent } from '../../../shared/components/input/input.component';
 import { ZardAlertComponent } from '../../../shared/components/alert/alert.component';
-import { AuthService } from '../../../core/auth/auth.service';
+import { AuthService } from '@/core/auth/api/auth.service';
 
 @Component({
   selector: 'app-login',

@@ -1,0 +1,76 @@
+<table z-table>
+  <thead z-table-header>
+    <tr z-table-row>
+      <th z-table-head class="w-12"><z-checkbox (ngModelChange)="toggleAll.emit($event)" [ngModel]="allSelected()"></z-checkbox></th>
+      <th z-table-head class="w-12"></th>
+      <th z-table-head (click)="sortChange.emit('sku')" class="cursor-pointer hover:bg-muted/50 select-none">
+        SKU / Código {{ getSortIcon('sku') }}
+      </th>
+      <th z-table-head (click)="sortChange.emit('nombre')" class="cursor-pointer hover:bg-muted/50 select-none">
+        Nombre {{ getSortIcon('nombre') }}
+      </th>
+      <th z-table-head>Categoría</th>
+      <th z-table-head (click)="sortChange.emit('precio_venta')" class="cursor-pointer hover:bg-muted/50 select-none">
+        Precio (Costo) {{ getSortIcon('precio_venta') }}
+      </th>
+      <th z-table-head>Stock</th>
+      <th z-table-head class="text-right">Acciones</th>
+    </tr>
+  </thead>
+  <tbody z-table-body>
+    @if (loading()) {
+      <tr z-table-row>
+        <td z-table-cell colspan="8" class="h-24 text-center text-muted-foreground">
+          Cargando productos...
+        </td>
+      </tr>
+    } @else {
+      @for (producto of productos(); track producto.id) {
+        <tr z-table-row>
+          <td z-table-cell><z-checkbox [ngModel]="selectedIds().has(producto.id)" (ngModelChange)="toggleSelection.emit({id: producto.id, checked: $event})"></z-checkbox></td>
+          <td z-table-cell><ng-icon name="lucideGripVertical" class="text-muted-foreground/50 size-4" /></td>
+          <td z-table-cell>
+            <div class="font-medium">{{ producto.sku }}</div>
+            <div class="text-xs text-muted-foreground">{{ producto.codigo_barras || '-' }}</div>
+          </td>
+          <td z-table-cell>
+            <div class="font-medium">{{ producto.nombre }}</div>
+            <div class="text-xs text-muted-foreground truncate max-w-[200px]" [title]="producto.descripcion || ''">
+              {{ producto.descripcion || 'Sin descripción' }}
+            </div>
+          </td>
+          <td z-table-cell>{{ producto.categoria?.nombre || 'Sin Categoría' }}</td>
+          <td z-table-cell>
+            <div class="font-medium">{{ '$' }}{{ producto.precio_venta }}</div>
+            <div class="text-xs text-muted-foreground">Costo: {{ '$' }}{{ producto.costo }}</div>
+          </td>
+          <td z-table-cell>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  [class.bg-secondary]="producto.activo"
+                  [class.text-secondary-foreground]="producto.activo"
+                  [class.bg-destructive]="!producto.activo"
+                  [class.text-destructive-foreground]="!producto.activo">
+              {{ producto.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td z-table-cell class="text-right space-x-2">
+            @if (canEditar()) {
+              <a [routerLink]="['/inventario/productos', producto.id]" z-button zType="ghost" zSize="icon" class="text-muted-foreground hover:text-primary h-8 w-8" title="Editar">
+                <ng-icon name="lucidePencil" class="size-4" />
+              </a>
+              <button z-button zType="ghost" zSize="icon" class="text-muted-foreground hover:text-destructive h-8 w-8" title="Desactivar" (click)="desactivar.emit(producto)">
+                <ng-icon name="lucideTrash" class="size-4" />
+              </button>
+            }
+          </td>
+        </tr>
+      } @empty {
+        <tr z-table-row>
+          <td z-table-cell colspan="8" class="h-24 text-center text-muted-foreground">
+            No se encontraron resultados
+          </td>
+        </tr>
+      }
+    }
+  </tbody>
+</table>

@@ -1,12 +1,15 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, switchMap, throwError } from 'rxjs';
-import { AuthService } from './auth.service';
 import { Router } from '@angular/router';
+
+import { AuthService } from '@/core/auth/api/auth.service';
+import { ZardSonnerService } from '@/shared/components/sonner/sonner.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
+  const sonner = inject(ZardSonnerService);
 
   // Skip adding token for login and refresh endpoints
   if (req.url.includes('/usuarios/login') || req.url.includes('/usuarios/refresh')) {
@@ -45,6 +48,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             return throwError(() => refreshError);
           })
         );
+      }
+      if (error.status === 403) {
+        sonner.error('No tienes permiso para realizar esta acción');
       }
       return throwError(() => error);
     })

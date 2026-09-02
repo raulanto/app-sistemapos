@@ -5,8 +5,8 @@ import { catchError, map, of, switchMap, firstValueFrom } from 'rxjs';
 
 import { routes } from './app.routes';
 import { provideZard } from '@/shared/core/provider/providezard';
-import { authInterceptor } from './core/auth/auth.interceptor';
-import { AuthService } from './core/auth/auth.service';
+import { authInterceptor } from './core/auth/interceptors/auth.interceptor';
+import { AuthService } from './core/auth/api/auth.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [

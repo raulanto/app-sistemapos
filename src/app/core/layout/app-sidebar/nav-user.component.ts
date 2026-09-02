@@ -15,7 +15,7 @@ import type { ZardDropdownSide } from '../../../shared/components/dropdown/dropd
 import { ZardDropdownImports } from '../../../shared/components/dropdown/dropdown.imports';
 import { ZardSidebarImports } from '../../../shared/components/sidebar/sidebar.imports';
 import { ZardSidebarService } from '../../../shared/components/sidebar/sidebar.service';
-import { AuthService } from '../../auth/auth.service';
+import { AuthService } from '../../auth/api/auth.service';
 
 @Component({
   selector: 'lib-sidebar-07-nav-user',

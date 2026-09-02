@@ -1,10 +1,10 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { catchError, finalize, map, tap, switchMap } from 'rxjs/operators';
 import { Observable, throwError } from 'rxjs';
-import { ApiResponse, LoginRequest, TokenResponse, UsuarioResponse } from './models/auth.models';
-import { environment } from '../../../environments/environment';
+import { ApiResponse, LoginRequest, PermisoResponse, TokenResponse, UsuarioResponse } from '../models/auth.models';
+import { environment } from '@env/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -21,6 +21,14 @@ export class AuthService {
   
   readonly sessionResolved = signal<boolean>(false);
   readonly isReady = computed(() => this.sessionResolved());
+
+  readonly permisos = computed(() => new Set((this.currentUser()?.rol?.permisos ?? []).map((p: PermisoResponse) => p.codigo)));
+
+  /** True si el usuario tiene al menos uno de los códigos indicados (permite convenciones equivalentes). */
+  hasPermission(...codigos: string[]): boolean {
+    const permisos = this.permisos();
+    return codigos.some(codigo => permisos.has(codigo));
+  }
 
   login(credentials: LoginRequest): Observable<TokenResponse> {
     return this.http.post<TokenResponse>(`${this.API_URL}/usuarios/login`, credentials, { withCredentials: true }).pipe(
@@ -66,7 +74,8 @@ export class AuthService {
   }
 
   loadCurrentUser(): Observable<UsuarioResponse> {
-    return this.http.get<ApiResponse<UsuarioResponse>>(`${this.API_URL}/usuarios/me`).pipe(
+    const params = new HttpParams().set('include', 'rol');
+    return this.http.get<ApiResponse<UsuarioResponse>>(`${this.API_URL}/usuarios/me`, { params }).pipe(
       map(res => res.data),
       tap(user => {
         this.currentUser.set(user);

@@ -1,0 +1,70 @@
+<div class="p-6 w-full space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Productos</h1>
+      <p class="text-muted-foreground">Gestiona el catálogo de productos y precios.</p>
+    </div>
+    @if (canCrear()) {
+      <a routerLink="nuevo" z-button zType="default">
+        <ng-icon name="lucidePlus" class="mr-2" /> Nuevo Producto
+      </a>
+    }
+  </div>
+
+  <app-producto-filtros
+    [q]="q()"
+    [categorias]="categorias()"
+    [categoriaId]="categoriaId()"
+    [activo]="activo()"
+    (qChange)="updateSearch($event)"
+    (categoriaIdChange)="updateCategoria($event)"
+    (activoChange)="updateActivo($event)"
+  ></app-producto-filtros>
+
+  <div z-card>
+    <z-card-content class="p-0">
+      <app-producto-table
+        [productos]="productos()"
+        [loading]="loading()"
+        [selectedIds]="selectedIds()"
+        [allSelected]="allSelected()"
+        [sort]="sort()"
+        [canEditar]="canEditar()"
+        (sortChange)="toggleSort($event)"
+        (toggleSelection)="toggleSelection($event.id, $event.checked)"
+        (toggleAll)="toggleAll($event)"
+        (desactivar)="desactivar($event)"
+      ></app-producto-table>
+    </z-card-content>
+
+    <!-- Paginación -->
+    @if (totalItems() > 0) {
+      <div class="border-t p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="text-sm text-muted-foreground">
+          {{ selectedIds().size }} de {{ totalItems() }} fila(s) seleccionada(s).
+        </div>
+
+        <div class="flex items-center gap-6">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium">Filas por página</span>
+            <z-select [ngModel]="pageSize().toString()" (ngModelChange)="updatePageSize($event)">
+              <z-select-item [zValue]="'10'">10</z-select-item>
+              <z-select-item [zValue]="'20'">20</z-select-item>
+              <z-select-item [zValue]="'50'">50</z-select-item>
+            </z-select>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium mr-4">Página {{ page() }} de {{ totalPages() }}</span>
+            <z-pagination
+              [zTotal]="totalPages()"
+              [zPageIndex]="page()"
+              (zPageIndexChange)="page.set($event)"
+            >
+            </z-pagination>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

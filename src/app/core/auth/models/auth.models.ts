@@ -17,10 +17,17 @@ export interface TokenResponse {
   token_type: string;
 }
 
+export interface PermisoResponse {
+  id: string;
+  codigo: string;
+  descripcion: string;
+}
+
 export interface RolResponse {
   id: string;
   codigo: string;
   nombre: string;
+  permisos?: PermisoResponse[];
 }
 
 export interface SucursalEmbed {
