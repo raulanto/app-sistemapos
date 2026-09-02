@@ -1,0 +1,44 @@
+<form [formGroup]="form" class="grid flex-1 auto-rows-min gap-6 px-4 pb-32 overflow-y-auto">
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Sucursal *</label>
+      <z-select formControlName="sucursal_id" placeholder="Selecciona una sucursal">
+        @for (sucursal of sucursalService.sucursales(); track sucursal.id) {
+          <z-select-item [zValue]="sucursal.id">{{ sucursal.nombre }}</z-select-item>
+        }
+      </z-select>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label>Tipo *</label>
+      <z-select formControlName="tipo" placeholder="Selecciona el tipo">
+        <z-select-item zValue="entrada">Entrada</z-select-item>
+        <z-select-item zValue="salida">Salida</z-select-item>
+        <z-select-item zValue="ajuste_positivo">Ajuste Positivo</z-select-item>
+        <z-select-item zValue="ajuste_negativo">Ajuste Negativo</z-select-item>
+        <z-select-item zValue="merma">Merma</z-select-item>
+      </z-select>
+    </div>
+
+    <div z-field>
+      <label z-field-label for="cantidad">Cantidad *</label>
+      <input z-input id="cantidad" type="number" step="0.01" min="0.01" formControlName="cantidad" placeholder="0.00">
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label for="referencia_tipo">Referencia *</label>
+      <input z-input id="referencia_tipo" type="text" formControlName="referencia_tipo" placeholder="Ej. Ajuste manual">
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label for="motivo">Motivo (Opcional)</label>
+      <textarea z-textarea id="motivo" rows="3" formControlName="motivo" placeholder="Explica el motivo del movimiento"></textarea>
+    </div>
+  </div>
+</form>

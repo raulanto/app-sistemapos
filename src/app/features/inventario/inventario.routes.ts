@@ -17,12 +17,12 @@ export const INVENTARIO_ROUTES: Routes = [
   {
     path: 'productos/nuevo',
     canActivate: [permissionGuard(...PERMISOS.inventario.crear)],
-    loadComponent: () => import('./feature-producto-form/producto-form.component').then(m => m.ProductoFormComponent)
+    loadComponent: () => import('./feature-producto-create/producto-create.component').then(m => m.ProductoCreateComponent)
   },
   {
     path: 'productos/:id',
-    canActivate: [permissionGuard(...PERMISOS.inventario.editar)],
-    loadComponent: () => import('./feature-producto-form/producto-form.component').then(m => m.ProductoFormComponent)
+    canActivate: [permissionGuard(...PERMISOS.inventario.leer)],
+    loadComponent: () => import('./feature-producto-detail/producto-detail.component').then(m => m.ProductoDetailComponent)
   },
   {
     path: 'categorias',

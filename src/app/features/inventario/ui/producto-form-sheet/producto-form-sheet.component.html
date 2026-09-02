@@ -1,4 +1,4 @@
-<form [formGroup]="form" class="grid flex-1 auto-rows-min gap-6 px-4 pb-4">
+<form [formGroup]="form" class="grid flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto" (ngSubmit)="save()">
   <div class="grid grid-cols-2 gap-4">
     <div z-field>
       <label z-field-label for="sku">SKU *</label>
@@ -19,7 +19,7 @@
 
   <div class="grid grid-cols-1 gap-4">
     <div z-field>
-      <label z-field-label>Categoría</label>
+      <label z-field-label>Categoría *</label>
       <z-select formControlName="categoria_id" placeholder="Selecciona una categoría">
         @for (cat of categorias(); track cat.id) {
           <z-select-item [zValue]="cat.id">{{ cat.nombre }}</z-select-item>
@@ -37,5 +37,84 @@
       <label z-field-label for="costo">Costo *</label>
       <input z-input id="costo" type="number" step="0.01" formControlName="costo" placeholder="0.00">
     </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label for="impuesto_tasa">Impuesto (%) *</label>
+      <input z-input id="impuesto_tasa" type="number" step="0.01" formControlName="impuesto_tasa" placeholder="0">
+    </div>
+    <div z-field>
+      <label z-field-label for="unidad_medida">Unidad de Medida *</label>
+      <input z-input id="unidad_medida" type="text" formControlName="unidad_medida" placeholder="Ej. PIEZA, KG, LITRO">
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label for="descripcion">Descripción</label>
+      <textarea z-textarea id="descripcion" formControlName="descripcion" placeholder="Descripción adicional del producto" rows="3"></textarea>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2 my-2">
+    <z-checkbox id="permite_stock_negativo" formControlName="permite_stock_negativo"></z-checkbox>
+    <label for="permite_stock_negativo" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Permitir stock negativo (vender sin existencias)</label>
+  </div>
+
+  @if (!sheetData?.productoId) {
+    <div class="mt-4 border-t pt-4">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-sm font-medium">Inventario Inicial (Opcional)</h3>
+          <p class="text-xs text-muted-foreground">Selecciona sucursales para agregar stock inicial o configurar el umbral.</p>
+        </div>
+        <button type="button" z-button zType="outline" zSize="sm" (click)="agregarExistencia()">
+          <ng-icon name="lucidePlus" class="mr-2"></ng-icon>
+          Agregar Existencia
+        </button>
+      </div>
+      
+      <div formArrayName="existencias" class="flex flex-col gap-4">
+        @for (control of existenciasArray.controls; track $index) {
+          <div [formGroupName]="$index" class="flex flex-col gap-3 p-3 border rounded-md">
+            <div z-field>
+              <label z-field-label>Sucursal *</label>
+              <z-select formControlName="sucursal_id" placeholder="Seleccionar Sucursal">
+                @for (sucursal of sucursalService.sucursales(); track sucursal.id) {
+                  <z-select-item [zValue]="sucursal.id">{{ sucursal.nombre }}</z-select-item>
+                }
+              </z-select>
+            </div>
+            <div class="flex gap-3">
+              <div z-field class="flex-1">
+                <label z-field-label>Cantidad Inicial</label>
+                <input z-input type="number" formControlName="cantidad" placeholder="0.00" min="0" step="0.01">
+              </div>
+              <div z-field class="flex-1">
+                <label z-field-label>Umbral Mínimo</label>
+                <input z-input type="number" formControlName="umbral" placeholder="0.00" min="0" step="0.01">
+              </div>
+              <div class="flex items-end pb-1">
+                <button type="button" z-button zType="ghost" zSize="icon" class="text-destructive hover:bg-destructive/10" (click)="removerExistencia($index)" title="Quitar">
+                  <ng-icon name="lucideTrash" class="size-4"></ng-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="flex justify-end gap-3 pt-6 border-t mt-4">
+    <button z-button zType="outline" type="button" (click)="sheetRef.close()">Cancelar</button>
+    <button z-button zType="default" type="submit" [disabled]="loading()">
+      @if (loading()) {
+        Guardando...
+      } @else {
+        Guardar cambios
+      }
+    </button>
   </div>
 </form>

@@ -6,9 +6,9 @@
     </div>
     @if (canCrear()) {
       <div class="flex items-center gap-2">
-        <button z-button zType="default" (click)="openCreateSheet()">
+        <a z-button zType="default" routerLink="/inventario/productos/nuevo">
           <ng-icon name="lucidePlus" class="mr-2" /> Nuevo Producto
-        </button>
+        </a>
       </div>
     }
   </div>
@@ -26,13 +26,13 @@
   ></app-producto-filtros>
 
     <app-producto-table
-
       [productos]="productos()"
       [loading]="loading()"
       [selectedIds]="selectedIds()"
       [allSelected]="allSelected()"
       [sort]="sort()"
       [canEditar]="canEditar()"
+      [canCrearMovimiento]="canCrear()"
       [totalItems]="totalItems()"
       [totalPages]="totalPages()"
       [page]="page()"
@@ -45,5 +45,6 @@
       (desactivar)="desactivar($event)"
       (activar)="activar($event)"
       (editar)="openEditSheet($event)"
+      (crearMovimiento)="openMovimientoSheet($event)"
     ></app-producto-table>
 </div>

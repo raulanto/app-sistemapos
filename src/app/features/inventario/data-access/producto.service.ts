@@ -49,8 +49,12 @@ export class ProductoService {
     return this.http.get<ApiResponse<ProductoResponse[]>>(this.API_URL, { params });
   }
 
-  obtenerPorId(id: string): Observable<ProductoResponse> {
-    return this.http.get<ApiResponse<ProductoResponse>>(`${this.API_URL}/${id}`).pipe(
+  obtenerPorId(id: string, include?: string): Observable<ProductoResponse> {
+    let params = new HttpParams();
+    if (include) {
+      params = params.set('include', include);
+    }
+    return this.http.get<ApiResponse<ProductoResponse>>(`${this.API_URL}/${id}`, { params }).pipe(
       map(res => res.data)
     );
   }
@@ -62,7 +66,7 @@ export class ProductoService {
   }
 
   actualizar(id: string, producto: ActualizarProductoRequest): Observable<ProductoResponse> {
-    return this.http.put<ApiResponse<ProductoResponse>>(`${this.API_URL}/${id}`, producto).pipe(
+    return this.http.patch<ApiResponse<ProductoResponse>>(`${this.API_URL}/${id}`, producto).pipe(
       map(res => res.data)
     );
   }
@@ -73,5 +77,9 @@ export class ProductoService {
 
   activar(id: string): Observable<void> {
     return this.http.patch<void>(`${this.API_URL}/${id}/activar`, {});
+  }
+
+  actualizarUmbrales(producto_id: string, sucursal_id: string, umbrales: { stock_minimo: number; stock_maximo?: number }): Observable<any> {
+    return this.http.patch<any>(`${environment.apiUrl}/inventario/existencias/${producto_id}/${sucursal_id}/umbrales`, umbrales);
   }
 }

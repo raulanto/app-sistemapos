@@ -1,0 +1,132 @@
+<div class="p-6 max-w-4xl mx-auto space-y-6">
+  <div class="flex items-center gap-4">
+    <a routerLink="/inventario/productos" class="text-muted-foreground hover:text-foreground">
+      <ng-icon name="lucideArrowLeft" class="size-5" />
+    </a>
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Nuevo Producto</h1>
+      <p class="text-muted-foreground">Llena los datos para registrar un nuevo producto en el inventario.</p>
+    </div>
+  </div>
+
+  <div z-card>
+    <z-card-content class="pt-6">
+      <form [formGroup]="form" class="space-y-8" (ngSubmit)="guardar()">
+        <!-- Datos Principales -->
+        <div>
+          <h2 class="text-lg font-medium mb-4">Datos Principales</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div z-field>
+              <label z-field-label for="sku">SKU *</label>
+              <input z-input id="sku" type="text" formControlName="sku" placeholder="Ej. PRD-001">
+            </div>
+            <div z-field>
+              <label z-field-label for="codigo_barras">Código de Barras</label>
+              <input z-input id="codigo_barras" type="text" formControlName="codigo_barras" placeholder="Opcional">
+            </div>
+            <div z-field class="md:col-span-2">
+              <label z-field-label for="nombre">Nombre *</label>
+              <input z-input id="nombre" type="text" formControlName="nombre" placeholder="Nombre del producto">
+            </div>
+            <div z-field class="md:col-span-2">
+              <label z-field-label for="descripcion">Descripción</label>
+              <input z-input id="descripcion" type="text" formControlName="descripcion" placeholder="Opcional">
+            </div>
+            <div z-field>
+              <label z-field-label>Categoría *</label>
+              <z-select formControlName="categoria_id" placeholder="Selecciona una categoría">
+                @for (cat of categorias(); track cat.id) {
+                  <z-select-item [zValue]="cat.id">{{ cat.nombre }}</z-select-item>
+                }
+              </z-select>
+            </div>
+            <div z-field>
+              <label z-field-label for="unidad_medida">Unidad de Medida *</label>
+              <input z-input id="unidad_medida" type="text" formControlName="unidad_medida" placeholder="Ej. PIEZA, KG, LITRO">
+            </div>
+          </div>
+        </div>
+
+        <hr class="border-border">
+
+        <!-- Precios y Costos -->
+        <div>
+          <h2 class="text-lg font-medium mb-4">Precios y Costos</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div z-field>
+              <label z-field-label for="precio_venta">Precio de Venta *</label>
+              <input z-input id="precio_venta" type="number" step="0.01" formControlName="precio_venta" placeholder="0.00">
+            </div>
+            <div z-field>
+              <label z-field-label for="costo">Costo *</label>
+              <input z-input id="costo" type="number" step="0.01" formControlName="costo" placeholder="0.00">
+            </div>
+            <div z-field>
+              <label z-field-label for="impuesto_tasa">Impuesto (%) *</label>
+              <input z-input id="impuesto_tasa" type="number" step="0.01" formControlName="impuesto_tasa" placeholder="0">
+            </div>
+            <div z-field class="md:col-span-3 flex items-center gap-3">
+              <z-switch formControlName="permite_stock_negativo"></z-switch>
+              <label class="text-sm font-medium">Permitir Stock Negativo</label>
+            </div>
+          </div>
+        </div>
+
+        <hr class="border-border">
+
+        <!-- Inventario Inicial -->
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-lg font-medium">Inventario Inicial (Opcional)</h2>
+              <p class="text-sm text-muted-foreground">Selecciona las sucursales donde el producto tendrá stock inicial o un umbral configurado.</p>
+            </div>
+            <button type="button" z-button zType="outline" zSize="sm" (click)="agregarExistencia()">
+              <ng-icon name="lucidePlus" class="mr-2"></ng-icon>
+              Agregar Existencia
+            </button>
+          </div>
+          
+          <div formArrayName="existencias" class="space-y-4">
+            @for (control of existenciasArray.controls; track $index) {
+              <div [formGroupName]="$index" class="flex flex-col sm:flex-row gap-4 p-4 border rounded-md bg-card">
+                <div z-field class="flex-1">
+                  <label z-field-label>Sucursal *</label>
+                  <z-select formControlName="sucursal_id" placeholder="Seleccionar Sucursal">
+                    @for (sucursal of sucursalService.sucursales(); track sucursal.id) {
+                      <z-select-item [zValue]="sucursal.id">{{ sucursal.nombre }}</z-select-item>
+                    }
+                  </z-select>
+                </div>
+                <div z-field class="flex-1">
+                  <label z-field-label>Cantidad Inicial</label>
+                  <input z-input type="number" formControlName="cantidad" placeholder="0.00" min="0" step="0.01">
+                </div>
+                <div z-field class="flex-1">
+                  <label z-field-label>Umbral Mínimo</label>
+                  <input z-input type="number" formControlName="umbral" placeholder="0.00" min="0" step="0.01">
+                </div>
+                <div class="flex items-end pb-2">
+                  <button type="button" z-button zType="ghost" zSize="icon" class="text-destructive hover:bg-destructive/10" (click)="removerExistencia($index)" title="Quitar">
+                    <ng-icon name="lucideTrash" class="size-4"></ng-icon>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-6 border-t">
+          <a z-button zType="outline" routerLink="/inventario/productos">Cancelar</a>
+          <button z-button zType="default" type="submit" [disabled]="loading()">
+            @if (loading()) {
+              Guardando...
+            } @else {
+              <ng-icon name="lucideSave" class="mr-2" /> Guardar Producto
+            }
+          </button>
+        </div>
+      </form>
+    </z-card-content>
+  </div>
+</div>

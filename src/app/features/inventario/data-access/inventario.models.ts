@@ -31,16 +31,18 @@ export interface CrearProductoRequest {
 
 export interface ActualizarProductoRequest {
   sku?: string;
-  codigo_barras?: string | null;
   nombre?: string;
   descripcion?: string | null;
   categoria_id?: string;
   unidad_medida?: string;
-  precio_venta?: string;
-  costo?: string;
-  impuesto_tasa?: string;
+  precio_venta?: string | number;
+  costo?: string | number;
+  impuesto_tasa?: string | number;
+  tipo?: string;
   permite_stock_negativo?: boolean;
-  activo?: boolean;
+  codigo_barras?: string | null;
+  cambiar_codigo_barras?: boolean;
+  cambiar_descripcion?: boolean;
 }
 
 export interface CategoriaResponse {
@@ -128,4 +130,13 @@ export interface ExistenciaResponse {
   sucursal_id: string;
   cantidad: string;
   stock_minimo?: string | null;
+}
+
+export interface AplicarMovimientoRequest {
+  producto_id: string;
+  tipo: string;
+  sucursal_id: string;
+  cantidad: number | string;
+  referencia_tipo: string;
+  motivo?: string | null;
 }

@@ -36,7 +36,7 @@ export class CategoriaService {
   }
 
   actualizar(id: string, categoria: ActualizarCategoriaRequest): Observable<CategoriaResponse> {
-    return this.http.put<ApiResponse<CategoriaResponse>>(`${this.API_URL}/${id}`, categoria).pipe(
+    return this.http.patch<ApiResponse<CategoriaResponse>>(`${this.API_URL}/${id}`, categoria).pipe(
       map(res => res.data)
     );
   }

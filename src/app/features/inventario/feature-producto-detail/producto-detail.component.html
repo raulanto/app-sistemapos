@@ -1,0 +1,218 @@
+<div class="p-6 max-w-6xl mx-auto space-y-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <a routerLink="/inventario/productos" class="text-muted-foreground hover:text-foreground">
+        <ng-icon name="lucideArrowLeft" class="size-5" />
+      </a>
+      <h1 class="text-2xl font-bold tracking-tight">Detalles de Producto</h1>
+    </div>
+    @if (producto()) {
+      <div class="flex items-center gap-3">
+        <z-badge [zType]="producto()?.activo ? 'default' : 'destructive'" class="px-3 py-1 mr-2">
+          {{ producto()?.activo ? 'Activo' : 'Inactivo' }}
+        </z-badge>
+
+        @if (canEditar()) {
+          <button z-button zType="outline" zSize="sm" (click)="openEditSheet()">
+            <ng-icon name="lucideEdit" class="size-4 mr-2" />
+            Editar
+          </button>
+        }
+
+        @if (canCrearMovimiento()) {
+          <button z-button zType="default" zSize="sm" (click)="openMovimientoSheet()">
+            <ng-icon name="lucidePlus" class="size-4 mr-2" />
+            Movimiento
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="h-64 flex items-center justify-center text-muted-foreground">
+      Cargando producto...
+    </div>
+  } @else if (error()) {
+    <z-alert zType="destructive" zTitle="Error" [zDescription]="error() || ''"></z-alert>
+  } @else if (producto(); as prod) {
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Columna Principal: Info y Tabs -->
+      <div class="md:col-span-2 space-y-6">
+        
+        <div z-card>
+          <z-card-header>
+            <z-card-title class="flex items-center gap-2">
+              <ng-icon name="lucidePackage" class="text-primary size-5" />
+              {{ prod.nombre }}
+            </z-card-title>
+            <z-card-description>{{ prod.descripcion || 'Sin descripción' }}</z-card-description>
+          </z-card-header>
+          <z-card-content>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <p class="text-sm text-muted-foreground">SKU</p>
+                <p class="font-medium">{{ prod.sku }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-muted-foreground">Código de Barras</p>
+                <p class="font-medium">{{ prod.codigo_barras || '-' }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-muted-foreground">Categoría</p>
+                <p class="font-medium">{{ prod.categoria?.nombre || 'General' }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-muted-foreground">Unidad</p>
+                <p class="font-medium">{{ prod.unidad_medida }}</p>
+              </div>
+            </div>
+            <div class="mt-6 pt-6 border-t grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div>
+                <p class="text-sm text-muted-foreground">Precio de Venta</p>
+                <p class="text-lg font-semibold text-green-600 dark:text-green-400">${{ prod.precio_venta }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-muted-foreground">Costo</p>
+                <p class="text-lg font-medium">${{ prod.costo }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-muted-foreground">Impuesto</p>
+                <p class="text-lg font-medium">{{ prod.impuesto_tasa }}%</p>
+              </div>
+            </div>
+          </z-card-content>
+        </div>
+
+        <z-tab-group class="w-full">
+          <z-tab label="Existencias por Sucursal">
+            <div class="pt-4">
+              <div z-card>
+                <div class="overflow-x-auto rounded-md">
+                  <table z-table>
+                    <thead z-table-header class="bg-muted">
+                      <tr z-table-row>
+                        <th z-table-head>Sucursal</th>
+                        <th z-table-head class="text-right">Cantidad Disponible</th>
+                        <th z-table-head class="text-right">Stock Mínimo</th>
+                        <th z-table-head class="text-center w-16">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody z-table-body>
+                      @for (ext of prod.existencias; track ext.id) {
+                        <tr z-table-row>
+                          <td z-table-cell class="font-medium flex items-center gap-2">
+                            <ng-icon name="lucideMapPin" class="text-muted-foreground size-4" />
+                            {{ getNombreSucursal(ext.sucursal_id) }}
+                          </td>
+                          <td z-table-cell class="text-right">
+                            <z-badge [zType]="ext.cantidad <= (ext.stock_minimo || 0) ? 'destructive' : 'secondary'">
+                              {{ ext.cantidad }}
+                            </z-badge>
+                          </td>
+                          <td z-table-cell class="text-right text-muted-foreground">{{ ext.stock_minimo || '-' }}</td>
+                          <td z-table-cell class="text-center">
+                            @if (canEditar()) {
+                              <button z-button zType="ghost" zSize="icon-sm" (click)="openUmbralesSheet(ext)" title="Configurar Umbrales">
+                                <ng-icon name="lucideSettings2" class="size-4" />
+                              </button>
+                            }
+                          </td>
+                        </tr>
+                      } @empty {
+                        <tr z-table-row>
+                          <td z-table-cell colspan="4" class="h-24 text-center text-muted-foreground">
+                            No hay existencias registradas en ninguna sucursal
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </z-tab>
+
+          <z-tab label="Historial de Movimientos">
+            <div class="pt-4">
+              <div z-card>
+                <div class="overflow-x-auto rounded-md">
+                  <table z-table>
+                    <thead z-table-header class="bg-muted">
+                      <tr z-table-row>
+                        <th z-table-head>Fecha</th>
+                        <th z-table-head>Tipo</th>
+                        <th z-table-head>Sucursal</th>
+                        <th z-table-head class="text-right">Cantidad</th>
+                        <th z-table-head>Referencia / Motivo</th>
+                      </tr>
+                    </thead>
+                    <tbody z-table-body>
+                      @for (mov of movimientos(); track mov.id) {
+                        <tr z-table-row>
+                          <td z-table-cell class="whitespace-nowrap">
+                            <div class="flex items-center gap-2">
+                              <ng-icon name="lucideCalendar" class="text-muted-foreground size-3" />
+                              <span class="text-xs">{{ mov.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
+                            </div>
+                          </td>
+                          <td z-table-cell>
+                            <z-badge [zType]="mov.tipo === 'entrada' ? 'default' : (mov.tipo === 'salida' || mov.tipo === 'merma' ? 'destructive' : 'secondary')" class="uppercase text-[10px]">
+                              {{ mov.tipo }}
+                            </z-badge>
+                          </td>
+                          <td z-table-cell class="text-xs">{{ getNombreSucursal(mov.sucursal_id) }}</td>
+                          <td z-table-cell class="text-right font-medium">
+                            {{ mov.tipo === 'entrada' || mov.tipo === 'ajuste_positivo' ? '+' : (mov.tipo === 'salida' || mov.tipo === 'merma' ? '-' : '') }}{{ mov.cantidad }}
+                          </td>
+                          <td z-table-cell class="text-xs">
+                            <div class="font-medium">{{ mov.referencia_tipo }}</div>
+                            <div class="text-muted-foreground line-clamp-1" [title]="mov.motivo || ''">{{ mov.motivo || '-' }}</div>
+                          </td>
+                        </tr>
+                      } @empty {
+                        <tr z-table-row>
+                          <td z-table-cell colspan="5" class="h-24 text-center text-muted-foreground">
+                            No hay movimientos registrados
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </z-tab>
+        </z-tab-group>
+      </div>
+
+      <!-- Columna Secundaria: Resumen Global -->
+      <div class="space-y-6">
+        <div z-card class="bg-primary/5 border-primary/20">
+          <z-card-header>
+            <z-card-title class="text-lg">Stock Global</z-card-title>
+            <z-card-description>Total en todas las sucursales</z-card-description>
+          </z-card-header>
+          <z-card-content class="flex flex-col items-center justify-center py-6">
+            <span class="text-6xl font-bold text-primary">{{ totalStock() | number:'1.0-2' }}</span>
+            <span class="text-sm text-muted-foreground mt-2">{{ prod.unidad_medida | lowercase }}s</span>
+          </z-card-content>
+        </div>
+
+        <div z-card>
+          <z-card-header>
+            <z-card-title class="text-lg">Información Adicional</z-card-title>
+          </z-card-header>
+          <z-card-content class="space-y-4">
+            <div class="flex justify-between items-center py-2 border-b">
+              <span class="text-sm text-muted-foreground">Stock Negativo</span>
+              <z-badge [zType]="prod.permite_stock_negativo ? 'destructive' : 'secondary'">
+                {{ prod.permite_stock_negativo ? 'Permitido' : 'No Permitido' }}
+              </z-badge>
+            </div>
+          </z-card-content>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -57,7 +57,9 @@
                 <div class="text-xs text-muted-foreground">{{ producto.codigo_barras || '-' }}</div>
               </td>
               <td z-table-cell>
-                <div class="font-medium">{{ producto.nombre }}</div>
+                <a routerLink="/inventario/productos/{{ producto.id }}" class="font-medium hover:underline text-primary">
+                  {{ producto.nombre }}
+                </a>
                 <div
                   class="text-xs text-muted-foreground truncate max-w-[200px]"
                   [title]="producto.descripcion || ''"
@@ -83,12 +85,35 @@
                 </z-badge>
               </td>
               <td z-table-cell class="text-right">
-                <span class="font-medium">
+                <span 
+                  class="font-medium cursor-help hover:underline decoration-dashed underline-offset-4"
+                  [zHoverCard]="existenciasHover"
+                >
                   {{ getTotalExistencias(producto) | number }}
                 </span>
-                <span class="text-xs text-muted-foreground">{{
+                <span class="text-xs text-muted-foreground ml-1">{{
                   producto.unidad_medida | lowercase
                 }}</span>
+                
+                <ng-template #existenciasHover>
+                  <z-hover-card class="w-64 p-4 space-y-3">
+                    <div class="flex justify-between items-center">
+                      <h4 class="text-sm font-semibold">Stock por Sucursal</h4>
+                    </div>
+                    <div class="text-sm space-y-2">
+                      @if (producto.existencias && producto.existencias.length > 0) {
+                        @for (ext of producto.existencias; track ext.id) {
+                          <div class="flex justify-between items-center">
+                            <span class="text-muted-foreground">{{ getSucursalNombre(ext.sucursal_id) }}</span>
+                            <span class="font-medium">{{ ext.cantidad }}</span>
+                          </div>
+                        }
+                      } @else {
+                        <div class="text-muted-foreground text-center">Sin stock registrado</div>
+                      }
+                    </div>
+                  </z-hover-card>
+                </ng-template>
               </td>
               <td z-table-cell class="text-right space-x-2">
                 @if (canEditar()) {
@@ -102,6 +127,20 @@
                   >
                     <ng-icon name="lucidePencil" class="size-4" />
                   </button>
+                }
+                @if (canCrearMovimiento()) {
+                  <button
+                    z-button
+                    zType="ghost"
+                    zSize="icon"
+                    class="text-muted-foreground hover:text-primary h-8 w-8"
+                    title="Agregar Movimiento"
+                    (click)="crearMovimiento.emit(producto)"
+                  >
+                    <ng-icon name="lucideActivity" class="size-4" />
+                  </button>
+                }
+                @if (canEditar()) {
                   @if (producto.activo) {
                     <button
                       z-button
@@ -160,12 +199,36 @@
 
           <div class="flex items-center gap-2 w-full">
             <span class="text-sm font-medium mr-4">Página {{ page() }} de {{ totalPages() }}</span>
-            <z-pagination
-              [zTotal]="totalPages()"
-              [zPageIndex]="page()"
-              (zPageIndexChange)="pageChange.emit($event)"
-            >
-            </z-pagination>
+            
+            <z-pagination [zTotal]="totalPages()" [zPageIndex]="page()" [zContent]="content" />
+
+            <ng-template #content>
+              <ul z-pagination-content>
+                <li z-pagination-item>
+                  <z-pagination-previous (click)="goToPrevious()" [zDisabled]="page() === 1" />
+                </li>
+
+                @for (p of pages(); track p) {
+                  <li z-pagination-item>
+                    <button type="button" z-pagination-button [zActive]="p === page()" (click)="goToPage(p)">
+                      <span class="sr-only">Ir a página</span>
+                      {{ p }}
+                    </button>
+                  </li>
+                }
+
+                @if (pages().length > 0 && pages()[pages().length - 1] < totalPages()) {
+                  <li z-pagination-item>
+                    <z-pagination-ellipsis />
+                  </li>
+                }
+
+                <li z-pagination-item>
+                  <z-pagination-next (click)="goToNext()" [zDisabled]="page() === totalPages()" />
+                </li>
+              </ul>
+            </ng-template>
+
           </div>
         </div>
       </div>

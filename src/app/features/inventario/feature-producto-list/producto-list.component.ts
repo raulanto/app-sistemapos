@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePlus } from '@ng-icons/lucide';
@@ -20,6 +21,7 @@ import { SucursalService } from '@/core/sucursal/sucursal.service';
 import { ProductoFiltrosComponent } from '../ui/producto-filtros/producto-filtros.component';
 import { ProductoTableComponent } from '../ui/producto-table/producto-table.component';
 import { ProductoFormSheetComponent } from '../ui/producto-form-sheet/producto-form-sheet.component';
+import { MovimientoFormSheetComponent } from '../ui/movimiento-form-sheet/movimiento-form-sheet.component';
 import { InventarioActionService } from '../data-access/inventario-action.service';
 
 @Component({
@@ -27,6 +29,7 @@ import { InventarioActionService } from '../data-access/inventario-action.servic
   standalone: true,
   imports: [
     FormsModule,
+    RouterLink,
     NgIcon, 
     ...ZardCardImports, 
     ZardButtonComponent,
@@ -217,37 +220,35 @@ export class ProductoListComponent implements OnInit {
     });
   }
 
-  openCreateSheet() {
+  openEditSheet(prod: ProductoResponse) {
     this.sheetService.create({
-      zTitle: 'Nuevo Producto',
-      zDescription: 'Llena los datos para registrar un nuevo producto en el inventario.',
+      zTitle: `Editar ${prod.sku}`,
+      zDescription: 'Modifica los datos del producto.',
       zContent: ProductoFormSheetComponent,
-      zOkText: 'Guardar',
-      zCancelText: 'Cancelar',
-      zOnOk: (instance: any) => {
-        return this.inventarioAction.handleSheetSave(
-          instance.save(),
-          'Producto creado exitosamente',
-          'Error al crear el producto',
-          () => this.refreshTrigger.update(v => v + 1)
-        );
-      }
+      zData: { 
+        productoId: prod.id,
+        onSaved: () => {
+          this.sonner.success('Producto actualizado exitosamente');
+          this.refreshTrigger.update(v => v + 1);
+        }
+      },
+      zHideFooter: true
     });
   }
 
-  openEditSheet(producto: ProductoResponse) {
+  openMovimientoSheet(prod: ProductoResponse) {
     this.sheetService.create({
-      zTitle: `Editar ${producto.sku}`,
-      zDescription: 'Modifica los datos del producto.',
-      zContent: ProductoFormSheetComponent,
-      zData: { productoId: producto.id },
-      zOkText: 'Guardar cambios',
+      zTitle: 'Agregar Movimiento',
+      zDescription: `Registrar movimiento manual para ${prod.sku}.`,
+      zContent: MovimientoFormSheetComponent,
+      zData: { productoId: prod.id },
+      zOkText: 'Aplicar',
       zCancelText: 'Cancelar',
       zOnOk: (instance: any) => {
         return this.inventarioAction.handleSheetSave(
           instance.save(),
-          'Producto actualizado exitosamente',
-          'Error al actualizar el producto',
+          'Movimiento registrado exitosamente',
+          'Error al registrar el movimiento',
           () => this.refreshTrigger.update(v => v + 1)
         );
       }
