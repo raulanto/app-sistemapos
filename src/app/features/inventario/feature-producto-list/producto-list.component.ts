@@ -14,10 +14,12 @@ import { ZardSelectImports } from '../../../shared/components/select/select.impo
 import { ZardPaginationImports } from '../../../shared/components/pagination/pagination.imports';
 import { ZardAlertDialogService } from '../../../shared/components/alert-dialog/alert-dialog.service';
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
+import { ZardSheetService } from '../../../shared/components/sheet/sheet.service';
 import { AuthService } from '@/core/auth/api/auth.service';
 import { PERMISOS } from '@/core/auth/permissions';
 import { ProductoFiltrosComponent } from '../ui/producto-filtros/producto-filtros.component';
 import { ProductoTableComponent } from '../ui/producto-table/producto-table.component';
+import { ProductoFormSheetComponent } from '../ui/producto-form-sheet/producto-form-sheet.component';
 
 @Component({
   selector: 'app-producto-list',
@@ -44,6 +46,7 @@ export class ProductoListComponent implements OnInit {
   private readonly categoriaService = inject(CategoriaService);
   private readonly alertDialog = inject(ZardAlertDialogService);
   private readonly sonner = inject(ZardSonnerService);
+  private readonly sheetService = inject(ZardSheetService);
   private readonly authService = inject(AuthService);
 
   readonly canCrear = computed(() => this.authService.hasPermission(...PERMISOS.inventario.crear));
@@ -181,6 +184,67 @@ export class ProductoListComponent implements OnInit {
             console.error('Error desactivando:', err);
           }
         });
+      }
+    });
+  }
+
+  openCreateSheet() {
+    this.sheetService.create({
+      zTitle: 'Nuevo Producto',
+      zDescription: 'Llena los datos para registrar un nuevo producto en el inventario.',
+      zContent: ProductoFormSheetComponent,
+      zOkText: 'Guardar',
+      zCancelText: 'Cancelar',
+      zOnOk: (instance: any) => {
+        const obs = instance.save();
+        if (obs) {
+          return new Promise<void>((resolve, reject) => {
+            obs.subscribe({
+              next: () => {
+                this.sonner.success('Producto creado exitosamente');
+                this.page.set(this.page()); // Refresh table
+                resolve();
+              },
+              error: (err: any) => {
+                console.error(err);
+                this.sonner.error('Error al crear el producto');
+                reject(err);
+              }
+            });
+          });
+        }
+        return false;
+      }
+    });
+  }
+
+  openEditSheet(producto: ProductoResponse) {
+    this.sheetService.create({
+      zTitle: `Editar ${producto.sku}`,
+      zDescription: 'Modifica los datos del producto.',
+      zContent: ProductoFormSheetComponent,
+      zData: { productoId: producto.id },
+      zOkText: 'Guardar cambios',
+      zCancelText: 'Cancelar',
+      zOnOk: (instance: any) => {
+        const obs = instance.save();
+        if (obs) {
+          return new Promise<void>((resolve, reject) => {
+            obs.subscribe({
+              next: () => {
+                this.sonner.success('Producto actualizado exitosamente');
+                this.page.set(this.page()); // Refresh table
+                resolve();
+              },
+              error: (err: any) => {
+                console.error(err);
+                this.sonner.error('Error al actualizar el producto');
+                reject(err);
+              }
+            });
+          });
+        }
+        return false;
       }
     });
   }

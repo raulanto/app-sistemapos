@@ -1,0 +1,41 @@
+<form [formGroup]="form" class="grid flex-1 auto-rows-min gap-6 px-4 pb-4">
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label for="sku">SKU *</label>
+      <input z-input id="sku" type="text" formControlName="sku" placeholder="Ej. PRD-001">
+    </div>
+    <div z-field>
+      <label z-field-label for="codigo_barras">Código de Barras</label>
+      <input z-input id="codigo_barras" type="text" formControlName="codigo_barras" placeholder="Opcional">
+    </div>
+  </div>
+  
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label for="nombre">Nombre *</label>
+      <input z-input id="nombre" type="text" formControlName="nombre" placeholder="Nombre del producto">
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Categoría</label>
+      <z-select formControlName="categoria_id" placeholder="Selecciona una categoría">
+        @for (cat of categorias(); track cat.id) {
+          <z-select-item [zValue]="cat.id">{{ cat.nombre }}</z-select-item>
+        }
+      </z-select>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label for="precio_venta">Precio de Venta *</label>
+      <input z-input id="precio_venta" type="number" step="0.01" formControlName="precio_venta" placeholder="0.00">
+    </div>
+    <div z-field>
+      <label z-field-label for="costo">Costo *</label>
+      <input z-input id="costo" type="number" step="0.01" formControlName="costo" placeholder="0.00">
+    </div>
+  </div>
+</form>

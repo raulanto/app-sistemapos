@@ -5,9 +5,11 @@
       <p class="text-muted-foreground">Gestiona el catálogo de productos y precios.</p>
     </div>
     @if (canCrear()) {
-      <a routerLink="nuevo" z-button zType="default">
-        <ng-icon name="lucidePlus" class="mr-2" /> Nuevo Producto
-      </a>
+      <div class="flex items-center gap-2">
+        <button z-button zType="default" (click)="openCreateSheet()">
+          <ng-icon name="lucidePlus" class="mr-2" /> Nuevo Producto
+        </button>
+      </div>
     }
   </div>
 
@@ -33,6 +35,7 @@
       (toggleSelection)="toggleSelection($event.id, $event.checked)"
       (toggleAll)="toggleAll($event)"
       (desactivar)="desactivar($event)"
+      (editar)="openEditSheet($event)"
     ></app-producto-table>
 
     <!-- Paginación -->

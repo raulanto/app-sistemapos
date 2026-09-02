@@ -14,7 +14,6 @@ import { ZardButtonComponent } from '../../../../shared/components/button/button
   standalone: true,
   imports: [
     FormsModule,
-    RouterLink,
     NgIcon,
     DecimalPipe,
     ...ZardTableImports,
@@ -41,6 +40,7 @@ export class ProductoTableComponent {
   toggleSelection = output<{id: string, checked: boolean}>();
   toggleAll = output<boolean>();
   desactivar = output<ProductoResponse>();
+  editar = output<ProductoResponse>();
 
   getSortIcon(field: string): string {
     const current = this.sort();

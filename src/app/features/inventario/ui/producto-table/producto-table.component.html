@@ -81,16 +81,16 @@
           </td>
           <td z-table-cell class="text-right space-x-2">
             @if (canEditar()) {
-              <a
-                [routerLink]="['/inventario/productos', producto.id]"
+              <button
                 z-button
                 zType="ghost"
                 zSize="icon"
                 class="text-muted-foreground hover:text-primary h-8 w-8"
                 title="Editar"
+                (click)="editar.emit(producto)"
               >
                 <ng-icon name="lucidePencil" class="size-4" />
-              </a>
+              </button>
               <button
                 z-button
                 zType="ghost"

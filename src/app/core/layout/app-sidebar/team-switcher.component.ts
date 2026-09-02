@@ -7,25 +7,21 @@ import {
   lucideCommand,
   lucideGalleryVerticalEnd,
   lucidePlus,
+  lucideStore
 } from '@ng-icons/lucide';
 
 import type { ZardDropdownSide } from '../../../shared/components/dropdown/dropdown-positions';
 import { ZardDropdownImports } from '../../../shared/components/dropdown/dropdown.imports';
 import { ZardSidebarImports } from '../../../shared/components/sidebar/sidebar.imports';
 import { ZardSidebarService } from '../../../shared/components/sidebar/sidebar.service';
-
-export interface Sidebar07Team {
-  readonly name: string;
-  readonly logo: string;
-  readonly plan: string;
-}
+import { SucursalService } from '../../sucursal/sucursal.service';
 
 @Component({
   selector: 'lib-sidebar-07-team-switcher',
   standalone: true,
   imports: [...ZardSidebarImports, ...ZardDropdownImports, NgIcon],
   viewProviders: [
-    provideIcons({ lucideAudioWaveform, lucideChevronsUpDown, lucideCommand, lucideGalleryVerticalEnd, lucidePlus }),
+    provideIcons({ lucideAudioWaveform, lucideChevronsUpDown, lucideCommand, lucideGalleryVerticalEnd, lucidePlus, lucideStore }),
   ],
   template: `
     <ul z-sidebar-menu>
@@ -40,11 +36,11 @@ export interface Sidebar07Team {
           <div
             class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
           >
-            <ng-icon [name]="activeTeam()?.logo ?? ''" class="size-4" />
+            <ng-icon name="lucideStore" class="size-4" />
           </div>
           <div class="grid flex-1 text-left text-sm leading-tight">
-            <span class="truncate font-medium">{{ activeTeam()?.name }}</span>
-            <span class="truncate text-xs">{{ activeTeam()?.plan }}</span>
+            <span class="truncate font-medium">{{ sucursalService.selectedSucursal()?.nombre }}</span>
+            <span class="truncate text-xs">{{ sucursalService.selectedSucursal()?.direccion || 'Sin dirección' }}</span>
           </div>
           <ng-icon name="lucideChevronsUpDown" class="ml-auto" />
         </button>
@@ -57,12 +53,12 @@ export interface Sidebar07Team {
         >
           <z-dropdown-menu-label class="text-muted-foreground text-xs">Sucursales</z-dropdown-menu-label>
 
-          @for (team of teams(); track team.name; let index = $index) {
-            <z-dropdown-menu-item class="gap-2 p-2" (click)="selectedTeam.set(team)">
+          @for (team of sucursalService.sucursales(); track team.id; let index = $index) {
+            <z-dropdown-menu-item class="gap-2 p-2" (click)="sucursalService.setSucursalActiva(team.id)">
               <div class="flex size-6 items-center justify-center rounded-md border">
-                <ng-icon [name]="team.logo" class="size-3.5 shrink-0" />
+                <ng-icon name="lucideStore" class="size-3.5 shrink-0" />
               </div>
-              {{ team.name }}
+              {{ team.nombre }}
               <z-dropdown-menu-shortcut>⌘{{ index + 1 }}</z-dropdown-menu-shortcut>
             </z-dropdown-menu-item>
           }
@@ -83,12 +79,6 @@ export interface Sidebar07Team {
 })
 export class TeamSwitcherComponent {
   private readonly sidebar = inject(ZardSidebarService);
+  protected readonly sucursalService = inject(SucursalService);
   protected readonly menuSide = computed<ZardDropdownSide>(() => (this.sidebar.isMobile() ? 'bottom' : 'right'));
-
-  readonly teams = input<readonly Sidebar07Team[]>([]);
-  protected readonly selectedTeam = signal<Sidebar07Team | null>(null);
-
-  protected activeTeam(): Sidebar07Team | undefined {
-    return this.selectedTeam() ?? this.teams()[0];
-  }
 }

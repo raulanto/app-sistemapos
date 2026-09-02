@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ZardSidebarImports } from '../../../shared/components/sidebar/sidebar.imports';
 import { NavMainComponent, type Sidebar07NavItem } from './nav-main.component';
 import { NavUserComponent } from './nav-user.component';
-import { TeamSwitcherComponent, type Sidebar07Team } from './team-switcher.component';
+import { TeamSwitcherComponent } from './team-switcher.component';
 
 @Component({
   selector: 'app-sidebar',
@@ -17,7 +17,7 @@ import { TeamSwitcherComponent, type Sidebar07Team } from './team-switcher.compo
   template: `
     <z-sidebar zCollapsible="icon">
       <div z-sidebar-header>
-        <lib-sidebar-07-team-switcher [teams]="teams" />
+        <lib-sidebar-07-team-switcher />
       </div>
 
       <z-sidebar-content>
@@ -35,11 +35,7 @@ import { TeamSwitcherComponent, type Sidebar07Team } from './team-switcher.compo
   host: { class: 'contents' },
 })
 export class AppSidebarComponent {
-  protected readonly teams: readonly Sidebar07Team[] = [
-    { name: 'Sucursal Principal', logo: 'lucideGalleryVerticalEnd', plan: 'HQ' },
-    { name: 'Sucursal Norte', logo: 'lucideAudioWaveform', plan: 'Tienda' },
-    { name: 'Bodega Central', logo: 'lucideCommand', plan: 'Almacén' },
-  ];
+
 
   protected readonly navMain: readonly Sidebar07NavItem[] = [
     {
