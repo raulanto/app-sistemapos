@@ -140,3 +140,11 @@ export interface AplicarMovimientoRequest {
   referencia_tipo: string;
   motivo?: string | null;
 }
+export interface TransferenciaRequest {
+  producto_id: string;
+  sucursal_origen_id: string;
+  sucursal_destino_id: string;
+  cantidad: number | string;
+  referencia_id?: string | null;
+  motivo?: string | null;
+}

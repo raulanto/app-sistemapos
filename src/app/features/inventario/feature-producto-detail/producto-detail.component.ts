@@ -220,6 +220,34 @@ export class ProductoDetailComponent implements OnInit {
     });
   }
 
+  async openTransferenciaSheet() {
+    const prod = this.producto();
+    if (!prod) return;
+
+    const { TransferenciaFormSheetComponent } = await import('../ui/transferencia-form-sheet/transferencia-form-sheet.component');
+    
+    this.sheetService.create({
+      zTitle: 'Transferir Stock',
+      zDescription: `Mover unidades de ${prod.nombre} entre sucursales.`,
+      zContent: TransferenciaFormSheetComponent,
+      zData: { productoId: prod.id },
+      zOkText: 'Transferir',
+      zCancelText: 'Cancelar',
+      zOnOk: (instance: any) => {
+        return this.inventarioAction.handleSheetSave(
+          instance.save(),
+          'Transferencia realizada exitosamente',
+          'Error al realizar la transferencia',
+          () => {
+            setTimeout(() => {
+              this.cargarDatos(prod.id);
+            }, 300);
+          }
+        );
+      }
+    });
+  }
+
   openUmbralesSheet(existencia: ExistenciaResponse) {
     const prod = this.producto();
     if (!prod) return;

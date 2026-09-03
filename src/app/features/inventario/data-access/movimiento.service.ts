@@ -57,4 +57,8 @@ export class MovimientoService {
   aplicar(movimiento: any): Observable<any> {
     return this.http.post<ApiResponse<any>>(this.API_URL, movimiento);
   }
+
+  transferir(transferencia: any): Observable<any> {
+    return this.http.post<ApiResponse<any>>(`${this.API_URL}/transferencia`, transferencia);
+  }
 }
