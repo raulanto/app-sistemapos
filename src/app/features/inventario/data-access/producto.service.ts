@@ -9,7 +9,8 @@ import {
   CrearProductoRequest, 
   ActualizarProductoRequest, 
   ApiResponse,
-  ProductoQuery
+  ProductoQuery,
+  ProductoKpiResponse
 } from './inventario.models';
 
 @Injectable({
@@ -19,7 +20,7 @@ export class ProductoService {
   private http = inject(HttpClient);
   private readonly API_URL = `${environment.apiUrl}/inventario/productos`;
 
-  listar(query?: ProductoQuery): Observable<ApiResponse<ProductoResponse[]>> {
+  private buildParams(query?: ProductoQuery): HttpParams {
     let params = new HttpParams();
     
     if (query) {
@@ -45,8 +46,19 @@ export class ProductoService {
         params = params.set('include', includeValues.join(','));
       }
     }
+    return params;
+  }
 
+  listar(query?: ProductoQuery): Observable<ApiResponse<ProductoResponse[]>> {
+    const params = this.buildParams(query);
     return this.http.get<ApiResponse<ProductoResponse[]>>(this.API_URL, { params });
+  }
+
+  obtenerKpis(query?: ProductoQuery): Observable<ProductoKpiResponse> {
+    const params = this.buildParams(query);
+    return this.http.get<ApiResponse<ProductoKpiResponse>>(`${this.API_URL}/kpis`, { params }).pipe(
+      map(res => res.data)
+    );
   }
 
   obtenerPorId(id: string, include?: string): Observable<ProductoResponse> {

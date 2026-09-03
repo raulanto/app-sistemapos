@@ -2,16 +2,17 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed } 
 import { toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { debounceTime, switchMap, tap } from 'rxjs/operators';
+import { debounceTime, switchMap, tap, map } from 'rxjs/operators';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucidePlus } from '@ng-icons/lucide';
+import { lucidePlus, lucideTrendingUp, lucideTrendingDown, lucideMinus, lucideAlertCircle } from '@ng-icons/lucide';
 import { ProductoService } from '../data-access/producto.service';
 import { CategoriaService } from '../data-access/categoria.service';
-import { CategoriaResponse, ProductoQuery, ProductoResponse } from '../data-access/inventario.models';
+import { CategoriaResponse, ProductoQuery, ProductoResponse, ProductoKpiResponse } from '../data-access/inventario.models';
 import { ZardCardImports } from '../../../shared/components/card/card.imports';
 import { ZardButtonComponent } from '../../../shared/components/button/button.component';
 import { ZardSelectImports } from '../../../shared/components/select/select.imports';
 import { ZardPaginationImports } from '../../../shared/components/pagination/pagination.imports';
+import { ZardBadgeComponent } from '../../../shared/components/badge/badge.component';
 import { ZardAlertDialogService } from '../../../shared/components/alert-dialog/alert-dialog.service';
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
 import { ZardSheetService } from '../../../shared/components/sheet/sheet.service';
@@ -33,13 +34,14 @@ import { InventarioActionService } from '../data-access/inventario-action.servic
     NgIcon, 
     ...ZardCardImports, 
     ZardButtonComponent,
+    ZardBadgeComponent,
     ...ZardSelectImports,
     ...ZardPaginationImports,
     ProductoFiltrosComponent,
     ProductoTableComponent
   ],
   viewProviders: [
-    provideIcons({ lucidePlus })
+    provideIcons({ lucidePlus, lucideTrendingUp, lucideTrendingDown, lucideMinus, lucideAlertCircle })
   ],
   templateUrl: './producto-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -60,6 +62,7 @@ export class ProductoListComponent implements OnInit {
   readonly productos = signal<ProductoResponse[]>([]);
   readonly categorias = signal<CategoriaResponse[]>([]);
   readonly loading = signal(false);
+  readonly kpis = signal<ProductoKpiResponse | null>(null);
 
   // Filtros y Paginación
   readonly q = signal<string>('');
@@ -108,7 +111,16 @@ export class ProductoListComponent implements OnInit {
     toObservable(this.query).pipe(
       tap(() => this.loading.set(true)),
       debounceTime(300),
-      switchMap(query => this.productoService.listar(query))
+      switchMap(query => {
+        return this.productoService.listar(query).pipe(
+          switchMap(res => {
+            return this.productoService.obtenerKpis(query).pipe(
+              tap(kpiRes => this.kpis.set(kpiRes)),
+              map(() => res)
+            );
+          })
+        );
+      })
     ).subscribe({
       next: (res) => {
         this.productos.set(res.data);
@@ -123,6 +135,70 @@ export class ProductoListComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  readonly cards = computed(() => {
+    const kpi = this.kpis();
+    if (!kpi) return [];
+
+    const formatCurrency = (val: string | null) => {
+      const num = Number(val || 0);
+      return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(num);
+    };
+
+    const formatNum = (val: string | number | null) => {
+      const num = Number(val || 0);
+      return new Intl.NumberFormat('es-MX').format(num);
+    };
+
+    const totalActivos = kpi.activos;
+    const itemsBajoStock = kpi.bajo_stock;
+    const unidades = formatNum(kpi.unidades_en_stock);
+    const margen = formatCurrency(kpi.margen_promedio);
+    const valorVenta = formatCurrency(kpi.valor_inventario_venta);
+    const valorCosto = formatCurrency(kpi.valor_inventario_costo);
+
+    return [
+      {
+        description: 'Productos Activos',
+        value: totalActivos.toString(),
+        trend: 'neutral',
+        badge: `${kpi.inactivos} inactivos`,
+        headline: 'Catálogo',
+        caption: `${kpi.categorias_distintas} categorías activas`
+      },
+      {
+        description: 'Unidades en Stock',
+        value: unidades,
+        trend: itemsBajoStock > 0 ? 'down' : 'up',
+        badge: `${itemsBajoStock} bajo stock`,
+        headline: 'Disponibilidad',
+        caption: `En ${kpi.productos_con_existencia} productos`
+      },
+      {
+        description: 'Valor del Inventario (Costo)',
+        value: valorCosto,
+        trend: 'neutral',
+        badge: `Costo prom. ${formatCurrency(kpi.costo_promedio)}`,
+        headline: 'Inversión',
+        caption: 'Costo total del stock'
+      },
+      {
+        description: 'Valor del Inventario (Venta)',
+        value: valorVenta,
+        trend: 'up',
+        badge: `Margen prom. ${margen}`,
+        headline: 'Proyección',
+        caption: 'Valor potencial de venta'
+      }
+    ];
+  });
+
+  trendIcon(trend: string) {
+    if (trend === 'up') return 'lucideTrendingUp';
+    if (trend === 'down') return 'lucideTrendingDown';
+    if (trend === 'alert') return 'lucideAlertCircle';
+    return 'lucideMinus';
   }
 
   ngOnInit() {

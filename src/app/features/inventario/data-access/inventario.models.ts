@@ -148,3 +148,26 @@ export interface TransferenciaRequest {
   referencia_id?: string | null;
   motivo?: string | null;
 }
+
+export interface ProductoKpiResponse {
+  total: number;
+  activos: number;
+  inactivos: number;
+  por_tipo: Record<string, number>;
+  con_codigo_barras: number;
+  sin_codigo_barras: number;
+  categorias_distintas: number;
+  precio_venta_min: string | null;
+  precio_venta_max: string | null;
+  precio_venta_promedio: string | null;
+  costo_min: string | null;
+  costo_max: string | null;
+  costo_promedio: string | null;
+  margen_promedio: string | null;
+  unidades_en_stock: string | null;
+  valor_inventario_costo: string | null;
+  valor_inventario_venta: string | null;
+  productos_con_existencia: number;
+  productos_sin_existencia: number;
+  bajo_stock: number;
+}

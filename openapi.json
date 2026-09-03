@@ -1411,10 +1411,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, existencias",
+              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias",
               "title": "Include"
             },
-            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, existencias"
+            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias"
           }
         ],
         "responses": {
@@ -1456,10 +1456,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, existencias",
+              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias",
               "title": "Include"
             },
-            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, existencias"
+            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias"
           }
         ],
         "responses": {
@@ -1468,6 +1468,164 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ApiResponse_ProductoResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/productos/kpis": {
+      "get": {
+        "tags": ["inventario"],
+        "summary": "Kpis Productos",
+        "operationId": "kpis_productos_api_v1_inventario_productos_kpis_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "categoria_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "array", "items": { "type": "string", "format": "uuid" } },
+                { "type": "null" }
+              ],
+              "title": "Categoria Id"
+            }
+          },
+          {
+            "name": "activo",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Activo" }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Busca en nombre, sku y código de barras",
+              "title": "Q"
+            },
+            "description": "Busca en nombre, sku y código de barras"
+          },
+          {
+            "name": "sucursal_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "array", "items": { "type": "string", "format": "uuid" } },
+                { "type": "null" }
+              ],
+              "description": "Acota stock/valor a esa(s) sucursal(es)",
+              "title": "Sucursal Id"
+            },
+            "description": "Acota stock/valor a esa(s) sucursal(es)"
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "$ref": "#/components/schemas/TipoProducto" }, { "type": "null" }],
+              "title": "Tipo"
+            }
+          },
+          {
+            "name": "permite_stock_negativo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+              "title": "Permite Stock Negativo"
+            }
+          },
+          {
+            "name": "con_codigo_barras",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+              "description": "true=solo con código de barras, false=solo sin",
+              "title": "Con Codigo Barras"
+            },
+            "description": "true=solo con código de barras, false=solo sin"
+          },
+          {
+            "name": "precio_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "number", "minimum": 0.0 },
+                { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+                { "type": "null" }
+              ],
+              "title": "Precio Min"
+            }
+          },
+          {
+            "name": "precio_max",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "number", "minimum": 0.0 },
+                { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+                { "type": "null" }
+              ],
+              "title": "Precio Max"
+            }
+          },
+          {
+            "name": "costo_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "number", "minimum": 0.0 },
+                { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+                { "type": "null" }
+              ],
+              "title": "Costo Min"
+            }
+          },
+          {
+            "name": "costo_max",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "number", "minimum": 0.0 },
+                { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+                { "type": "null" }
+              ],
+              "title": "Costo Max"
+            }
+          },
+          {
+            "name": "solo_bajo_stock",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": false, "title": "Solo Bajo Stock" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ProductoKpisResponse_" }
               }
             }
           },
@@ -1501,10 +1659,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, existencias",
+              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias",
               "title": "Include"
             },
-            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, existencias"
+            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias"
           }
         ],
         "responses": {
@@ -1630,6 +1788,210 @@
               }
             }
           },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/productos/{kit_id}/componentes": {
+      "get": {
+        "tags": ["inventario"],
+        "summary": "Listar Componentes",
+        "operationId": "listar_componentes_api_v1_inventario_productos__kit_id__componentes_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "kit_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Kit Id" }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Relaciones a embeber, separadas por coma. Disponibles: producto",
+              "title": "Include"
+            },
+            "description": "Relaciones a embeber, separadas por coma. Disponibles: producto"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_list_ComponenteResponse__" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["inventario"],
+        "summary": "Reemplazar Receta",
+        "operationId": "reemplazar_receta_api_v1_inventario_productos__kit_id__componentes_put",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "kit_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Kit Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReemplazarRecetaRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_list_ComponenteResponse__" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["inventario"],
+        "summary": "Agregar Componente",
+        "operationId": "agregar_componente_api_v1_inventario_productos__kit_id__componentes_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "kit_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Kit Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AgregarComponenteRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ComponenteResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/productos/{kit_id}/componentes/{componente_id}": {
+      "patch": {
+        "tags": ["inventario"],
+        "summary": "Actualizar Componente",
+        "operationId": "actualizar_componente_api_v1_inventario_productos__kit_id__componentes__componente_id__patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "kit_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Kit Id" }
+          },
+          {
+            "name": "componente_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Componente Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ActualizarComponenteRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ComponenteResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["inventario"],
+        "summary": "Quitar Componente",
+        "operationId": "quitar_componente_api_v1_inventario_productos__kit_id__componentes__componente_id__delete",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "kit_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Kit Id" }
+          },
+          {
+            "name": "componente_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Componente Id" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -3600,8 +3962,27 @@
         "type": "object",
         "title": "ActualizarClienteRequest"
       },
+      "ActualizarComponenteRequest": {
+        "properties": {
+          "cantidad": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Cantidad"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["cantidad"],
+        "title": "ActualizarComponenteRequest"
+      },
       "ActualizarProductoRequest": {
         "properties": {
+          "sku": {
+            "anyOf": [{ "type": "string", "maxLength": 50, "minLength": 1 }, { "type": "null" }],
+            "title": "Sku"
+          },
           "nombre": {
             "anyOf": [{ "type": "string", "maxLength": 150, "minLength": 1 }, { "type": "null" }],
             "title": "Nombre"
@@ -3642,6 +4023,9 @@
             ],
             "title": "Impuesto Tasa"
           },
+          "tipo": {
+            "anyOf": [{ "$ref": "#/components/schemas/TipoProducto" }, { "type": "null" }]
+          },
           "permite_stock_negativo": {
             "anyOf": [{ "type": "boolean" }, { "type": "null" }],
             "title": "Permite Stock Negativo"
@@ -3653,6 +4037,11 @@
           "cambiar_codigo_barras": {
             "type": "boolean",
             "title": "Cambiar Codigo Barras",
+            "default": false
+          },
+          "cambiar_descripcion": {
+            "type": "boolean",
+            "title": "Cambiar Descripcion",
             "default": false
           }
         },
@@ -3678,6 +4067,26 @@
         "additionalProperties": false,
         "type": "object",
         "title": "ActualizarSucursalRequest"
+      },
+      "AgregarComponenteRequest": {
+        "properties": {
+          "producto_componente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Producto Componente Id"
+          },
+          "cantidad": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Cantidad"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["producto_componente_id", "cantidad"],
+        "title": "AgregarComponenteRequest"
       },
       "AnularVentaRequest": {
         "properties": {
@@ -3722,6 +4131,17 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[ClienteResponse]"
+      },
+      "ApiResponse_ComponenteResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/ComponenteResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[ComponenteResponse]"
       },
       "ApiResponse_CorteDeCajaResponse_": {
         "properties": {
@@ -3777,6 +4197,17 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[MovimientoResponse]"
+      },
+      "ApiResponse_ProductoKpisResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/ProductoKpisResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[ProductoKpisResponse]"
       },
       "ApiResponse_ProductoResponse_": {
         "properties": {
@@ -3910,6 +4341,21 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[list[ClienteSaldoResponse]]"
+      },
+      "ApiResponse_list_ComponenteResponse__": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": {
+            "items": { "$ref": "#/components/schemas/ComponenteResponse" },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[list[ComponenteResponse]]"
       },
       "ApiResponse_list_ExistenciaResponse__": {
         "properties": {
@@ -4079,6 +4525,7 @@
       "AplicarMovimientoRequest": {
         "properties": {
           "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
+          "sucursal_id": { "type": "string", "format": "uuid", "title": "Sucursal Id" },
           "tipo": { "$ref": "#/components/schemas/TipoMovimiento" },
           "cantidad": {
             "anyOf": [
@@ -4136,7 +4583,7 @@
           }
         },
         "type": "object",
-        "required": ["producto_id", "tipo", "referencia_tipo"],
+        "required": ["producto_id", "sucursal_id", "tipo", "referencia_tipo"],
         "title": "AplicarMovimientoRequest"
       },
       "AsignarPermisosRequest": {
@@ -4418,6 +4865,49 @@
         "type": "object",
         "required": ["cliente_id", "nombre", "saldo_credito", "limite_credito"],
         "title": "ClienteSaldoResponse"
+      },
+      "ComponenteEmbed": {
+        "properties": {
+          "producto_kit_id": { "type": "string", "format": "uuid", "title": "Producto Kit Id" },
+          "producto_componente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Producto Componente Id"
+          },
+          "cantidad": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cantidad"
+          },
+          "producto": {
+            "anyOf": [{ "$ref": "#/components/schemas/ProductoEmbed" }, { "type": "null" }]
+          }
+        },
+        "type": "object",
+        "required": ["producto_kit_id", "producto_componente_id", "cantidad"],
+        "title": "ComponenteEmbed",
+        "description": "Línea de receta de un kit (`?include=componentes`)."
+      },
+      "ComponenteResponse": {
+        "properties": {
+          "producto_kit_id": { "type": "string", "format": "uuid", "title": "Producto Kit Id" },
+          "producto_componente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Producto Componente Id"
+          },
+          "cantidad": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cantidad"
+          },
+          "producto": {
+            "anyOf": [{ "$ref": "#/components/schemas/ProductoEmbed" }, { "type": "null" }]
+          }
+        },
+        "type": "object",
+        "required": ["producto_kit_id", "producto_componente_id", "cantidad"],
+        "title": "ComponenteResponse"
       },
       "ConfigurarUmbralesRequest": {
         "properties": {
@@ -5086,6 +5576,112 @@
         "required": ["id", "sku", "nombre", "categoria_id", "precio_venta", "activo"],
         "title": "ProductoEmbed"
       },
+      "ProductoKpisResponse": {
+        "properties": {
+          "total": { "type": "integer", "title": "Total" },
+          "activos": { "type": "integer", "title": "Activos" },
+          "inactivos": { "type": "integer", "title": "Inactivos" },
+          "por_tipo": {
+            "additionalProperties": { "type": "integer" },
+            "type": "object",
+            "title": "Por Tipo"
+          },
+          "con_codigo_barras": { "type": "integer", "title": "Con Codigo Barras" },
+          "sin_codigo_barras": { "type": "integer", "title": "Sin Codigo Barras" },
+          "categorias_distintas": { "type": "integer", "title": "Categorias Distintas" },
+          "precio_venta_min": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Precio Venta Min"
+          },
+          "precio_venta_max": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Precio Venta Max"
+          },
+          "precio_venta_promedio": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Precio Venta Promedio"
+          },
+          "costo_min": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Costo Min"
+          },
+          "costo_max": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Costo Max"
+          },
+          "costo_promedio": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Costo Promedio"
+          },
+          "margen_promedio": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Margen Promedio"
+          },
+          "unidades_en_stock": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Unidades En Stock"
+          },
+          "valor_inventario_costo": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Valor Inventario Costo"
+          },
+          "valor_inventario_venta": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Valor Inventario Venta"
+          },
+          "productos_con_existencia": { "type": "integer", "title": "Productos Con Existencia" },
+          "productos_sin_existencia": { "type": "integer", "title": "Productos Sin Existencia" },
+          "bajo_stock": { "type": "integer", "title": "Bajo Stock" }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "activos",
+          "inactivos",
+          "por_tipo",
+          "con_codigo_barras",
+          "sin_codigo_barras",
+          "categorias_distintas",
+          "precio_venta_min",
+          "precio_venta_max",
+          "precio_venta_promedio",
+          "costo_min",
+          "costo_max",
+          "costo_promedio",
+          "margen_promedio",
+          "unidades_en_stock",
+          "valor_inventario_costo",
+          "valor_inventario_venta",
+          "productos_con_existencia",
+          "productos_sin_existencia",
+          "bajo_stock"
+        ],
+        "title": "ProductoKpisResponse"
+      },
       "ProductoRankingResponse": {
         "properties": {
           "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
@@ -5136,6 +5732,7 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Impuesto Tasa"
           },
+          "tipo": { "$ref": "#/components/schemas/TipoProducto" },
           "permite_stock_negativo": { "type": "boolean", "title": "Permite Stock Negativo" },
           "activo": { "type": "boolean", "title": "Activo" },
           "categoria": {
@@ -5147,6 +5744,13 @@
               { "type": "null" }
             ],
             "title": "Existencias"
+          },
+          "componentes": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/ComponenteEmbed" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Componentes"
           }
         },
         "type": "object",
@@ -5161,10 +5765,24 @@
           "precio_venta",
           "costo",
           "impuesto_tasa",
+          "tipo",
           "permite_stock_negativo",
           "activo"
         ],
         "title": "ProductoResponse"
+      },
+      "ReemplazarRecetaRequest": {
+        "properties": {
+          "componentes": {
+            "items": { "$ref": "#/components/schemas/_LineaRecetaRequest" },
+            "type": "array",
+            "title": "Componentes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["componentes"],
+        "title": "ReemplazarRecetaRequest"
       },
       "RefreshRequest": {
         "properties": { "refresh_token": { "type": "string", "title": "Refresh Token" } },
@@ -5275,6 +5893,7 @@
         "enum": ["entrada", "salida", "ajuste", "merma", "transferencia"],
         "title": "TipoMovimiento"
       },
+      "TipoProducto": { "type": "string", "enum": ["simple", "kit"], "title": "TipoProducto" },
       "TokenResponse": {
         "properties": {
           "access_token": { "type": "string", "title": "Access Token" },
@@ -5579,6 +6198,26 @@
           "detalle"
         ],
         "title": "VentasPorMetodoResponse"
+      },
+      "_LineaRecetaRequest": {
+        "properties": {
+          "producto_componente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Producto Componente Id"
+          },
+          "cantidad": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Cantidad"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["producto_componente_id", "cantidad"],
+        "title": "_LineaRecetaRequest"
       }
     },
     "securitySchemes": {
