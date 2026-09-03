@@ -96,9 +96,12 @@ export class ProductoDetailComponent implements OnInit {
         grouped.set(date, { entradas: 0, salidas: 0 });
       }
       const data = grouped.get(date)!;
-      if (mov.tipo === 'entrada' || mov.tipo === 'ajuste_positivo') {
+      
+      const tipo = String(mov.tipo).toLowerCase();
+      
+      if (tipo === 'entrada' || tipo === 'ajuste_positivo') {
         data.entradas += Number(mov.cantidad);
-      } else if (mov.tipo === 'salida' || mov.tipo === 'merma' || mov.tipo === 'ajuste_negativo') {
+      } else if (tipo === 'salida' || tipo === 'merma' || tipo === 'ajuste_negativo') {
         data.salidas += Number(mov.cantidad);
       }
     }
