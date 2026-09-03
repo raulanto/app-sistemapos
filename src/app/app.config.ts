@@ -7,9 +7,10 @@ import { routes } from './app.routes';
 import { provideZard } from '@/shared/core/provider/providezard';
 import { authInterceptor } from './core/auth/interceptors/auth.interceptor';
 import { AuthService } from './core/auth/api/auth.service';
-
+import { provideZardCharts } from '@/shared/components/chart/chart-echarts.provider';
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideZardCharts(),
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),

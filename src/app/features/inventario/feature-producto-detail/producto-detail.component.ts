@@ -23,6 +23,7 @@ import { MovimientoFormSheetComponent } from '../ui/movimiento-form-sheet/movimi
 import { UmbralesFormSheetComponent } from '../ui/umbrales-form-sheet/umbrales-form-sheet.component';
 import { ZardButtonComponent } from '../../../shared/components/button/button.component';
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
+import { ZardChartImports } from '../../../shared/components/chart/chart.imports';
 
 @Component({
   selector: 'app-producto-detail',
@@ -36,7 +37,8 @@ import { ZardSonnerService } from '../../../shared/components/sonner/sonner.serv
     ...ZardTableImports,
     ...ZardTabsImports,
     ZardAlertComponent,
-    ZardButtonComponent
+    ZardButtonComponent,
+    ...ZardChartImports
   ],
   templateUrl: './producto-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -67,6 +69,63 @@ export class ProductoDetailComponent implements OnInit {
     if (!prod || !prod.existencias) return 0;
     return prod.existencias.reduce((sum, ext) => sum + Number(ext.cantidad), 0);
   });
+
+  valorCostoTotal = computed(() => {
+    const prod = this.producto();
+    if (!prod) return 0;
+    return this.totalStock() * Number(prod.costo || 0);
+  });
+
+  valorVentaTotal = computed(() => {
+    const prod = this.producto();
+    if (!prod) return 0;
+    return this.totalStock() * Number(prod.precio_venta || 0);
+  });
+
+  chartData = computed(() => {
+    const movs = this.movimientos();
+    // Group by date (DD/MM/YYYY)
+    const grouped = new Map<string, { entradas: number, salidas: number }>();
+    
+    // Sort ascending for chart (they are fetched desc)
+    const sortedMovs = [...movs].reverse();
+    
+    for (const mov of sortedMovs) {
+      const date = new Date(mov.created_at).toLocaleDateString();
+      if (!grouped.has(date)) {
+        grouped.set(date, { entradas: 0, salidas: 0 });
+      }
+      const data = grouped.get(date)!;
+      if (mov.tipo === 'entrada' || mov.tipo === 'ajuste_positivo') {
+        data.entradas += Number(mov.cantidad);
+      } else if (mov.tipo === 'salida' || mov.tipo === 'merma' || mov.tipo === 'ajuste_negativo') {
+        data.salidas += Number(mov.cantidad);
+      }
+    }
+    
+    return Array.from(grouped.entries()).map(([date, data]) => ({
+      fecha: date,
+      entradas: data.entradas,
+      salidas: data.salidas
+    }));
+  });
+
+  chartConfig = {
+    entradas: { label: 'Entradas', color: '#10b981' }, // emerald-500
+    salidas: { label: 'Salidas', color: '#ef4444' } // red-500
+  };
+
+  chartSeries = [
+    { dataKey: 'entradas' },
+    { dataKey: 'salidas' }
+  ];
+
+  chartOptions = {
+    series: [
+      { barMaxWidth: 50, itemStyle: { borderRadius: [4, 4, 0, 0] } },
+      { barMaxWidth: 50, itemStyle: { borderRadius: [4, 4, 0, 0] } }
+    ]
+  };
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');

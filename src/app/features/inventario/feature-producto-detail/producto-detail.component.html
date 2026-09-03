@@ -175,7 +175,6 @@
                           <td z-table-cell colspan="5" class="h-24 text-center text-muted-foreground">
                             No hay movimientos registrados
                           </td>
-                        </tr>
                       }
                     </tbody>
                   </table>
@@ -211,6 +210,49 @@
               </z-badge>
             </div>
           </z-card-content>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección Analítica (Ancho Completo) -->
+    <div class="mt-8 pt-6 border-t">
+      <h2 class="text-xl font-bold tracking-tight mb-4">Análisis de Movimientos</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="col-span-1 flex flex-col gap-4">
+          <div z-card class="flex-1 flex flex-col justify-center text-center p-6 bg-primary/5 border-primary/10">
+            <span class="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Valor (Costo Real)</span>
+            <span class="text-3xl font-bold text-primary mt-2">{{ valorCostoTotal() | currency }}</span>
+            <span class="text-xs text-muted-foreground mt-2">Basado en {{ totalStock() }} unidades al costo</span>
+          </div>
+
+          <div z-card class="flex-1 flex flex-col justify-center text-center p-6 bg-green-500/5 border-green-500/10 dark:bg-green-500/10 dark:border-green-500/20">
+            <span class="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Valor (Venta)</span>
+            <span class="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">{{ valorVentaTotal() | currency }}</span>
+            <span class="text-xs text-muted-foreground mt-2">Basado en {{ totalStock() }} unidades a precio de venta</span>
+          </div>
+        </div>
+        
+        <div z-card class="col-span-1 lg:col-span-2 p-4 min-h-[250px]">
+          <h3 class="text-sm font-semibold text-muted-foreground mb-4 ml-2">Balance de Movimientos por Fecha</h3>
+          @if (chartData().length > 0) {
+            <z-chart
+              class=" w-full block"
+              zType="bar"
+              [zData]="chartData()"
+              [zConfig]="chartConfig"
+              [zSeries]="chartSeries"
+              [zOption]="chartOptions"
+              zXAxisKey="fecha"
+              [zStacked]="false"
+            >
+              <z-chart-tooltip />
+              <z-chart-legend />
+            </z-chart>
+          } @else {
+            <div class="h-full flex items-center justify-center text-muted-foreground">
+              No hay datos suficientes para la gráfica
+            </div>
+          }
         </div>
       </div>
     </div>
