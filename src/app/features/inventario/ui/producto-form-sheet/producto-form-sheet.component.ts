@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, forkJoin, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { map, switchMap, retry } from 'rxjs/operators';
 
 import { ProductoService } from '../../data-access/producto.service';
 import { CategoriaService } from '../../data-access/categoria.service';
@@ -69,6 +69,7 @@ export class ProductoFormSheetComponent implements OnInit {
     costo: ['0.00', Validators.required],
     impuesto_tasa: ['0', Validators.required],
     permite_stock_negativo: [false],
+    tipo: ['SIMPLE', Validators.required],
     activo: [true],
     existencias: this.fb.array([])
   });
@@ -82,7 +83,12 @@ export class ProductoFormSheetComponent implements OnInit {
     
     if (this.sheetData?.productoId) {
       this.productoService.obtenerPorId(this.sheetData.productoId).subscribe({
-        next: (prod) => this.form.patchValue(prod as any),
+        next: (prod) => {
+          this.form.patchValue(prod as any);
+          if (!prod.tipo) {
+            this.form.patchValue({ tipo: 'SIMPLE' });
+          }
+        },
         error: (err) => console.error('Error al obtener producto', err)
       });
     }
@@ -98,8 +104,12 @@ export class ProductoFormSheetComponent implements OnInit {
   agregarExistencia() {
     const group = this.fb.group({
       sucursal_id: ['', Validators.required],
+      tipo: ['entrada', Validators.required],
+      referencia_tipo: ['inventario_inicial', Validators.required],
+      motivo: ['Inventario inicial'],
       cantidad: [0, [Validators.required, Validators.min(0)]],
-      umbral: [0, [Validators.required, Validators.min(0)]]
+      stock_minimo: [0, [Validators.min(0)]],
+      stock_maximo: [0, [Validators.min(0)]]
     });
     this.existenciasArray.push(group);
   }
@@ -133,7 +143,6 @@ export class ProductoFormSheetComponent implements OnInit {
       const updateData = { ...data };
       delete updateData.activo; // Not in the update schema
       
-      updateData.tipo = 'simple';
       updateData.cambiar_codigo_barras = this.form.get('codigo_barras')?.dirty ?? false;
       updateData.cambiar_descripcion = this.form.get('descripcion')?.dirty ?? false;
       
@@ -145,33 +154,47 @@ export class ProductoFormSheetComponent implements OnInit {
       request$ = this.productoService.actualizar(this.sheetData.productoId, updateData);
     } else {
       request$ = this.productoService.crear(data).pipe(
-        switchMap(prodRes => {
-          const operations: Observable<any>[] = [];
+        switchMap((prodRes: any) => {
+          const rowOps: Observable<any>[] = [];
           
           this.existenciasArray.controls.forEach(c => {
             const sucursal_id = c.get('sucursal_id')?.value;
             const cantidad = c.get('cantidad')?.value;
-            const umbral = c.get('umbral')?.value;
+            const stock_minimo = c.get('stock_minimo')?.value;
+            const stock_maximo = c.get('stock_maximo')?.value;
+            const tipo = c.get('tipo')?.value;
+            const referencia_tipo = c.get('referencia_tipo')?.value;
+            const motivo = c.get('motivo')?.value;
 
             if (cantidad > 0) {
-              operations.push(this.movimientoService.aplicar({
+              const movObs$ = this.movimientoService.aplicar({
                  producto_id: prodRes.id,
                  sucursal_id: sucursal_id,
-                 tipo: 'entrada',
+                 tipo: tipo,
                  cantidad: cantidad,
-                 referencia_tipo: 'inventario_inicial',
-                 motivo: 'Inventario inicial'
-              }));
-            }
-            if (umbral > 0) {
-              operations.push(this.productoService.actualizarUmbrales(prodRes.id, sucursal_id, {
-                stock_minimo: umbral
-              }));
+                 referencia_tipo: referencia_tipo,
+                 motivo: motivo
+              }).pipe(
+                retry({ count: 3, delay: 1000 }),
+                switchMap(() => {
+                  if (stock_minimo > 0 || stock_maximo > 0) {
+                    const umbralesPayload: any = {};
+                    if (stock_minimo > 0) umbralesPayload.stock_minimo = stock_minimo;
+                    if (stock_maximo > 0) umbralesPayload.stock_maximo = stock_maximo;
+                    
+                    return this.productoService.actualizarUmbrales(prodRes.id, sucursal_id, umbralesPayload);
+                  }
+                  return of(null);
+                })
+              );
+              rowOps.push(movObs$);
+            } else if (stock_minimo > 0 || stock_maximo > 0) {
+              this.sonner.warning('Algunos umbrales fueron ignorados porque requieren registrar un stock inicial mayor a 0 primero.');
             }
           });
 
-          if (operations.length > 0) {
-            return forkJoin(operations).pipe(map(() => prodRes));
+          if (rowOps.length > 0) {
+            return forkJoin(rowOps).pipe(map(() => prodRes));
           }
           return of(prodRes);
         })

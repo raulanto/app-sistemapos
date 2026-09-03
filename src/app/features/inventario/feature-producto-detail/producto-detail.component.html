@@ -11,6 +11,12 @@
         <z-badge [zType]="producto()?.activo ? 'default' : 'destructive'" class="px-3 py-1 mr-2">
           {{ producto()?.activo ? 'Activo' : 'Inactivo' }}
         </z-badge>
+        
+        @if (producto()?.tipo === 'kit') {
+          <z-badge zType="secondary" class="px-3 py-1 mr-2 bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
+            Kit
+          </z-badge>
+        }
 
         @if (canEditar()) {
           <button z-button zType="outline" zSize="sm" (click)="openEditSheet()">
@@ -136,6 +142,131 @@
               </div>
             </div>
           </z-tab>
+
+          @if (prod.tipo === 'kit') {
+            <z-tab label="Receta (Componentes)">
+              <div class="pt-4 space-y-4">
+                <div class="flex justify-end">
+                  @if (canEditar()) {
+                    <button z-button zType="default" zSize="sm" (click)="openAddComponenteSheet()">
+                      <ng-icon name="lucidePlus" class="size-4 mr-2" />
+                      Agregar Componente
+                    </button>
+                  }
+                </div>
+                <div z-card>
+                  <div class="overflow-x-auto rounded-md">
+                    <table z-table>
+                      <thead z-table-header class="bg-muted">
+                        <tr z-table-row>
+                          <th z-table-head>Producto</th>
+                          <th z-table-head>SKU</th>
+                          <th z-table-head class="text-right">Cantidad</th>
+                          <th z-table-head class="text-center w-24">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody z-table-body>
+                        @for (comp of prod.componentes; track comp.producto_componente_id) {
+                          <tr z-table-row>
+                            <td z-table-cell class="font-medium">
+                              <a [routerLink]="['/inventario/productos', comp.producto_componente_id]" class="hover:underline text-primary">
+                                {{ comp.componente?.nombre || 'Producto ' + comp.producto_componente_id }}
+                              </a>
+                            </td>
+                            <td z-table-cell class="text-muted-foreground">{{ comp.componente?.sku || '-' }}</td>
+                            <td z-table-cell class="text-right font-medium">{{ comp.cantidad }}</td>
+                            <td z-table-cell class="text-center">
+                              @if (canEditar()) {
+                                <button z-button zType="ghost" zSize="icon-sm" (click)="openEditComponenteSheet(comp)" title="Editar">
+                                  <ng-icon name="lucideEdit" class="size-4" />
+                                </button>
+                                <button z-button zType="ghost" zSize="icon-sm" (click)="quitarComponente(comp)" title="Quitar" class="text-destructive hover:bg-destructive/10">
+                                  <ng-icon name="lucideTrash" class="size-4" />
+                                </button>
+                              }
+                            </td>
+                          </tr>
+                        } @empty {
+                          <tr z-table-row>
+                            <td z-table-cell colspan="4" class="h-24 text-center text-muted-foreground">
+                              Este Kit aún no tiene componentes.
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </z-tab>
+          }
+
+          @if (prod.tipo !== 'kit') {
+            <z-tab label="Presentaciones de Venta">
+              <div class="pt-4 space-y-4">
+                <div class="flex justify-end">
+                  @if (canEditar()) {
+                    <button z-button zType="default" zSize="sm" (click)="openAddUnidadSheet()">
+                      <ng-icon name="lucidePlus" class="size-4 mr-2" />
+                      Agregar Presentación
+                    </button>
+                  }
+                </div>
+                <div z-card>
+                  <div class="overflow-x-auto rounded-md">
+                    <table z-table>
+                      <thead z-table-header class="bg-muted">
+                        <tr z-table-row>
+                          <th z-table-head>Nombre</th>
+                          <th z-table-head class="text-right">Factor (Unidades Base)</th>
+                          <th z-table-head class="text-right">Precio Venta</th>
+                          <th z-table-head>Código de Barras</th>
+                          <th z-table-head class="text-center w-24">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody z-table-body>
+                        @for (unidad of unidades(); track unidad.id) {
+                          <tr z-table-row>
+                            <td z-table-cell class="font-medium">
+                              <div class="flex items-center gap-2">
+                                <span>{{ unidad.nombre }}</span>
+                                @if (!unidad.activo) {
+                                  <z-badge zType="destructive" class="px-2 py-0 border-none text-[10px]">
+                                    Inactiva
+                                  </z-badge>
+                                }
+                              </div>
+                            </td>
+                            <td z-table-cell class="text-right font-medium">{{ unidad.factor }}</td>
+                            <td z-table-cell class="text-right text-green-600 dark:text-green-400 font-medium">
+                              {{ unidad.precio_venta | currency }}
+                            </td>
+                            <td z-table-cell class="text-muted-foreground">{{ unidad.codigo_barras || '-' }}</td>
+                            <td z-table-cell class="text-center">
+                              @if (canEditar()) {
+                                <button z-button zType="ghost" zSize="icon-sm" (click)="openEditUnidadSheet(unidad)" title="Editar">
+                                  <ng-icon name="lucideEdit" class="size-4" />
+                                </button>
+                                <button z-button zType="ghost" zSize="icon-sm" (click)="eliminarUnidad(unidad)" title="Eliminar" class="text-destructive hover:bg-destructive/10">
+                                  <ng-icon name="lucideTrash" class="size-4" />
+                                </button>
+                              }
+                            </td>
+                          </tr>
+                        } @empty {
+                          <tr z-table-row>
+                            <td z-table-cell colspan="5" class="h-24 text-center text-muted-foreground">
+                              Este producto no tiene presentaciones adicionales. Se vende solo en su unidad base.
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </z-tab>
+          }
 
           <z-tab label="Historial de Movimientos">
             <div class="pt-4">

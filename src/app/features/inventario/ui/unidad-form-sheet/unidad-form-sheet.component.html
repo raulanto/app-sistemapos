@@ -1,0 +1,42 @@
+<form [formGroup]="form" class="grid flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Nombre de la presentación *</label>
+      <input z-input formControlName="nombre" placeholder="Ej. Reja x24, Six-pack" />
+      @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
+        <p class="text-[0.8rem] font-medium text-destructive">El nombre es obligatorio.</p>
+      }
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Factor (cantidad de unidades base) *</label>
+      <input z-input type="number" formControlName="factor" min="2" placeholder="Ej. 24" />
+      <p class="text-[0.8rem] text-muted-foreground">
+        ¿Cuántas unidades base contiene esta presentación? (Debe ser mayor a 1).
+      </p>
+      @if (form.controls.factor.invalid && form.controls.factor.touched) {
+        <p class="text-[0.8rem] font-medium text-destructive">El factor es obligatorio y debe ser mayor a 1.</p>
+      }
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Precio de Venta *</label>
+      <input z-input type="number" formControlName="precio_venta" min="0" step="0.01" />
+      @if (form.controls.precio_venta.invalid && form.controls.precio_venta.touched) {
+        <p class="text-[0.8rem] font-medium text-destructive">El precio de venta es obligatorio.</p>
+      }
+    </div>
+  </div>
+  
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Código de Barras (Opcional)</label>
+      <input z-input formControlName="codigo_barras" placeholder="Código de barras para esta presentación" />
+    </div>
+  </div>
+
+</form>

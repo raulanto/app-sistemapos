@@ -1284,6 +1284,200 @@
         }
       }
     },
+    "/api/v1/inventario/productos/resolver-codigo": {
+      "get": {
+        "tags": ["inventario"],
+        "summary": "Resolver Codigo Barras",
+        "description": "Escaneo POS: devuelve el producto, la presentación (si aplica), el `factor`\ny el `precio_venta` a usar en la línea de venta.",
+        "operationId": "resolver_codigo_barras_api_v1_inventario_productos_resolver_codigo_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "codigo_barras",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "minLength": 1, "title": "Codigo Barras" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ResolucionCodigoResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/productos/{producto_id}/unidades": {
+      "get": {
+        "tags": ["inventario"],
+        "summary": "Listar Unidades",
+        "operationId": "listar_unidades_api_v1_inventario_productos__producto_id__unidades_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "producto_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Producto Id" }
+          },
+          {
+            "name": "incluir_inactivas",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": false, "title": "Incluir Inactivas" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_list_UnidadResponse__" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["inventario"],
+        "summary": "Agregar Unidad",
+        "operationId": "agregar_unidad_api_v1_inventario_productos__producto_id__unidades_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "producto_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Producto Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AgregarUnidadRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_UnidadResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/productos/{producto_id}/unidades/{unidad_id}": {
+      "patch": {
+        "tags": ["inventario"],
+        "summary": "Actualizar Unidad",
+        "operationId": "actualizar_unidad_api_v1_inventario_productos__producto_id__unidades__unidad_id__patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "producto_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Producto Id" }
+          },
+          {
+            "name": "unidad_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Unidad Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ActualizarUnidadRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_UnidadResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["inventario"],
+        "summary": "Desactivar Unidad",
+        "operationId": "desactivar_unidad_api_v1_inventario_productos__producto_id__unidades__unidad_id__delete",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "producto_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Producto Id" }
+          },
+          {
+            "name": "unidad_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Unidad Id" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/inventario/productos": {
       "post": {
         "tags": ["inventario"],
@@ -1411,10 +1605,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias",
+              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, unidades",
               "title": "Include"
             },
-            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias"
+            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, unidades"
           }
         ],
         "responses": {
@@ -1456,10 +1650,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias",
+              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, unidades",
               "title": "Include"
             },
-            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias"
+            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, unidades"
           }
         ],
         "responses": {
@@ -1659,10 +1853,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias",
+              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, unidades",
               "title": "Include"
             },
-            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias"
+            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, unidades"
           }
         ],
         "responses": {
@@ -4068,6 +4262,42 @@
         "type": "object",
         "title": "ActualizarSucursalRequest"
       },
+      "ActualizarUnidadRequest": {
+        "properties": {
+          "nombre": {
+            "anyOf": [{ "type": "string", "maxLength": 50, "minLength": 1 }, { "type": "null" }],
+            "title": "Nombre"
+          },
+          "factor": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Factor"
+          },
+          "precio_venta": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Precio Venta"
+          },
+          "codigo_barras": {
+            "anyOf": [{ "type": "string", "maxLength": 50 }, { "type": "null" }],
+            "title": "Codigo Barras"
+          },
+          "cambiar_codigo_barras": {
+            "type": "boolean",
+            "title": "Cambiar Codigo Barras",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ActualizarUnidadRequest"
+      },
       "AgregarComponenteRequest": {
         "properties": {
           "producto_componente_id": {
@@ -4087,6 +4317,33 @@
         "type": "object",
         "required": ["producto_componente_id", "cantidad"],
         "title": "AgregarComponenteRequest"
+      },
+      "AgregarUnidadRequest": {
+        "properties": {
+          "nombre": { "type": "string", "maxLength": 50, "minLength": 1, "title": "Nombre" },
+          "factor": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Factor"
+          },
+          "precio_venta": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Precio Venta"
+          },
+          "codigo_barras": {
+            "anyOf": [{ "type": "string", "maxLength": 50 }, { "type": "null" }],
+            "title": "Codigo Barras"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["nombre", "factor", "precio_venta"],
+        "title": "AgregarUnidadRequest"
       },
       "AnularVentaRequest": {
         "properties": {
@@ -4231,6 +4488,17 @@
         "required": ["data"],
         "title": "ApiResponse[ReporteVentasResponse]"
       },
+      "ApiResponse_ResolucionCodigoResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/ResolucionCodigoResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[ResolucionCodigoResponse]"
+      },
       "ApiResponse_ResumenTurnoResponse_": {
         "properties": {
           "success": { "type": "boolean", "title": "Success", "default": true },
@@ -4263,6 +4531,17 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[SucursalResponse]"
+      },
+      "ApiResponse_UnidadResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/UnidadResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[UnidadResponse]"
       },
       "ApiResponse_UsuarioResponse_": {
         "properties": {
@@ -4476,6 +4755,21 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[list[SucursalResponse]]"
+      },
+      "ApiResponse_list_UnidadResponse__": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": {
+            "items": { "$ref": "#/components/schemas/UnidadResponse" },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[list[UnidadResponse]]"
       },
       "ApiResponse_list_UsuarioResponse__": {
         "properties": {
@@ -5327,6 +5621,10 @@
             ],
             "title": "Impuesto Tasa",
             "default": "0"
+          },
+          "producto_unidad_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Producto Unidad Id"
           }
         },
         "type": "object",
@@ -5337,6 +5635,10 @@
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
+          "producto_unidad_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Producto Unidad Id"
+          },
           "cantidad": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -5751,6 +6053,13 @@
               { "type": "null" }
             ],
             "title": "Componentes"
+          },
+          "unidades": {
+            "anyOf": [
+              { "items": { "$ref": "#/components/schemas/UnidadEmbed" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Unidades"
           }
         },
         "type": "object",
@@ -5826,6 +6135,29 @@
           "por_dia"
         ],
         "title": "ReporteVentasResponse"
+      },
+      "ResolucionCodigoResponse": {
+        "properties": {
+          "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
+          "unidad_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Unidad Id"
+          },
+          "nombre_unidad": { "type": "string", "title": "Nombre Unidad" },
+          "factor": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Factor"
+          },
+          "precio_venta": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Precio Venta"
+          }
+        },
+        "type": "object",
+        "required": ["producto_id", "unidad_id", "nombre_unidad", "factor", "precio_venta"],
+        "title": "ResolucionCodigoResponse"
       },
       "ResumenTurnoResponse": {
         "properties": {
@@ -5944,6 +6276,65 @@
         "type": "object",
         "required": ["producto_id", "sucursal_origen_id", "sucursal_destino_id", "cantidad"],
         "title": "TransferenciaRequest"
+      },
+      "UnidadEmbed": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
+          "nombre": { "type": "string", "title": "Nombre" },
+          "factor": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Factor"
+          },
+          "precio_venta": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Precio Venta"
+          },
+          "codigo_barras": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Codigo Barras"
+          },
+          "activo": { "type": "boolean", "title": "Activo" }
+        },
+        "type": "object",
+        "required": ["id", "producto_id", "nombre", "factor", "precio_venta", "activo"],
+        "title": "UnidadEmbed",
+        "description": "Presentación de venta de un producto (`?include=unidades`)."
+      },
+      "UnidadResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
+          "nombre": { "type": "string", "title": "Nombre" },
+          "factor": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Factor"
+          },
+          "precio_venta": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Precio Venta"
+          },
+          "codigo_barras": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Codigo Barras"
+          },
+          "activo": { "type": "boolean", "title": "Activo" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "producto_id",
+          "nombre",
+          "factor",
+          "precio_venta",
+          "codigo_barras",
+          "activo"
+        ],
+        "title": "UnidadResponse"
       },
       "UsuarioEmbed": {
         "properties": {

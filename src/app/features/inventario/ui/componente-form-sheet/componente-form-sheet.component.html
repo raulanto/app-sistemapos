@@ -1,0 +1,19 @@
+<form [formGroup]="form" class="grid flex-1 auto-rows-min gap-6 px-4 pb-32 overflow-y-auto">
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Producto (Componente) *</label>
+      <z-select formControlName="producto_componente_id" placeholder="Selecciona un producto">
+        @for (prod of productos(); track prod.id) {
+          <z-select-item [zValue]="prod.id">{{ prod.sku }} - {{ prod.nombre }}</z-select-item>
+        }
+      </z-select>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Cantidad *</label>
+      <input z-input type="number" formControlName="cantidad" placeholder="0.00" min="0" step="0.01">
+    </div>
+  </div>
+</form>

@@ -1,8 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Observable, throwError, of } from 'rxjs';
+import { catchError, switchMap, delay } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { ProductoService } from '../../data-access/producto.service';
+import { MovimientoService } from '../../data-access/movimiento.service';
 import { injectSheetData } from '../../../../shared/components/sheet/sheet.service';
 
 import { ZardFieldImports } from '../../../../shared/components/field/field.imports';
@@ -43,6 +46,7 @@ export interface UmbralesSheetData {
 export class UmbralesFormSheetComponent implements OnInit {
   private fb = inject(FormBuilder);
   private productoService = inject(ProductoService);
+  private movimientoService = inject(MovimientoService);
   
   public sheetData = injectSheetData<UmbralesSheetData>();
 
@@ -65,13 +69,33 @@ export class UmbralesFormSheetComponent implements OnInit {
     }
     
     const data = this.form.value;
-    return this.productoService.actualizarUmbrales(
+    const request$ = this.productoService.actualizarUmbrales(
       this.sheetData.productoId,
       this.sheetData.sucursalId,
       {
         stock_minimo: data.stock_minimo!,
         stock_maximo: data.stock_maximo || undefined
       }
+    );
+
+    return request$.pipe(
+      catchError((err: HttpErrorResponse) => {
+        if (err.error?.error?.code === 'NOT_FOUND') {
+          // Si no existe la existencia, forzamos su creación con un ajuste_positivo a 0
+          return this.movimientoService.aplicar({
+            producto_id: this.sheetData.productoId,
+            sucursal_id: this.sheetData.sucursalId,
+            tipo: 'ajuste_positivo',
+            cantidad_final: 0,
+            referencia_tipo: 'inventario_inicial',
+            motivo: 'Inicialización automática de registro de existencia'
+          }).pipe(
+            delay(500),
+            switchMap(() => request$)
+          );
+        }
+        return throwError(() => err);
+      })
     );
   }
 }

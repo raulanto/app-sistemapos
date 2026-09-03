@@ -7,7 +7,7 @@ import { lucideArrowLeft, lucidePackage, lucideActivity, lucideCalendar, lucideM
 import { ProductoService } from '../data-access/producto.service';
 import { MovimientoService } from '../data-access/movimiento.service';
 import { SucursalService } from '../../../core/sucursal/sucursal.service';
-import { ProductoResponse, MovimientoResponse, ExistenciaResponse } from '../data-access/inventario.models';
+import { ProductoResponse, MovimientoResponse, ExistenciaResponse, UnidadResponse } from '../data-access/inventario.models';
 
 import { ZardCardImports } from '../../../shared/components/card/card.imports';
 import { ZardBadgeComponent } from '../../../shared/components/badge/badge.component';
@@ -21,9 +21,12 @@ import { InventarioActionService } from '../data-access/inventario-action.servic
 import { ProductoFormSheetComponent } from '../ui/producto-form-sheet/producto-form-sheet.component';
 import { MovimientoFormSheetComponent } from '../ui/movimiento-form-sheet/movimiento-form-sheet.component';
 import { UmbralesFormSheetComponent } from '../ui/umbrales-form-sheet/umbrales-form-sheet.component';
+import { ComponenteFormSheetComponent } from '../ui/componente-form-sheet/componente-form-sheet.component';
+import { UnidadFormSheetComponent } from '../ui/unidad-form-sheet/unidad-form-sheet.component';
 import { ZardButtonComponent } from '../../../shared/components/button/button.component';
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
 import { ZardChartImports } from '../../../shared/components/chart/chart.imports';
+import { ComponenteResponse } from '../data-access/inventario.models';
 
 @Component({
   selector: 'app-producto-detail',
@@ -61,6 +64,7 @@ export class ProductoDetailComponent implements OnInit {
 
   producto = signal<ProductoResponse | null>(null);
   movimientos = signal<MovimientoResponse[]>([]);
+  unidades = signal<UnidadResponse[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
 
@@ -144,10 +148,13 @@ export class ProductoDetailComponent implements OnInit {
     this.error.set(null);
     this.cdr.markForCheck(); // force check
 
-    this.productoService.obtenerPorId(id, 'categoria,existencias').subscribe({
+    this.productoService.obtenerPorId(id, 'categoria,existencias,componentes').subscribe({
       next: (prod) => {
         this.producto.set(prod);
         this.cargarMovimientos(id);
+        if (prod.tipo !== 'kit') {
+          this.cargarUnidades(id);
+        }
       },
       error: (err) => {
         console.error('Error al cargar producto:', err);
@@ -169,6 +176,18 @@ export class ProductoDetailComponent implements OnInit {
         console.error('Error al cargar movimientos:', err);
         this.loading.set(false);
         this.cdr.markForCheck();
+      }
+    });
+  }
+
+  cargarUnidades(productoId: string) {
+    this.productoService.listarUnidades(productoId, true).subscribe({
+      next: (unids) => {
+        this.unidades.set(unids);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error al cargar unidades:', err);
       }
     });
   }
@@ -279,5 +298,145 @@ export class ProductoDetailComponent implements OnInit {
         );
       }
     });
+  }
+
+  openAddComponenteSheet() {
+    const prod = this.producto();
+    if (!prod || prod.tipo !== 'kit') return;
+
+    this.sheetService.create({
+      zTitle: 'Agregar Componente',
+      zDescription: `Selecciona un producto para agregarlo a la receta de ${prod.nombre}.`,
+      zContent: ComponenteFormSheetComponent,
+      zData: { kitId: prod.id },
+      zOkText: 'Agregar',
+      zCancelText: 'Cancelar',
+      zOnOk: (instance: any) => {
+        return this.inventarioAction.handleSheetSave(
+          instance.save(),
+          'Componente agregado exitosamente',
+          'Error al agregar componente',
+          () => {
+            setTimeout(() => {
+              this.cargarDatos(prod.id);
+            }, 300);
+          }
+        );
+      }
+    });
+  }
+
+  openEditComponenteSheet(comp: ComponenteResponse) {
+    const prod = this.producto();
+    if (!prod || prod.tipo !== 'kit') return;
+
+    this.sheetService.create({
+      zTitle: 'Editar Componente',
+      zDescription: `Actualiza la cantidad del componente.`,
+      zContent: ComponenteFormSheetComponent,
+      zData: { kitId: prod.id, componente: comp },
+      zOkText: 'Guardar',
+      zCancelText: 'Cancelar',
+      zOnOk: (instance: any) => {
+        return this.inventarioAction.handleSheetSave(
+          instance.save(),
+          'Componente actualizado',
+          'Error al actualizar componente',
+          () => {
+            setTimeout(() => {
+              this.cargarDatos(prod.id);
+            }, 300);
+          }
+        );
+      }
+    });
+  }
+
+  quitarComponente(comp: ComponenteResponse) {
+    const prod = this.producto();
+    if (!prod || prod.tipo !== 'kit') return;
+
+    if (confirm(`¿Estás seguro de quitar este componente de la receta?`)) {
+      this.productoService.quitarComponente(prod.id, comp.producto_componente_id).subscribe({
+        next: () => {
+          this.sonner.success('Componente removido');
+          this.cargarDatos(prod.id);
+        },
+        error: (err) => {
+          console.error(err);
+          this.sonner.error('Error al remover componente');
+        }
+      });
+    }
+  }
+
+  openAddUnidadSheet() {
+    const prod = this.producto();
+    if (!prod || prod.tipo === 'kit') return;
+
+    this.sheetService.create({
+      zTitle: 'Agregar Presentación',
+      zDescription: `Nueva presentación de venta para ${prod.nombre}.`,
+      zContent: UnidadFormSheetComponent,
+      zData: { productoId: prod.id },
+      zOkText: 'Guardar',
+      zCancelText: 'Cancelar',
+      zOnOk: (instance: any) => {
+        return this.inventarioAction.handleSheetSave(
+          instance.save(),
+          'Presentación agregada exitosamente',
+          'Error al agregar presentación',
+          () => {
+            setTimeout(() => {
+              this.cargarUnidades(prod.id);
+            }, 300);
+          }
+        );
+      }
+    });
+  }
+
+  openEditUnidadSheet(unidad: UnidadResponse) {
+    const prod = this.producto();
+    if (!prod || prod.tipo === 'kit') return;
+
+    this.sheetService.create({
+      zTitle: 'Editar Presentación',
+      zDescription: `Actualiza los datos de la presentación.`,
+      zContent: UnidadFormSheetComponent,
+      zData: { productoId: prod.id, unidad },
+      zOkText: 'Guardar',
+      zCancelText: 'Cancelar',
+      zOnOk: (instance: any) => {
+        return this.inventarioAction.handleSheetSave(
+          instance.save(),
+          'Presentación actualizada exitosamente',
+          'Error al actualizar presentación',
+          () => {
+            setTimeout(() => {
+              this.cargarUnidades(prod.id);
+            }, 300);
+          }
+        );
+      }
+    });
+  }
+
+  eliminarUnidad(unidad: UnidadResponse) {
+    const prod = this.producto();
+    if (!prod || prod.tipo === 'kit') return;
+
+    if (confirm(`¿Estás seguro de eliminar esta presentación?`)) {
+      this.productoService.eliminarUnidad(prod.id, unidad.id).subscribe({
+        next: () => {
+          this.sonner.success('Presentación eliminada');
+          this.cargarUnidades(prod.id);
+        },
+        error: (err) => {
+          console.error(err);
+          this.sonner.error('Error al eliminar presentación');
+        }
+      });
+    }
   }
 }

@@ -10,7 +10,13 @@ import {
   ActualizarProductoRequest, 
   ApiResponse,
   ProductoQuery,
-  ProductoKpiResponse
+  ProductoKpiResponse,
+  ComponenteResponse,
+  AgregarComponenteRequest,
+  ActualizarComponenteRequest,
+  UnidadResponse,
+  AgregarUnidadRequest,
+  ActualizarUnidadRequest
 } from './inventario.models';
 
 @Injectable({
@@ -91,7 +97,65 @@ export class ProductoService {
     return this.http.patch<void>(`${this.API_URL}/${id}/activar`, {});
   }
 
+  // --- COMPONENTES DE KIT ---
+
+  listarComponentes(kit_id: string, include?: string): Observable<ComponenteResponse[]> {
+    let params = new HttpParams();
+    if (include) {
+      params = params.set('include', include);
+    }
+    return this.http.get<ApiResponse<ComponenteResponse[]>>(`${this.API_URL}/${kit_id}/componentes`, { params }).pipe(
+      map(res => res.data)
+    );
+  }
+
+  agregarComponente(kit_id: string, request: AgregarComponenteRequest): Observable<ComponenteResponse> {
+    return this.http.post<ApiResponse<ComponenteResponse>>(`${this.API_URL}/${kit_id}/componentes`, request).pipe(
+      map(res => res.data)
+    );
+  }
+
+  actualizarComponente(kit_id: string, componente_id: string, request: ActualizarComponenteRequest): Observable<ComponenteResponse> {
+    return this.http.patch<ApiResponse<ComponenteResponse>>(`${this.API_URL}/${kit_id}/componentes/${componente_id}`, request).pipe(
+      map(res => res.data)
+    );
+  }
+
+  quitarComponente(kit_id: string, componente_id: string): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/${kit_id}/componentes/${componente_id}`);
+  }
+
+  // --- UMBRALES ---
+
   actualizarUmbrales(producto_id: string, sucursal_id: string, umbrales: { stock_minimo: number; stock_maximo?: number }): Observable<any> {
     return this.http.patch<any>(`${environment.apiUrl}/inventario/existencias/${producto_id}/${sucursal_id}/umbrales`, umbrales);
+  }
+
+  // --- PRESENTACIONES (UNIDADES) ---
+
+  listarUnidades(producto_id: string, incluir_inactivas: boolean = false): Observable<UnidadResponse[]> {
+    let params = new HttpParams();
+    if (incluir_inactivas) {
+      params = params.set('incluir_inactivas', 'true');
+    }
+    return this.http.get<ApiResponse<UnidadResponse[]>>(`${this.API_URL}/${producto_id}/unidades`, { params }).pipe(
+      map(res => res.data)
+    );
+  }
+
+  agregarUnidad(producto_id: string, request: AgregarUnidadRequest): Observable<UnidadResponse> {
+    return this.http.post<ApiResponse<UnidadResponse>>(`${this.API_URL}/${producto_id}/unidades`, request).pipe(
+      map(res => res.data)
+    );
+  }
+
+  actualizarUnidad(producto_id: string, unidad_id: string, request: ActualizarUnidadRequest): Observable<UnidadResponse> {
+    return this.http.patch<ApiResponse<UnidadResponse>>(`${this.API_URL}/${producto_id}/unidades/${unidad_id}`, request).pipe(
+      map(res => res.data)
+    );
+  }
+
+  eliminarUnidad(producto_id: string, unidad_id: string): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/${producto_id}/unidades/${unidad_id}`);
   }
 }

@@ -11,8 +11,53 @@ export interface ProductoResponse {
   impuesto_tasa: string;
   permite_stock_negativo: boolean;
   activo: boolean;
+  tipo?: 'simple' | 'kit'; // Added tipo
   categoria?: any;
   existencias?: ExistenciaResponse[] | null;
+  componentes?: ComponenteResponse[] | null; // Added componentes
+  unidades?: UnidadResponse[] | null; // Added unidades
+}
+
+export interface ComponenteResponse {
+  producto_kit_id: string;
+  producto_componente_id: string;
+  cantidad: string;
+  componente?: ProductoResponse; // Embebido opcional
+}
+
+export interface AgregarComponenteRequest {
+  producto_componente_id: string;
+  cantidad: number | string;
+}
+
+export interface ActualizarComponenteRequest {
+  cantidad: number | string;
+}
+
+export interface UnidadResponse {
+  id: string;
+  producto_id: string;
+  nombre: string;
+  factor: string;
+  precio_venta: string;
+  codigo_barras?: string | null;
+  activo: boolean;
+  producto?: ProductoResponse;
+}
+
+export interface AgregarUnidadRequest {
+  nombre: string;
+  factor: number | string;
+  precio_venta: number | string;
+  codigo_barras?: string | null;
+}
+
+export interface ActualizarUnidadRequest {
+  nombre?: string;
+  factor?: number | string;
+  precio_venta?: number | string;
+  codigo_barras?: string | null;
+  activo?: boolean;
 }
 
 export interface CrearProductoRequest {
@@ -26,6 +71,7 @@ export interface CrearProductoRequest {
   costo: string;
   impuesto_tasa: string;
   permite_stock_negativo: boolean;
+  tipo?: 'SIMPLE' | 'KIT';
   activo?: boolean;
 }
 
@@ -104,7 +150,7 @@ export interface ProductoQuery {
   page?: number;
   page_size?: number;
   sort?: string;
-  include: Array<'existencias' | 'categoria'  | { type: 'existencias'; sucursal_id: string }>;
+  include?: Array<'existencias' | 'categoria' | 'componentes' | { type: 'existencias'; sucursal_id: string }>;
 }
 
 export interface ApiResponse<T> {
@@ -139,6 +185,8 @@ export interface AplicarMovimientoRequest {
   cantidad: number | string;
   referencia_tipo: string;
   motivo?: string | null;
+  stock_minimo?: number | null;
+  stock_maximo?: number | null;
 }
 export interface TransferenciaRequest {
   producto_id: string;

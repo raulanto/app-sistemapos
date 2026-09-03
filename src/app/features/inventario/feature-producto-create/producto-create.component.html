@@ -18,7 +18,8 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div z-field>
               <label z-field-label for="sku">SKU *</label>
-              <input z-input id="sku" type="text" formControlName="sku" placeholder="Ej. PRD-001">
+              <input z-input id="sku" type="text" formControlName="sku" placeholder="Ej. PRD-001" [class.border-destructive]="skuError().length > 0" [attr.aria-invalid]="skuError().length > 0 ? 'true' : null">
+              <z-field-error [zErrors]="skuError()"></z-field-error>
             </div>
             <div z-field>
               <label z-field-label for="codigo_barras">Código de Barras</label>
@@ -26,7 +27,8 @@
             </div>
             <div z-field class="md:col-span-2">
               <label z-field-label for="nombre">Nombre *</label>
-              <input z-input id="nombre" type="text" formControlName="nombre" placeholder="Nombre del producto">
+              <input z-input id="nombre" type="text" formControlName="nombre" placeholder="Nombre del producto" [class.border-destructive]="nombreError().length > 0" [attr.aria-invalid]="nombreError().length > 0 ? 'true' : null">
+              <z-field-error [zErrors]="nombreError()"></z-field-error>
             </div>
             <div z-field class="md:col-span-2">
               <label z-field-label for="descripcion">Descripción</label>
@@ -34,15 +36,25 @@
             </div>
             <div z-field>
               <label z-field-label>Categoría *</label>
-              <z-select formControlName="categoria_id" placeholder="Selecciona una categoría">
+              <z-select formControlName="categoria_id" placeholder="Selecciona una categoría" [class.border-destructive]="categoriaError().length > 0" [attr.aria-invalid]="categoriaError().length > 0 ? 'true' : null">
                 @for (cat of categorias(); track cat.id) {
                   <z-select-item [zValue]="cat.id">{{ cat.nombre }}</z-select-item>
                 }
               </z-select>
+              <z-field-error [zErrors]="categoriaError()"></z-field-error>
+            </div>
+            <div z-field>
+              <label z-field-label>Tipo *</label>
+              <z-select formControlName="tipo" placeholder="Selecciona un tipo" [class.border-destructive]="tipoError().length > 0" [attr.aria-invalid]="tipoError().length > 0 ? 'true' : null">
+                <z-select-item zValue="simple">Simple</z-select-item>
+                <z-select-item zValue="kit">Kit (Compuesto)</z-select-item>
+              </z-select>
+              <z-field-error [zErrors]="tipoError()"></z-field-error>
             </div>
             <div z-field>
               <label z-field-label for="unidad_medida">Unidad de Medida *</label>
-              <input z-input id="unidad_medida" type="text" formControlName="unidad_medida" placeholder="Ej. PIEZA, KG, LITRO">
+              <input z-input id="unidad_medida" type="text" formControlName="unidad_medida" placeholder="Ej. PIEZA, KG, LITRO" [class.border-destructive]="unidadMedidaError().length > 0" [attr.aria-invalid]="unidadMedidaError().length > 0 ? 'true' : null">
+              <z-field-error [zErrors]="unidadMedidaError()"></z-field-error>
             </div>
           </div>
         </div>
@@ -55,15 +67,18 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div z-field>
               <label z-field-label for="precio_venta">Precio de Venta *</label>
-              <input z-input id="precio_venta" type="number" step="0.01" formControlName="precio_venta" placeholder="0.00">
+              <input z-input id="precio_venta" type="number" min="0.01" step="0.01" formControlName="precio_venta" placeholder="0.00" [class.border-destructive]="precioVentaError().length > 0" [attr.aria-invalid]="precioVentaError().length > 0 ? 'true' : null">
+              <z-field-error [zErrors]="precioVentaError()"></z-field-error>
             </div>
             <div z-field>
               <label z-field-label for="costo">Costo *</label>
-              <input z-input id="costo" type="number" step="0.01" formControlName="costo" placeholder="0.00">
+              <input z-input id="costo" type="number" min="0.01" step="0.01" formControlName="costo" placeholder="0.00" [class.border-destructive]="costoError().length > 0" [attr.aria-invalid]="costoError().length > 0 ? 'true' : null">
+              <z-field-error [zErrors]="costoError()"></z-field-error>
             </div>
             <div z-field>
               <label z-field-label for="impuesto_tasa">Impuesto (%) *</label>
-              <input z-input id="impuesto_tasa" type="number" step="0.01" formControlName="impuesto_tasa" placeholder="0">
+              <input z-input id="impuesto_tasa" type="number" min="0" step="0.01" formControlName="impuesto_tasa" placeholder="0" [class.border-destructive]="impuestoTasaError().length > 0" [attr.aria-invalid]="impuestoTasaError().length > 0 ? 'true' : null">
+              <z-field-error [zErrors]="impuestoTasaError()"></z-field-error>
             </div>
             <div z-field class="md:col-span-3 flex items-center gap-3">
               <z-switch formControlName="permite_stock_negativo"></z-switch>
@@ -89,32 +104,100 @@
           
           <div formArrayName="existencias" class="space-y-4">
             @for (control of existenciasArray.controls; track $index) {
-              <div [formGroupName]="$index" class="flex flex-col sm:flex-row gap-4 p-4 border rounded-md bg-card">
-                <div z-field class="flex-1">
-                  <label z-field-label>Sucursal *</label>
-                  <z-select formControlName="sucursal_id" placeholder="Seleccionar Sucursal">
-                    @for (sucursal of sucursalService.sucursales(); track sucursal.id) {
-                      <z-select-item [zValue]="sucursal.id">{{ sucursal.nombre }}</z-select-item>
-                    }
-                  </z-select>
-                </div>
-                <div z-field class="flex-1">
-                  <label z-field-label>Cantidad Inicial</label>
-                  <input z-input type="number" formControlName="cantidad" placeholder="0.00" min="0" step="0.01">
-                </div>
-                <div z-field class="flex-1">
-                  <label z-field-label>Umbral Mínimo</label>
-                  <input z-input type="number" formControlName="umbral" placeholder="0.00" min="0" step="0.01">
-                </div>
-                <div class="flex items-end pb-2">
-                  <button type="button" z-button zType="ghost" zSize="icon" class="text-destructive hover:bg-destructive/10" (click)="removerExistencia($index)" title="Quitar">
-                    <ng-icon name="lucideTrash" class="size-4"></ng-icon>
-                  </button>
+              <div [formGroupName]="$index" class="p-4 border rounded-md bg-card relative">
+                <button type="button" z-button zType="ghost" zSize="icon" class="absolute top-2 right-2 text-destructive hover:bg-destructive/10" (click)="removerExistencia($index)" title="Quitar">
+                  <ng-icon name="lucideTrash" class="size-4"></ng-icon>
+                </button>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+                  <div z-field>
+                    <label z-field-label>Sucursal *</label>
+                    <z-select formControlName="sucursal_id" placeholder="Seleccionar Sucursal">
+                      @for (sucursal of sucursalService.sucursales(); track sucursal.id) {
+                        <z-select-item [zValue]="sucursal.id">{{ sucursal.nombre }}</z-select-item>
+                      }
+                    </z-select>
+                  </div>
+                  <div z-field>
+                    <label z-field-label>Tipo *</label>
+                    <z-select formControlName="tipo" placeholder="Tipo">
+                      <z-select-item zValue="entrada">Entrada</z-select-item>
+                      <z-select-item zValue="ajuste_positivo">Ajuste Positivo</z-select-item>
+                    </z-select>
+                  </div>
+                  <div z-field>
+                    <label z-field-label>Referencia Tipo *</label>
+                    <input z-input type="text" formControlName="referencia_tipo" placeholder="Ej. inventario_inicial">
+                  </div>
+                  <div z-field>
+                    <label z-field-label>Motivo</label>
+                    <input z-input type="text" formControlName="motivo" placeholder="Opcional">
+                  </div>
+                  
+                  <div z-field>
+                    <label z-field-label>Cantidad Inicial</label>
+                    <input z-input type="number" formControlName="cantidad" placeholder="0.00" min="0" step="0.01">
+                  </div>
+                  <div z-field>
+                    <label z-field-label>Stock Mínimo</label>
+                    <input z-input type="number" formControlName="stock_minimo" placeholder="0.00" min="0" step="0.01">
+                  </div>
+                  <div z-field>
+                    <label z-field-label>Stock Máximo</label>
+                    <input z-input type="number" formControlName="stock_maximo" placeholder="0.00" min="0" step="0.01">
+                  </div>
                 </div>
               </div>
             }
           </div>
         </div>
+
+        @if (form.get('tipo')?.value === 'kit') {
+          <hr class="border-border">
+
+          <!-- Componentes (Receta) -->
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h2 class="text-lg font-medium">Receta del Kit</h2>
+                <p class="text-sm text-muted-foreground">Agrega los productos que conforman este kit.</p>
+              </div>
+              <button type="button" z-button zType="outline" zSize="sm" (click)="agregarComponente()">
+                <ng-icon name="lucidePlus" class="mr-2"></ng-icon>
+                Agregar Componente
+              </button>
+            </div>
+            
+            <div formArrayName="componentes" class="flex flex-col gap-4">
+              @for (control of componentesArray.controls; track $index) {
+                <div [formGroupName]="$index" class="flex flex-col sm:flex-row gap-4 p-4 border rounded-md bg-card">
+                  <div z-field class="flex-1">
+                    <label z-field-label>Producto (Componente) *</label>
+                    <z-select formControlName="producto_componente_id" placeholder="Selecciona un producto">
+                      @for (prod of productosSimples(); track prod.id) {
+                        <z-select-item [zValue]="prod.id">{{ prod.sku }} - {{ prod.nombre }}</z-select-item>
+                      }
+                    </z-select>
+                  </div>
+                  <div z-field class="w-full sm:w-48">
+                    <label z-field-label>Cantidad *</label>
+                    <input z-input type="number" formControlName="cantidad" placeholder="1" min="0.01" step="0.01">
+                  </div>
+                  <div class="flex items-end pb-2">
+                    <button type="button" z-button zType="ghost" zSize="icon" class="text-destructive hover:bg-destructive/10" (click)="removerComponente($index)" title="Quitar">
+                      <ng-icon name="lucideTrash" class="size-4"></ng-icon>
+                    </button>
+                  </div>
+                </div>
+              }
+              @if (componentesArray.length === 0) {
+                <div class="p-6 border border-dashed rounded-md text-center text-muted-foreground">
+                  No has agregado ningún componente. El kit se creará vacío.
+                </div>
+              }
+            </div>
+          </div>
+        }
 
         <div class="flex justify-end gap-3 pt-6 border-t">
           <a z-button zType="outline" routerLink="/inventario/productos">Cancelar</a>
