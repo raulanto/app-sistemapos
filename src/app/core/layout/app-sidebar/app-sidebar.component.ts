@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 import { ZardSidebarImports } from '../../../shared/components/sidebar/sidebar.imports';
 import { NavMainComponent, type Sidebar07NavItem } from './nav-main.component';
+import { NavSecondaryComponent } from './nav-secondary.component';
 import { NavUserComponent } from './nav-user.component';
 import { TeamSwitcherComponent } from './team-switcher.component';
 
@@ -12,6 +13,7 @@ import { TeamSwitcherComponent } from './team-switcher.component';
     ...ZardSidebarImports,
     TeamSwitcherComponent,
     NavMainComponent,
+    NavSecondaryComponent,
     NavUserComponent,
   ],
   template: `
@@ -22,6 +24,7 @@ import { TeamSwitcherComponent } from './team-switcher.component';
 
       <z-sidebar-content>
         <lib-sidebar-07-nav-main [items]="navMain" />
+        <lib-sidebar-07-nav-secondary [items]="navSecondary" class="mt-auto" />
       </z-sidebar-content>
 
       <div z-sidebar-footer>
@@ -36,6 +39,23 @@ import { TeamSwitcherComponent } from './team-switcher.component';
 })
 export class AppSidebarComponent {
 
+  protected readonly navSecondary: readonly Sidebar07NavItem[] = [
+    {
+      title: 'Buscar',
+      url: '/buscar',
+      icon: 'lucideSearch',
+    },
+    {
+      title: 'Sucursales',
+      url: '/sucursales',
+      icon: 'lucideStore',
+    },
+    {
+      title: 'Configuración',
+      url: '/config',
+      icon: 'lucideSettings',
+    },
+  ];
 
   protected readonly navMain: readonly Sidebar07NavItem[] = [
     {
