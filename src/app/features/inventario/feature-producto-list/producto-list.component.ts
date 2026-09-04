@@ -301,7 +301,8 @@ export class ProductoListComponent implements OnInit {
       zTitle: `Editar ${prod.sku}`,
       zDescription: 'Modifica los datos del producto.',
       zContent: ProductoFormSheetComponent,
-      zData: { 
+      zSize: 'lg',
+      zData: {
         productoId: prod.id,
         onSaved: () => {
           this.sonner.success('Producto actualizado exitosamente');

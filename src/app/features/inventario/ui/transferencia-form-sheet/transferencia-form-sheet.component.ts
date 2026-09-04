@@ -37,7 +37,10 @@ function differentBranchValidator(control: AbstractControl): ValidationErrors | 
   ],
   templateUrl: './transferencia-form-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  exportAs: 'transferenciaFormSheet'
+  exportAs: 'transferenciaFormSheet',
+  // Sin esto el host (inline por defecto) rompe la cadena flex-1/min-h-0 del sheet
+  // y el formulario nunca scrollea, tapando los botones del footer.
+  host: { style: 'display: contents' }
 })
 export class TransferenciaFormSheetComponent implements OnInit {
   private fb = inject(FormBuilder);

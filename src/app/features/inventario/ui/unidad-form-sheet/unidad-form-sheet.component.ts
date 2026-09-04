@@ -35,6 +35,9 @@ function equivalenciaValidator(control: AbstractControl): ValidationErrors | nul
   templateUrl: './unidad-form-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   exportAs: 'unidadFormSheet',
+  // Sin esto el host (inline por defecto) rompe la cadena flex-1/min-h-0 del sheet
+  // y el formulario nunca scrollea, tapando los botones del footer.
+  host: { style: 'display: contents' },
 })
 export class UnidadFormSheetComponent implements OnInit {
   private fb = inject(FormBuilder);

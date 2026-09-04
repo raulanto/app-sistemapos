@@ -27,8 +27,8 @@ export interface UmbralesSheetData {
     ZardInputComponent
   ],
   template: `
-    <form [formGroup]="form" class="grid flex-1 auto-rows-min gap-6 px-4 pb-24 overflow-y-auto">
-      <div class="grid grid-cols-1 gap-4">
+    <form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
+      <div class="grid grid-cols-2 gap-4">
         <div z-field>
           <label z-field-label for="stock_minimo">Stock Mínimo *</label>
           <input z-input id="stock_minimo" type="number" formControlName="stock_minimo" min="0" placeholder="0">
@@ -41,7 +41,10 @@ export interface UmbralesSheetData {
     </form>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  exportAs: 'umbralesFormSheet'
+  exportAs: 'umbralesFormSheet',
+  // Sin esto el host (inline por defecto) rompe la cadena flex-1/min-h-0 del sheet
+  // y el formulario nunca scrollea, tapando los botones del footer.
+  host: { style: 'display: contents' }
 })
 export class UmbralesFormSheetComponent implements OnInit {
   private fb = inject(FormBuilder);

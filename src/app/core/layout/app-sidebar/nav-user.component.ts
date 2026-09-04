@@ -8,6 +8,8 @@ import {
   lucideCreditCard,
   lucideLogOut,
   lucideSparkles,
+  lucideSun,
+  lucideMoon,
 } from '@ng-icons/lucide';
 
 import { ZardAvatarComponent } from '../../../shared/components/avatar/avatar.component';
@@ -16,6 +18,7 @@ import { ZardDropdownImports } from '../../../shared/components/dropdown/dropdow
 import { ZardSidebarImports } from '../../../shared/components/sidebar/sidebar.imports';
 import { ZardSidebarService } from '../../../shared/components/sidebar/sidebar.service';
 import { AuthService } from '../../auth/api/auth.service';
+import { ThemeService } from '../../theme/theme.service';
 
 @Component({
   selector: 'lib-sidebar-07-nav-user',
@@ -29,6 +32,8 @@ import { AuthService } from '../../auth/api/auth.service';
       lucideCreditCard,
       lucideLogOut,
       lucideSparkles,
+      lucideSun,
+      lucideMoon,
     }),
   ],
   template: `
@@ -65,6 +70,18 @@ import { AuthService } from '../../auth/api/auth.service';
                 <span class="truncate font-medium">{{ userName() }}</span>
                 <span class="truncate text-xs">{{ userEmail() }}</span>
               </div>
+              
+              <button 
+                class="ml-auto flex items-center justify-center p-2 rounded-md hover:bg-accent hover:text-accent-foreground" 
+                (click)="toggleTheme()"
+                title="Cambiar tema"
+              >
+                @if (isDarkTheme()) {
+                  <ng-icon name="lucideSun" class="size-4" />
+                } @else {
+                  <ng-icon name="lucideMoon" class="size-4" />
+                }
+              </button>
             </div>
           </z-dropdown-menu-label>
 
@@ -100,6 +117,7 @@ import { AuthService } from '../../auth/api/auth.service';
 export class NavUserComponent {
   private readonly sidebar = inject(ZardSidebarService);
   private authService = inject(AuthService);
+  private themeService = inject(ThemeService);
   
   protected readonly menuSide = computed<ZardDropdownSide>(() => (this.sidebar.isMobile() ? 'bottom' : 'right'));
 
@@ -110,6 +128,12 @@ export class NavUserComponent {
   
   readonly userEmail = computed(() => this.authService.currentUser()?.email ?? 'usuario@sistema.local');
   readonly userAvatar = computed(() => 'https://api.dicebear.com/7.x/initials/svg?seed=' + this.userName());
+  
+  readonly isDarkTheme = computed(() => this.themeService.currentTheme() === 'dark');
+
+  toggleTheme() {
+    this.themeService.toggleTheme();
+  }
 
   logout() {
     this.authService.logoutRemote().subscribe();

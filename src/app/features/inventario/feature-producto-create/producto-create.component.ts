@@ -10,10 +10,13 @@ import { lucideArrowLeft, lucideSave, lucidePlus, lucideTrash, lucidePackage, lu
 
 import { ProductoService } from '../data-access/producto.service';
 import { CategoriaService } from '../data-access/categoria.service';
+import { UnidadMedidaService } from '../data-access/unidad-medida.service';
 import { SucursalService } from '../../../core/sucursal/sucursal.service';
 import { MovimientoService } from '../data-access/movimiento.service';
-import { CategoriaResponse, ProductoResponse } from '../data-access/inventario.models';
+import { CategoriaResponse, ProductoResponse, UnidadMedidaResponse, TipoProducto } from '../data-access/inventario.models';
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
+import { ZardSheetService } from '../../../shared/components/sheet/sheet.service';
+import { UnidadMedidaFormSheetComponent } from '../ui/unidad-medida-form-sheet/unidad-medida-form-sheet.component';
 
 import { ZardCardImports } from '../../../shared/components/card/card.imports';
 import { ZardFieldImports } from '../../../shared/components/field/field.imports';
@@ -58,13 +61,16 @@ export class ProductoCreateComponent implements OnInit {
   private fb = inject(FormBuilder);
   private productoService = inject(ProductoService);
   private categoriaService = inject(CategoriaService);
+  private unidadMedidaService = inject(UnidadMedidaService);
   public sucursalService = inject(SucursalService);
   private movimientoService = inject(MovimientoService);
   private sonner = inject(ZardSonnerService);
+  private sheetService = inject(ZardSheetService);
   private router = inject(Router);
 
   categorias = signal<CategoriaResponse[]>([]);
   productosSimples = signal<ProductoResponse[]>([]);
+  unidadesMedida = signal<UnidadMedidaResponse[]>([]);
   loading = signal(false);
 
   form = this.fb.group({
@@ -74,12 +80,15 @@ export class ProductoCreateComponent implements OnInit {
     descripcion: [''],
     categoria_id: ['', Validators.required],
     unidad_medida: ['UNIDAD', Validators.required],
+    unidad_medida_id: [null as string | null],
     precio_venta: ['0.00', [Validators.required, Validators.min(0.01)]],
     costo: ['0.00', [Validators.required, Validators.min(0.01)]],
     impuesto_tasa: ['0', [Validators.required, Validators.min(0)]],
     permite_stock_negativo: [false],
+    permite_venta_fraccionada: [false],
+    incremento_minimo_venta: [null as number | null],
     activo: [true],
-    tipo: ['simple', Validators.required],
+    tipo: ['simple' as TipoProducto, Validators.required],
     existencias: this.fb.array([]),
     componentes: this.fb.array([]),
     unidades: this.fb.array([])
@@ -152,15 +161,82 @@ export class ProductoCreateComponent implements OnInit {
     return this.form.get('unidades') as FormArray;
   }
 
+  /** `fraccionable`/`simple`: puede tener venta fraccionada. `kit`/`servicio`: no aplica. */
+  readonly permiteFraccionamiento = computed(() => {
+    this.formEvents();
+    const tipo = this.form.get('tipo')?.value;
+    return tipo === 'simple' || tipo === 'fraccionable';
+  });
+
+  readonly esFraccionable = computed(() => {
+    this.formEvents();
+    return this.form.get('tipo')?.value === 'fraccionable';
+  });
+
+  /** `servicio`: nunca mueve inventario (flete, mano de obra) — no aplica stock ni presentaciones. */
+  readonly esServicio = computed(() => {
+    this.formEvents();
+    return this.form.get('tipo')?.value === 'servicio';
+  });
+
   ngOnInit() {
     this.cargarCategorias();
     this.cargarProductosSimples();
+    this.cargarUnidadesMedida();
+    this.form.controls.tipo.valueChanges.subscribe(tipo => this.onTipoChange(tipo as TipoProducto));
+  }
+
+  private onTipoChange(tipo: TipoProducto) {
+    const puedeFraccionar = tipo === 'simple' || tipo === 'fraccionable';
+    if (!puedeFraccionar) {
+      this.form.patchValue({ permite_venta_fraccionada: false, incremento_minimo_venta: null });
+    } else if (tipo === 'fraccionable') {
+      // El backend fuerza permite_venta_fraccionada=true para este tipo.
+      this.form.patchValue({ permite_venta_fraccionada: true });
+    }
   }
 
   cargarCategorias() {
     this.categoriaService.listar().subscribe({
       next: (data) => this.categorias.set(data),
       error: (err) => console.error('Error al cargar categorias', err)
+    });
+  }
+
+  cargarUnidadesMedida() {
+    this.unidadMedidaService.listar().subscribe({
+      next: (data) => this.unidadesMedida.set(data),
+      error: (err) => console.error('Error al cargar unidades de medida', err)
+    });
+  }
+
+  /** Alta rápida cuando la unidad de medida deseada todavía no existe en el catálogo. */
+  abrirCrearUnidadMedida() {
+    this.sheetService.create({
+      zTitle: 'Nueva unidad de medida',
+      zDescription: 'Agrega una unidad al catálogo (kg, l, ml, pza, hora, …). Queda disponible para todos los productos.',
+      zContent: UnidadMedidaFormSheetComponent,
+      zOkText: 'Crear',
+      zCancelText: 'Cancelar',
+      zOnOk: (instance: any) => {
+        const obs = instance.save();
+        if (!obs) return false;
+        return new Promise<void>((resolve, reject) => {
+          obs.subscribe({
+            next: (nueva: UnidadMedidaResponse) => {
+              this.sonner.success('Unidad de medida creada');
+              this.unidadesMedida.update(list => [...list, nueva]);
+              this.form.patchValue({ unidad_medida_id: nueva.id });
+              resolve();
+            },
+            error: (err: any) => {
+              console.error('Error al crear unidad de medida', err);
+              this.sonner.error('Error al crear la unidad de medida');
+              reject(err);
+            }
+          });
+        });
+      }
     });
   }
 
@@ -242,11 +318,24 @@ export class ProductoCreateComponent implements OnInit {
 
     if (data.codigo_barras === '') data.codigo_barras = null;
     if (data.descripcion === '') data.descripcion = null;
+    if (data.unidad_medida_id === '') data.unidad_medida_id = null;
+    if (data.incremento_minimo_venta === '' || data.incremento_minimo_venta == null) {
+      data.incremento_minimo_venta = null;
+    } else {
+      data.incremento_minimo_venta = Number(data.incremento_minimo_venta);
+    }
+
+    const esServicio = data.tipo === 'servicio';
 
     this.productoService.crear(data).pipe(
       switchMap(prodRes => {
         const operations: Observable<any>[] = [];
-        
+
+        // Un servicio nunca mueve inventario ni tiene presentaciones de venta.
+        if (esServicio) {
+          return of(prodRes);
+        }
+
         this.existenciasArray.controls.forEach(c => {
           const sucursal_id = c.get('sucursal_id')?.value;
           const cantidad = Number(c.get('cantidad')?.value) || 0;

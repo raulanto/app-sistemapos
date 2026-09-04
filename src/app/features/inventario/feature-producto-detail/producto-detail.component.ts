@@ -31,8 +31,9 @@ import {
 
 import { ProductoService } from '../data-access/producto.service';
 import { MovimientoService } from '../data-access/movimiento.service';
+import { UnidadMedidaService } from '../data-access/unidad-medida.service';
 import { SucursalService } from '../../../core/sucursal/sucursal.service';
-import { ProductoResponse, MovimientoResponse, ExistenciaResponse, UnidadResponse } from '../data-access/inventario.models';
+import { ProductoResponse, MovimientoResponse, ExistenciaResponse, UnidadResponse, UnidadMedidaResponse } from '../data-access/inventario.models';
 
 import { ZardCardImports } from '../../../shared/components/card/card.imports';
 import { ZardBadgeComponent } from '../../../shared/components/badge/badge.component';
@@ -111,6 +112,7 @@ export class ProductoDetailComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly productoService = inject(ProductoService);
   private readonly movimientoService = inject(MovimientoService);
+  private readonly unidadMedidaService = inject(UnidadMedidaService);
   public readonly sucursalService = inject(SucursalService);
   private readonly authService = inject(AuthService);
   private readonly sheetService = inject(ZardSheetService);
@@ -125,6 +127,7 @@ export class ProductoDetailComponent implements OnInit {
   producto = signal<ProductoResponse | null>(null);
   movimientos = signal<MovimientoResponse[]>([]);
   unidades = signal<UnidadResponse[]>([]);
+  unidadesMedidaCatalogo = signal<UnidadMedidaResponse[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
 
@@ -154,6 +157,13 @@ export class ProductoDetailComponent implements OnInit {
     const costo = Number(prod.costo || 0);
     const monto = precio - costo;
     return { monto, pct: precio > 0 ? (monto / precio) * 100 : 0 };
+  });
+
+  /** Unidad del catálogo vinculada al producto (`unidad_medida_id`), si aplica. */
+  unidadMedidaVinculada = computed(() => {
+    const id = this.producto()?.unidad_medida_id;
+    if (!id) return null;
+    return this.unidadesMedidaCatalogo().find(u => u.id === id) ?? null;
   });
 
   chartData = computed(() => {
@@ -211,6 +221,10 @@ export class ProductoDetailComponent implements OnInit {
       return;
     }
     this.cargarDatos(id);
+    this.unidadMedidaService.listar().subscribe({
+      next: (data) => this.unidadesMedidaCatalogo.set(data),
+      error: (err) => console.error('Error al cargar unidades de medida', err)
+    });
   }
 
   cargarDatos(id: string) {
@@ -290,7 +304,8 @@ export class ProductoDetailComponent implements OnInit {
       zTitle: `Editar ${prod.sku}`,
       zDescription: 'Modifica los datos del producto.',
       zContent: ProductoFormSheetComponent,
-      zData: { 
+      zSize: 'lg',
+      zData: {
         productoId: prod.id,
         onSaved: () => {
           this.sonner.success('Producto actualizado exitosamente');
@@ -374,6 +389,7 @@ export class ProductoDetailComponent implements OnInit {
       zTitle: 'Transferir Stock',
       zDescription: `Mover unidades de ${prod.nombre} entre sucursales.`,
       zContent: TransferenciaFormSheetComponent,
+      zSize: 'lg',
       zData: { productoId: prod.id },
       zOkText: 'Transferir',
       zCancelText: 'Cancelar',
@@ -502,6 +518,7 @@ export class ProductoDetailComponent implements OnInit {
       zTitle: 'Agregar Presentación',
       zDescription: `Nueva presentación de venta para ${prod.nombre}.`,
       zContent: UnidadFormSheetComponent,
+      zSize: 'lg',
       zData: { productoId: prod.id, unidadBase: prod.unidad_medida },
       zOkText: 'Guardar',
       zCancelText: 'Cancelar',
@@ -528,6 +545,7 @@ export class ProductoDetailComponent implements OnInit {
       zTitle: 'Editar Presentación',
       zDescription: `Actualiza los datos de la presentación.`,
       zContent: UnidadFormSheetComponent,
+      zSize: 'lg',
       zData: { productoId: prod.id, unidadBase: prod.unidad_medida, unidad },
       zOkText: 'Guardar',
       zCancelText: 'Cancelar',

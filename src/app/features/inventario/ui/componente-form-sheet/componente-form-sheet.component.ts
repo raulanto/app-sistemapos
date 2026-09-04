@@ -26,7 +26,10 @@ export interface ComponenteSheetData {
   ],
   templateUrl: './componente-form-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  exportAs: 'componenteFormSheet'
+  exportAs: 'componenteFormSheet',
+  // Sin esto el host (inline por defecto) rompe la cadena flex-1/min-h-0 del sheet
+  // y el formulario nunca scrollea, tapando los botones del footer.
+  host: { style: 'display: contents' }
 })
 export class ComponenteFormSheetComponent implements OnInit {
   private fb = inject(FormBuilder);

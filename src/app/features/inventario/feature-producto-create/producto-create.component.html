@@ -67,9 +67,14 @@
               <label z-field-label>Tipo *</label>
               <z-select formControlName="tipo" placeholder="Selecciona un tipo" [attr.aria-invalid]="tipoError().length ? 'true' : null">
                 <z-select-item zValue="simple">Simple</z-select-item>
+                <z-select-item zValue="fraccionable">Fraccionable (venta parcial)</z-select-item>
                 <z-select-item zValue="kit">Kit (compuesto)</z-select-item>
+                <z-select-item zValue="servicio">Servicio (no mueve inventario)</z-select-item>
               </z-select>
-              <p z-field-description>Un kit se arma a partir de otros productos (receta).</p>
+              <p z-field-description>
+                Kit: se arma con otros productos. Fraccionable: se vende en incrementos parciales (ej. aceite a granel).
+                Servicio: flete, mano de obra — nunca genera movimientos de inventario.
+              </p>
               <z-field-error [zErrors]="tipoError()"></z-field-error>
             </div>
 
@@ -79,6 +84,42 @@
               <p z-field-description>Cómo se cuenta el stock. Las presentaciones (six-pack, caja, etc.) se agregan más abajo.</p>
               <z-field-error [zErrors]="unidadMedidaError()"></z-field-error>
             </div>
+
+            <div z-field class="md:col-span-2">
+              <div class="flex items-end gap-2">
+                <div class="flex-1">
+                  <label z-field-label>Unidad del catálogo (opcional)</label>
+                  <z-select formControlName="unidad_medida_id" placeholder="Sin vincular (usa el texto libre)">
+                    <z-select-item zValue="">Sin vincular</z-select-item>
+                    @for (um of unidadesMedida(); track um.id) {
+                      <z-select-item [zValue]="um.id">{{ um.codigo }} — {{ um.nombre }}</z-select-item>
+                    }
+                  </z-select>
+                </div>
+                <button type="button" z-button zType="outline" zSize="default" (click)="abrirCrearUnidadMedida()">
+                  <ng-icon name="lucidePlus" class="mr-1.5" />
+                  Nueva
+                </button>
+              </div>
+              <p z-field-description>Vincularla al catálogo define los decimales usados para redondear el stock. Es opcional.</p>
+            </div>
+
+            @if (permiteFraccionamiento()) {
+              <div z-field zOrientation="horizontal" class="md:col-span-2">
+                <z-switch formControlName="permite_venta_fraccionada" zId="permite_venta_fraccionada" [zDisabled]="esFraccionable()"></z-switch>
+                <label z-field-label for="permite_venta_fraccionada">Permite venta fraccionada (cantidad no entera de la unidad base)</label>
+              </div>
+              <div z-field class="md:col-span-2">
+                <label z-field-label for="incremento_minimo_venta">Incremento mínimo de venta</label>
+                <input z-input id="incremento_minimo_venta" type="number" step="any" min="0" formControlName="incremento_minimo_venta" placeholder="Ej. 0.5">
+                <p z-field-description>
+                  Si se define, toda venta o salida debe ser múltiplo exacto de este valor (la entrada/compra no tiene esta restricción).
+                  @if (esFraccionable()) {
+                    El tipo "Fraccionable" ya habilita la venta parcial automáticamente.
+                  }
+                </p>
+              </div>
+            }
           </div>
         </fieldset>
 
@@ -115,6 +156,7 @@
           </div>
         </fieldset>
 
+        @if (!esServicio()) {
         <z-separator></z-separator>
 
         <!-- Inventario Inicial -->
@@ -191,8 +233,11 @@
             }
           </div>
         </fieldset>
+        } @else {
+        <z-alert zType="default" zTitle="Producto de tipo servicio" zDescription="No maneja inventario: no aplican stock inicial ni presentaciones de venta."></z-alert>
+        }
 
-        @if (form.get('tipo')?.value !== 'kit') {
+        @if (form.get('tipo')?.value !== 'kit' && !esServicio()) {
           <z-separator></z-separator>
 
           <!-- Presentaciones de Venta (Unidades) -->

@@ -1,4 +1,4 @@
-<form [formGroup]="form" class="grid flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto" (ngSubmit)="save()">
+<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto" (ngSubmit)="save()">
   <div class="grid grid-cols-2 gap-4">
     <div z-field>
       <label z-field-label for="sku">SKU *</label>
@@ -22,8 +22,13 @@
       <label z-field-label>Tipo de Producto *</label>
       <z-select formControlName="tipo" placeholder="Selecciona el tipo">
         <z-select-item zValue="simple">Simple</z-select-item>
+        <z-select-item zValue="fraccionable">Fraccionable (venta parcial)</z-select-item>
         <z-select-item zValue="kit">Kit (Compuesto)</z-select-item>
+        <z-select-item zValue="servicio">Servicio (no mueve inventario)</z-select-item>
       </z-select>
+      <p class="text-[0.8rem] text-muted-foreground">
+        Fraccionable: se vende en incrementos parciales (ej. aceite a granel). Servicio: flete, mano de obra — nunca genera movimientos de inventario.
+      </p>
     </div>
     <div z-field>
       <label z-field-label>Categoría *</label>
@@ -59,6 +64,45 @@
 
   <div class="grid grid-cols-1 gap-4">
     <div z-field>
+      <label z-field-label>Unidad del catálogo (opcional)</label>
+      <div class="flex items-center gap-2">
+        <z-select class="flex-1" formControlName="unidad_medida_id" placeholder="Sin vincular (usa el texto libre)">
+          <z-select-item zValue="">Sin vincular</z-select-item>
+          @for (um of unidadesMedida(); track um.id) {
+            <z-select-item [zValue]="um.id">{{ um.codigo }} — {{ um.nombre }}</z-select-item>
+          }
+        </z-select>
+        <button type="button" z-button zType="outline" (click)="abrirCrearUnidadMedida()">
+          <ng-icon name="lucidePlus" class="mr-1.5"></ng-icon>
+          Nueva
+        </button>
+      </div>
+      <p class="text-[0.8rem] text-muted-foreground">
+        Vincularla al catálogo define los decimales usados para redondear el stock. Es opcional.
+      </p>
+    </div>
+  </div>
+
+  @if (permiteFraccionamiento()) {
+    <div class="grid grid-cols-1 gap-4 rounded-md border border-border p-3">
+      <div class="flex items-center gap-2">
+        <z-checkbox id="permite_venta_fraccionada" formControlName="permite_venta_fraccionada"></z-checkbox>
+        <label for="permite_venta_fraccionada" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+          Permite venta fraccionada (cantidad no entera de la unidad base)
+        </label>
+      </div>
+      <div z-field>
+        <label z-field-label for="incremento_minimo_venta">Incremento mínimo de venta</label>
+        <input z-input id="incremento_minimo_venta" type="number" step="any" min="0" formControlName="incremento_minimo_venta" placeholder="Ej. 0.5">
+        <p class="text-[0.8rem] text-muted-foreground">
+          Si se define, toda venta o salida debe ser múltiplo exacto de este valor (la entrada/compra no tiene esta restricción).
+        </p>
+      </div>
+    </div>
+  }
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
       <label z-field-label for="descripcion">Descripción</label>
       <textarea z-textarea id="descripcion" formControlName="descripcion" placeholder="Descripción adicional del producto" rows="3"></textarea>
     </div>
@@ -69,7 +113,7 @@
     <label for="permite_stock_negativo" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Permitir stock negativo (vender sin existencias)</label>
   </div>
 
-  @if (!sheetData?.productoId) {
+  @if (!sheetData?.productoId && !esServicio()) {
     <div class="mt-4 border-t pt-4">
       <div class="flex items-center justify-between mb-4">
         <div>

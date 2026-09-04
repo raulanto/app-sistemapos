@@ -1,0 +1,39 @@
+<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label>Código *</label>
+      <input z-input formControlName="codigo" maxlength="20" placeholder="Ej. kg, l, pza" />
+      @if (form.controls.codigo.invalid && form.controls.codigo.touched) {
+        <p class="text-[0.8rem] font-medium text-destructive">Obligatorio (1–20 caracteres).</p>
+      }
+    </div>
+    <div z-field>
+      <label z-field-label>Decimales *</label>
+      <input z-input type="number" formControlName="decimales" min="0" max="6" step="1" />
+      <p class="text-[0.8rem] text-muted-foreground">Precisión para redondear el stock (0–6).</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Nombre *</label>
+      <input z-input formControlName="nombre" maxlength="60" placeholder="Ej. Kilogramo, Litro, Pieza" />
+      @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
+        <p class="text-[0.8rem] font-medium text-destructive">El nombre es obligatorio.</p>
+      }
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Tipo de magnitud *</label>
+      <z-select formControlName="tipo_magnitud" placeholder="Selecciona el tipo">
+        <z-select-item zValue="conteo">Conteo (piezas, unidades)</z-select-item>
+        <z-select-item zValue="masa">Masa (kg, g)</z-select-item>
+        <z-select-item zValue="volumen">Volumen (l, ml)</z-select-item>
+        <z-select-item zValue="longitud">Longitud (m, cm)</z-select-item>
+        <z-select-item zValue="tiempo">Tiempo (hora, minuto)</z-select-item>
+      </z-select>
+    </div>
+  </div>
+</form>

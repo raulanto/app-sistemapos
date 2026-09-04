@@ -5,14 +5,16 @@ import { map, switchMap, retry } from 'rxjs/operators';
 
 import { ProductoService } from '../../data-access/producto.service';
 import { CategoriaService } from '../../data-access/categoria.service';
+import { UnidadMedidaService } from '../../data-access/unidad-medida.service';
 import { SucursalService } from '../../../../core/sucursal/sucursal.service';
 import { MovimientoService } from '../../data-access/movimiento.service';
-import { CategoriaResponse } from '../../data-access/inventario.models';
-import { injectSheetData } from '../../../../shared/components/sheet/sheet.service';
+import { CategoriaResponse, UnidadMedidaResponse, TipoProducto } from '../../data-access/inventario.models';
+import { injectSheetData, ZardSheetService } from '../../../../shared/components/sheet/sheet.service';
 import { ZardSheetRef } from '../../../../shared/components/sheet/sheet-ref';
 import { ZardSonnerService } from '../../../../shared/components/sonner/sonner.service';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucideTrash } from '@ng-icons/lucide';
+import { UnidadMedidaFormSheetComponent } from '../unidad-medida-form-sheet/unidad-medida-form-sheet.component';
 
 import { ZardFieldImports } from '../../../../shared/components/field/field.imports';
 import { ZardInputComponent } from '../../../../shared/components/input/input.component';
@@ -42,20 +44,27 @@ export interface ProductoSheetData {
   templateUrl: './producto-form-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   exportAs: 'productoFormSheet',
-  viewProviders: [provideIcons({ lucidePlus, lucideTrash })]
+  viewProviders: [provideIcons({ lucidePlus, lucideTrash })],
+  // El sheet proyecta este componente dentro de un <main> flex: sin display:contents, este
+  // host (un elemento inline por defecto) rompe la cadena flex-1/min-h-0 y el <form> nunca
+  // llega a scrollear, tapando los botones del footer.
+  host: { style: 'display: contents' }
 })
 export class ProductoFormSheetComponent implements OnInit {
   private fb = inject(FormBuilder);
   private productoService = inject(ProductoService);
   private categoriaService = inject(CategoriaService);
+  private unidadMedidaService = inject(UnidadMedidaService);
   public sucursalService = inject(SucursalService);
   private movimientoService = inject(MovimientoService);
   public sheetRef = inject(ZardSheetRef);
   private sonner = inject(ZardSonnerService);
-  
+  private sheetService = inject(ZardSheetService);
+
   public sheetData = injectSheetData<ProductoSheetData | undefined>();
 
   categorias = signal<CategoriaResponse[]>([]);
+  unidadesMedida = signal<UnidadMedidaResponse[]>([]);
   loading = signal(false);
 
   form = this.fb.group({
@@ -65,14 +74,22 @@ export class ProductoFormSheetComponent implements OnInit {
     descripcion: [''],
     categoria_id: ['', Validators.required],
     unidad_medida: ['UNIDAD', Validators.required],
+    unidad_medida_id: [null as string | null],
     precio_venta: ['0.00', Validators.required],
     costo: ['0.00', Validators.required],
     impuesto_tasa: ['0', Validators.required],
     permite_stock_negativo: [false],
-    tipo: ['SIMPLE', Validators.required],
+    permite_venta_fraccionada: [false],
+    incremento_minimo_venta: [null as number | null],
+    tipo: ['simple' as TipoProducto, Validators.required],
     activo: [true],
     existencias: this.fb.array([])
   });
+
+  /** `fraccionable`/`simple`: puede tener venta fraccionada. `kit`/`servicio`: no aplica. */
+  readonly permiteFraccionamiento = signal(true);
+  /** `servicio`: nunca mueve inventario, no tiene sentido cargar stock inicial. */
+  readonly esServicio = signal(false);
 
   get existenciasArray() {
     return this.form.get('existencias') as FormArray;
@@ -80,17 +97,56 @@ export class ProductoFormSheetComponent implements OnInit {
 
   ngOnInit() {
     this.cargarCategorias();
-    
+    this.cargarUnidadesMedida();
+
     if (this.sheetData?.productoId) {
       this.productoService.obtenerPorId(this.sheetData.productoId).subscribe({
         next: (prod) => {
           this.form.patchValue(prod as any);
           if (!prod.tipo) {
-            this.form.patchValue({ tipo: 'SIMPLE' });
+            this.form.patchValue({ tipo: 'simple' });
           }
+          // Solo fija enable/disable según lo cargado; no pisa los valores recién leídos del server.
+          this.applyTipoState((prod.tipo || 'simple') as TipoProducto, false);
+          this.watchTipoChanges();
         },
         error: (err) => console.error('Error al obtener producto', err)
       });
+    } else {
+      this.applyTipoState('simple', false);
+      this.watchTipoChanges();
+    }
+  }
+
+  /** Reacciona a cambios de tipo hechos por el usuario en el select (no al patch inicial). */
+  private watchTipoChanges() {
+    this.form.controls.tipo.valueChanges.subscribe(tipo => this.applyTipoState(tipo as TipoProducto, true));
+  }
+
+  private applyTipoState(tipo: TipoProducto, esCambioDeUsuario: boolean) {
+    const puedeFraccionar = tipo === 'simple' || tipo === 'fraccionable';
+    this.permiteFraccionamiento.set(puedeFraccionar);
+    this.esServicio.set(tipo === 'servicio');
+
+    if (!puedeFraccionar) {
+      if (esCambioDeUsuario) {
+        // El usuario movió el producto a kit/servicio: limpiar la config de fraccionamiento
+        // y marcar el control como dirty para que el guardado la borre en el backend.
+        this.form.patchValue({ permite_venta_fraccionada: false, incremento_minimo_venta: null }, { emitEvent: false });
+        this.form.controls.incremento_minimo_venta.markAsDirty();
+      }
+      this.form.controls.permite_venta_fraccionada.disable({ emitEvent: false });
+      this.form.controls.incremento_minimo_venta.disable({ emitEvent: false });
+      return;
+    }
+
+    this.form.controls.incremento_minimo_venta.enable({ emitEvent: false });
+    if (tipo === 'fraccionable') {
+      // El backend fuerza permite_venta_fraccionada=true para este tipo.
+      this.form.patchValue({ permite_venta_fraccionada: true }, { emitEvent: false });
+      this.form.controls.permite_venta_fraccionada.disable({ emitEvent: false });
+    } else {
+      this.form.controls.permite_venta_fraccionada.enable({ emitEvent: false });
     }
   }
 
@@ -98,6 +154,44 @@ export class ProductoFormSheetComponent implements OnInit {
     this.categoriaService.listar().subscribe({
       next: (data) => this.categorias.set(data),
       error: (err) => console.error('Error al cargar categorias', err)
+    });
+  }
+
+  cargarUnidadesMedida() {
+    this.unidadMedidaService.listar().subscribe({
+      next: (data) => this.unidadesMedida.set(data),
+      error: (err) => console.error('Error al cargar unidades de medida', err)
+    });
+  }
+
+  /** Alta rápida cuando la unidad de medida deseada todavía no existe en el catálogo. */
+  abrirCrearUnidadMedida() {
+    this.sheetService.create({
+      zTitle: 'Nueva unidad de medida',
+      zDescription: 'Agrega una unidad al catálogo (kg, l, ml, pza, hora, …). Queda disponible para todos los productos.',
+      zContent: UnidadMedidaFormSheetComponent,
+      zOkText: 'Crear',
+      zCancelText: 'Cancelar',
+      zOnOk: (instance: any) => {
+        const obs = instance.save();
+        if (!obs) return false;
+        return new Promise<void>((resolve, reject) => {
+          obs.subscribe({
+            next: (nueva: UnidadMedidaResponse) => {
+              this.sonner.success('Unidad de medida creada');
+              this.unidadesMedida.update(list => [...list, nueva]);
+              this.form.patchValue({ unidad_medida_id: nueva.id });
+              this.form.controls.unidad_medida_id.markAsDirty();
+              resolve();
+            },
+            error: (err: any) => {
+              console.error('Error al crear unidad de medida', err);
+              this.sonner.error('Error al crear la unidad de medida');
+              reject(err);
+            }
+          });
+        });
+      }
     });
   }
 
@@ -131,21 +225,31 @@ export class ProductoFormSheetComponent implements OnInit {
     }
     
     this.loading.set(true);
-    const data = { ...this.form.value } as any;
+    // getRawValue() para incluir permite_venta_fraccionada/incremento_minimo_venta
+    // aunque el control esté deshabilitado (tipo kit/servicio/fraccionable forzado).
+    const data = { ...this.form.getRawValue() } as any;
     delete data.existencias;
 
     if (data.codigo_barras === '') data.codigo_barras = null;
     if (data.descripcion === '') data.descripcion = null;
+    if (data.unidad_medida_id === '') data.unidad_medida_id = null;
+    if (data.incremento_minimo_venta === '' || data.incremento_minimo_venta == null) {
+      data.incremento_minimo_venta = null;
+    } else {
+      data.incremento_minimo_venta = Number(data.incremento_minimo_venta);
+    }
 
     let request$: Observable<any>;
 
     if (this.sheetData?.productoId) {
       const updateData = { ...data };
       delete updateData.activo; // Not in the update schema
-      
+
       updateData.cambiar_codigo_barras = this.form.get('codigo_barras')?.dirty ?? false;
       updateData.cambiar_descripcion = this.form.get('descripcion')?.dirty ?? false;
-      
+      updateData.cambiar_unidad_medida_id = this.form.get('unidad_medida_id')?.dirty ?? false;
+      updateData.cambiar_incremento_minimo_venta = this.form.get('incremento_minimo_venta')?.dirty ?? false;
+
       // Ensure numeric fields are numbers
       updateData.precio_venta = Number(updateData.precio_venta);
       updateData.costo = Number(updateData.costo);

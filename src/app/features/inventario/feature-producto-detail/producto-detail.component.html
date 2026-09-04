@@ -36,6 +36,10 @@
             <z-badge [zType]="prod.activo ? 'default' : 'destructive'">{{ prod.activo ? 'Activo' : 'Inactivo' }}</z-badge>
             @if (prod.tipo === 'kit') {
               <z-badge zType="secondary">Kit</z-badge>
+            } @else if (prod.tipo === 'fraccionable') {
+              <z-badge zType="secondary">Fraccionable</z-badge>
+            } @else if (prod.tipo === 'servicio') {
+              <z-badge zType="secondary">Servicio</z-badge>
             }
           </div>
           @if (prod.descripcion) {
@@ -463,6 +467,30 @@
                 <dt class="text-muted-foreground">Impuesto</dt>
                 <dd class="font-medium tabular-nums">{{ prod.impuesto_tasa }}%</dd>
               </div>
+              <div class="flex items-center justify-between gap-4 py-2.5">
+                <dt class="text-muted-foreground">Unidad del catálogo</dt>
+                @if (unidadMedidaVinculada(); as um) {
+                  <dd class="truncate font-medium">{{ um.codigo }} — {{ um.nombre }}</dd>
+                } @else {
+                  <dd class="text-muted-foreground">Sin vincular</dd>
+                }
+              </div>
+              @if (prod.tipo !== 'kit' && prod.tipo !== 'servicio') {
+                <div class="flex items-center justify-between py-2.5">
+                  <dt class="text-muted-foreground">Venta fraccionada</dt>
+                  <dd>
+                    <z-badge [zType]="prod.permite_venta_fraccionada ? 'default' : 'secondary'">
+                      {{ prod.permite_venta_fraccionada ? 'Permitida' : 'No permitida' }}
+                    </z-badge>
+                  </dd>
+                </div>
+                @if (prod.incremento_minimo_venta) {
+                  <div class="flex items-center justify-between py-2.5">
+                    <dt class="text-muted-foreground">Incremento mínimo</dt>
+                    <dd class="font-medium tabular-nums">{{ prod.incremento_minimo_venta }} {{ prod.unidad_medida | lowercase }}</dd>
+                  </div>
+                }
+              }
               <div class="flex items-center justify-between py-2.5">
                 <dt class="text-muted-foreground">Stock negativo</dt>
                 <dd>
