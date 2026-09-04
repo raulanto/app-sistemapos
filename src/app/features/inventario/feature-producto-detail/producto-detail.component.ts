@@ -23,6 +23,10 @@ import {
   lucideHistory,
   lucidePackageOpen,
   lucideWallet,
+  lucideBan,
+  lucideCircleCheck,
+  lucideUser,
+  lucideScale,
 } from '@ng-icons/lucide';
 
 import { ProductoService } from '../data-access/producto.service';
@@ -49,6 +53,8 @@ import { ZardSonnerService } from '../../../shared/components/sonner/sonner.serv
 import { ZardChartImports } from '../../../shared/components/chart/chart.imports';
 import { ZardEmptyComponent } from '../../../shared/components/empty/empty.component';
 import { ZardSkeletonComponent } from '../../../shared/components/skeleton/skeleton.component';
+import { ZardSeparatorComponent } from '../../../shared/components/separator/separator.component';
+import { ZardAlertDialogService } from '../../../shared/components/alert-dialog/alert-dialog.service';
 import { ComponenteResponse } from '../data-access/inventario.models';
 
 @Component({
@@ -66,6 +72,7 @@ import { ComponenteResponse } from '../data-access/inventario.models';
     ZardButtonComponent,
     ZardEmptyComponent,
     ZardSkeletonComponent,
+    ZardSeparatorComponent,
     ...ZardChartImports
   ],
   templateUrl: './producto-detail.component.html',
@@ -92,6 +99,10 @@ import { ComponenteResponse } from '../data-access/inventario.models';
       lucideHistory,
       lucidePackageOpen,
       lucideWallet,
+      lucideBan,
+      lucideCircleCheck,
+      lucideUser,
+      lucideScale,
     }),
   ]
 })
@@ -105,6 +116,7 @@ export class ProductoDetailComponent implements OnInit {
   private readonly sheetService = inject(ZardSheetService);
   private readonly inventarioAction = inject(InventarioActionService);
   private readonly sonner = inject(ZardSonnerService);
+  private readonly alertDialog = inject(ZardAlertDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly canEditar = computed(() => this.authService.hasPermission(...PERMISOS.inventario.editar));
@@ -132,6 +144,16 @@ export class ProductoDetailComponent implements OnInit {
     const prod = this.producto();
     if (!prod) return 0;
     return this.totalStock() * Number(prod.precio_venta || 0);
+  });
+
+  /** Margen unitario: diferencia y porcentaje entre precio de venta y costo. */
+  margen = computed(() => {
+    const prod = this.producto();
+    if (!prod) return { monto: 0, pct: 0 };
+    const precio = Number(prod.precio_venta || 0);
+    const costo = Number(prod.costo || 0);
+    const monto = precio - costo;
+    return { monto, pct: precio > 0 ? (monto / precio) * 100 : 0 };
   });
 
   chartData = computed(() => {
@@ -214,7 +236,7 @@ export class ProductoDetailComponent implements OnInit {
   }
 
   cargarMovimientos(productoId: string) {
-    this.movimientoService.listar({ producto_id: productoId, sort: 'created_at:desc' }).subscribe({
+    this.movimientoService.listar({ producto_id: productoId, sort: 'created_at:desc', include: 'usuario' }).subscribe({
       next: (movs) => {
         this.movimientos.set(movs);
         this.loading.set(false);
@@ -279,6 +301,43 @@ export class ProductoDetailComponent implements OnInit {
     });
   }
 
+  desactivarProducto() {
+    const prod = this.producto();
+    if (!prod) return;
+    this.alertDialog.confirm({
+      zTitle: `¿Desactivar producto ${prod.sku}?`,
+      zDescription: 'El producto dejará de estar disponible para la venta.',
+      zOkText: 'Desactivar',
+      zOkDestructive: true,
+      zOnOk: () => {
+        this.inventarioAction.handleAction(
+          this.productoService.desactivar(prod.id),
+          'Producto desactivado correctamente',
+          'Error al desactivar el producto',
+          () => this.cargarDatos(prod.id)
+        );
+      }
+    });
+  }
+
+  activarProducto() {
+    const prod = this.producto();
+    if (!prod) return;
+    this.alertDialog.confirm({
+      zTitle: `¿Activar producto ${prod.sku}?`,
+      zDescription: 'El producto volverá a estar disponible para la venta.',
+      zOkText: 'Activar',
+      zOnOk: () => {
+        this.inventarioAction.handleAction(
+          this.productoService.activar(prod.id),
+          'Producto activado correctamente',
+          'Error al activar el producto',
+          () => this.cargarDatos(prod.id)
+        );
+      }
+    });
+  }
+
   openMovimientoSheet() {
     const prod = this.producto();
     if (!prod) return;
@@ -340,11 +399,11 @@ export class ProductoDetailComponent implements OnInit {
       zTitle: 'Configurar Umbrales',
       zDescription: `Establecer stock mínimo y máximo para la sucursal ${this.getNombreSucursal(existencia.sucursal_id)}.`,
       zContent: UmbralesFormSheetComponent,
-      zData: { 
-        productoId: prod.id, 
+      zData: {
+        productoId: prod.id,
         sucursalId: existencia.sucursal_id,
         stockMinimo: existencia.stock_minimo ? Number(existencia.stock_minimo) : 0,
-        stockMaximo: null // Backend has it but we might not have it in the frontend interface yet, will default to null
+        stockMaximo: existencia.stock_maximo != null ? Number(existencia.stock_maximo) : null
       },
       zOkText: 'Guardar Umbrales',
       zCancelText: 'Cancelar',
@@ -419,18 +478,20 @@ export class ProductoDetailComponent implements OnInit {
     const prod = this.producto();
     if (!prod || prod.tipo !== 'kit') return;
 
-    if (confirm(`¿Estás seguro de quitar este componente de la receta?`)) {
-      this.productoService.quitarComponente(prod.id, comp.producto_componente_id).subscribe({
-        next: () => {
-          this.sonner.success('Componente removido');
-          this.cargarDatos(prod.id);
-        },
-        error: (err) => {
-          console.error(err);
-          this.sonner.error('Error al remover componente');
-        }
-      });
-    }
+    this.alertDialog.confirm({
+      zTitle: '¿Quitar componente de la receta?',
+      zDescription: `Se eliminará "${comp.componente?.nombre || 'este producto'}" de la receta de ${prod.nombre}.`,
+      zOkText: 'Quitar',
+      zOkDestructive: true,
+      zOnOk: () => {
+        this.inventarioAction.handleAction(
+          this.productoService.quitarComponente(prod.id, comp.producto_componente_id),
+          'Componente removido',
+          'Error al remover componente',
+          () => this.cargarDatos(prod.id)
+        );
+      }
+    });
   }
 
   openAddUnidadSheet() {
@@ -489,17 +550,19 @@ export class ProductoDetailComponent implements OnInit {
     const prod = this.producto();
     if (!prod || prod.tipo === 'kit') return;
 
-    if (confirm(`¿Estás seguro de eliminar esta presentación?`)) {
-      this.productoService.eliminarUnidad(prod.id, unidad.id).subscribe({
-        next: () => {
-          this.sonner.success('Presentación eliminada');
-          this.cargarUnidades(prod.id);
-        },
-        error: (err) => {
-          console.error(err);
-          this.sonner.error('Error al eliminar presentación');
-        }
-      });
-    }
+    this.alertDialog.confirm({
+      zTitle: '¿Eliminar presentación?',
+      zDescription: `Se eliminará la presentación "${unidad.nombre}" de ${prod.nombre}.`,
+      zOkText: 'Eliminar',
+      zOkDestructive: true,
+      zOnOk: () => {
+        this.inventarioAction.handleAction(
+          this.productoService.eliminarUnidad(prod.id, unidad.id),
+          'Presentación eliminada',
+          'Error al eliminar presentación',
+          () => this.cargarUnidades(prod.id)
+        );
+      }
+    });
   }
 }

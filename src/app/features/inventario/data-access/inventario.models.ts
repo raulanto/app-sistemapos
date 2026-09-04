@@ -202,6 +202,8 @@ export interface ExistenciaResponse {
   sucursal_id: string;
   cantidad: string;
   stock_minimo?: string | null;
+  stock_maximo?: string | null;
+  updated_at?: string;
 }
 
 export interface AplicarMovimientoRequest {

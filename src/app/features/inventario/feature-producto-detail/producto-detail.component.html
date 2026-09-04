@@ -61,8 +61,22 @@
             <ng-icon name="lucideEdit" class="mr-2 size-4" />
             Editar
           </button>
+          @if (prod.activo) {
+            <button z-button zType="outline" zSize="sm" class="text-destructive hover:bg-destructive/10" (click)="desactivarProducto()">
+              <ng-icon name="lucideBan" class="mr-2 size-4" />
+              Desactivar
+            </button>
+          } @else {
+            <button z-button zType="outline" zSize="sm" (click)="activarProducto()">
+              <ng-icon name="lucideCircleCheck" class="mr-2 size-4" />
+              Activar
+            </button>
+          }
         }
         @if (canCrearMovimiento()) {
+          @if (canEditar()) {
+            <z-separator zOrientation="vertical" class="mx-1 h-6" />
+          }
           <button z-button zType="secondary" zSize="sm" (click)="openTransferenciaSheet()">
             <ng-icon name="lucideArrowRightLeft" class="mr-2 size-4" />
             Transferir
@@ -76,7 +90,7 @@
     </div>
 
     <!-- INDICADORES -->
-    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       <div z-card class="gap-0 py-4">
         <z-card-content class="flex items-start justify-between gap-3">
           <div class="space-y-1">
@@ -97,6 +111,19 @@
           </div>
           <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
             <ng-icon name="lucideWallet" class="size-4" />
+          </span>
+        </z-card-content>
+      </div>
+
+      <div z-card class="gap-0 py-4">
+        <z-card-content class="flex items-start justify-between gap-3">
+          <div class="space-y-1">
+            <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Margen</p>
+            <p class="text-2xl font-semibold tabular-nums" [class.text-destructive]="margen().monto < 0">{{ margen().monto | currency }}</p>
+            <p class="text-xs text-muted-foreground tabular-nums">{{ margen().pct | number:'1.0-1' }}% sobre venta</p>
+          </div>
+          <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
+            <ng-icon name="lucideScale" class="size-4" />
           </span>
         </z-card-content>
       </div>
@@ -141,6 +168,7 @@
                         <th z-table-head>Sucursal</th>
                         <th z-table-head class="text-right">Disponible</th>
                         <th z-table-head class="text-right">Stock mínimo</th>
+                        <th z-table-head class="text-right">Stock máximo</th>
                         <th z-table-head class="w-16 text-center">Acciones</th>
                       </tr>
                     </thead>
@@ -150,7 +178,12 @@
                           <td z-table-cell class="font-medium">
                             <span class="flex items-center gap-2">
                               <ng-icon name="lucideMapPin" class="size-4 text-muted-foreground" />
-                              {{ getNombreSucursal(ext.sucursal_id) }}
+                              <span>
+                                {{ getNombreSucursal(ext.sucursal_id) }}
+                                @if (ext.updated_at) {
+                                  <span class="block text-xs font-normal text-muted-foreground">Actualizado {{ ext.updated_at | date:'dd/MM/yyyy' }}</span>
+                                }
+                              </span>
                             </span>
                           </td>
                           <td z-table-cell class="text-right">
@@ -159,6 +192,7 @@
                             </z-badge>
                           </td>
                           <td z-table-cell class="text-right tabular-nums text-muted-foreground">{{ ext.stock_minimo || '—' }}</td>
+                          <td z-table-cell class="text-right tabular-nums text-muted-foreground">{{ ext.stock_maximo || '—' }}</td>
                           <td z-table-cell class="text-center">
                             @if (canEditar()) {
                               <button z-button zType="ghost" zSize="icon-sm" (click)="openUmbralesSheet(ext)" aria-label="Configurar umbrales">
@@ -169,7 +203,7 @@
                         </tr>
                       } @empty {
                         <tr z-table-row>
-                          <td z-table-cell colspan="4" class="p-0">
+                          <td z-table-cell colspan="5" class="p-0">
                             <z-empty
                               zIcon="lucideMapPin"
                               zTitle="Sin existencias"
@@ -329,6 +363,8 @@
                         <th z-table-head>Tipo</th>
                         <th z-table-head>Sucursal</th>
                         <th z-table-head class="text-right">Cantidad</th>
+                        <th z-table-head class="text-right">Costo unit.</th>
+                        <th z-table-head>Usuario</th>
                         <th z-table-head>Referencia / Motivo</th>
                       </tr>
                     </thead>
@@ -350,6 +386,19 @@
                           <td z-table-cell class="text-right tabular-nums font-medium">
                             {{ mov.tipo === 'entrada' || mov.tipo === 'ajuste_positivo' ? '+' : (mov.tipo === 'salida' || mov.tipo === 'merma' ? '-' : '') }}{{ mov.cantidad }}
                           </td>
+                          <td z-table-cell class="text-right tabular-nums text-muted-foreground">
+                            {{ mov.costo_unitario != null ? (mov.costo_unitario | currency) : '—' }}
+                          </td>
+                          <td z-table-cell class="text-xs">
+                            @if (mov.usuario?.nombre) {
+                              <span class="flex items-center gap-1.5 text-muted-foreground">
+                                <ng-icon name="lucideUser" class="size-3.5" />
+                                {{ mov.usuario.nombre }}
+                              </span>
+                            } @else {
+                              <span class="text-muted-foreground">—</span>
+                            }
+                          </td>
                           <td z-table-cell class="text-xs">
                             <div class="font-medium">{{ mov.referencia_tipo }}</div>
                             <div class="line-clamp-1 text-muted-foreground" [title]="mov.motivo || ''">{{ mov.motivo || '—' }}</div>
@@ -357,7 +406,7 @@
                         </tr>
                       } @empty {
                         <tr z-table-row>
-                          <td z-table-cell colspan="5" class="p-0">
+                          <td z-table-cell colspan="7" class="p-0">
                             <z-empty
                               zIcon="lucideHistory"
                               zTitle="Sin movimientos"
@@ -379,7 +428,7 @@
       <div class="space-y-6">
         <div z-card>
           <z-card-header>
-            <z-card-title class="text-base">Ficha técnica</z-card-title>
+            <z-card-title zTitle="Ficha técnica" class="text-base" />
           </z-card-header>
           <z-card-content>
             <dl class="divide-y divide-border text-sm">
@@ -399,6 +448,21 @@
                 <dt class="text-muted-foreground">Tipo</dt>
                 <dd class="font-medium capitalize">{{ prod.tipo || 'simple' }}</dd>
               </div>
+              @if (prod.tipo === 'kit') {
+                <div class="flex items-center justify-between py-2.5">
+                  <dt class="text-muted-foreground">Componentes</dt>
+                  <dd class="font-medium tabular-nums">{{ prod.componentes?.length || 0 }}</dd>
+                </div>
+              } @else {
+                <div class="flex items-center justify-between py-2.5">
+                  <dt class="text-muted-foreground">Presentaciones</dt>
+                  <dd class="font-medium tabular-nums">{{ unidades().length }}</dd>
+                </div>
+              }
+              <div class="flex items-center justify-between py-2.5">
+                <dt class="text-muted-foreground">Impuesto</dt>
+                <dd class="font-medium tabular-nums">{{ prod.impuesto_tasa }}%</dd>
+              </div>
               <div class="flex items-center justify-between py-2.5">
                 <dt class="text-muted-foreground">Stock negativo</dt>
                 <dd>
@@ -413,8 +477,8 @@
 
         <div z-card>
           <z-card-header>
-            <z-card-title class="text-base">Valor del inventario</z-card-title>
-            <z-card-description>Sobre {{ totalStock() | number:'1.0-2' }} {{ prod.unidad_medida | lowercase }}s</z-card-description>
+            <z-card-title zTitle="Valor del inventario" class="text-base" />
+            <z-card-description [zDescription]="'Sobre ' + (totalStock() | number:'1.0-2') + ' ' + (prod.unidad_medida | lowercase) + 's'" />
           </z-card-header>
           <z-card-content class="space-y-3">
             <div class="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2.5">
@@ -439,11 +503,11 @@
     <!-- ANÁLISIS -->
     <div z-card>
       <z-card-header>
-        <z-card-title class="flex items-center gap-2 text-base">
+        <div class="flex items-center gap-2">
           <ng-icon name="lucideActivity" class="size-4 text-muted-foreground" />
-          Balance de movimientos por fecha
-        </z-card-title>
-        <z-card-description>Entradas y salidas registradas en el tiempo</z-card-description>
+          <z-card-title zTitle="Balance de movimientos por fecha" class="text-base" />
+        </div>
+        <z-card-description zDescription="Entradas y salidas registradas en el tiempo" />
       </z-card-header>
       <z-card-content>
         @if (chartData().length > 0) {
