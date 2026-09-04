@@ -130,6 +130,8 @@ export class ProductoDetailComponent implements OnInit {
   unidadesMedidaCatalogo = signal<UnidadMedidaResponse[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
+  /** Se activa si `imagen_url` no carga (link roto, CORS, etc.); cae al icono por defecto. */
+  imagenError = signal(false);
 
   totalStock = computed(() => {
     const prod = this.producto();
@@ -230,6 +232,7 @@ export class ProductoDetailComponent implements OnInit {
   cargarDatos(id: string) {
     this.loading.set(true);
     this.error.set(null);
+    this.imagenError.set(false);
     this.cdr.markForCheck(); // force check
 
     this.productoService.obtenerPorId(id, 'categoria,existencias,componentes').subscribe({

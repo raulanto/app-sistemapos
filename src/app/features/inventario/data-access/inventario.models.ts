@@ -6,6 +6,8 @@ export interface ProductoResponse {
   id: string;
   sku: string;
   codigo_barras?: string | null;
+  /** URL de la imagen principal del producto (alojada externamente). */
+  imagen_url?: string | null;
   nombre: string;
   descripcion?: string | null;
   categoria_id: string;
@@ -124,6 +126,8 @@ export interface ResolucionCodigoResponse {
 export interface CrearProductoRequest {
   sku: string;
   codigo_barras?: string | null;
+  /** URL de la imagen principal del producto (alojada externamente). Máx. 500 caracteres. */
+  imagen_url?: string | null;
   nombre: string;
   descripcion?: string | null;
   categoria_id: string;
@@ -162,6 +166,9 @@ export interface ActualizarProductoRequest {
   cambiar_incremento_minimo_venta?: boolean;
   codigo_barras?: string | null;
   cambiar_codigo_barras?: boolean;
+  /** URL de la imagen principal. Mismo patrón que `cambiar_codigo_barras`: sin el flag, null significa "no tocar". */
+  imagen_url?: string | null;
+  cambiar_imagen_url?: boolean;
   cambiar_descripcion?: boolean;
 }
 

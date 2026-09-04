@@ -53,6 +53,21 @@
               <input z-input id="descripcion" type="text" formControlName="descripcion" placeholder="Opcional">
             </div>
 
+            <div z-field class="md:col-span-2">
+              <label z-field-label for="imagen_url">Imagen principal (URL)</label>
+              <div class="flex items-center gap-3">
+                <z-avatar
+                  [zSrc]="form.get('imagen_url')?.value || ''"
+                  zFallback="IMG"
+                  zSize="lg"
+                  zAlt="Vista previa de la imagen principal"
+                  class="shrink-0"
+                ></z-avatar>
+                <input z-input id="imagen_url" type="url" formControlName="imagen_url" placeholder="https://…" class="flex-1">
+              </div>
+              <p z-field-description>Opcional. Pega la URL de una imagen ya alojada (CDN, S3, etc.).</p>
+            </div>
+
             <div z-field [attr.data-invalid]="categoriaError().length ? 'true' : null">
               <label z-field-label>Categoría *</label>
               <z-select formControlName="categoria_id" placeholder="Selecciona una categoría" [attr.aria-invalid]="categoriaError().length ? 'true' : null">

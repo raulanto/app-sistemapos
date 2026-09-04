@@ -22,6 +22,7 @@ import { ZardSelectImports } from '../../../../shared/components/select/select.i
 import { ZardButtonComponent } from '../../../../shared/components/button/button.component';
 import { ZardCheckboxComponent } from '../../../../shared/components/checkbox/checkbox.component';
 import { ZardTextareaComponent } from '../../../../shared/components/textarea/textarea.component';
+import { ZardAvatarComponent } from '../../../../shared/components/avatar/avatar.component';
 
 export interface ProductoSheetData {
   productoId?: string;
@@ -39,7 +40,8 @@ export interface ProductoSheetData {
     ...ZardSelectImports,
     ZardButtonComponent,
     ZardCheckboxComponent,
-    ZardTextareaComponent
+    ZardTextareaComponent,
+    ZardAvatarComponent
   ],
   templateUrl: './producto-form-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,6 +72,7 @@ export class ProductoFormSheetComponent implements OnInit {
   form = this.fb.group({
     sku: ['', Validators.required],
     codigo_barras: [''],
+    imagen_url: [''],
     nombre: ['', Validators.required],
     descripcion: [''],
     categoria_id: ['', Validators.required],
@@ -231,6 +234,7 @@ export class ProductoFormSheetComponent implements OnInit {
     delete data.existencias;
 
     if (data.codigo_barras === '') data.codigo_barras = null;
+    if (data.imagen_url === '') data.imagen_url = null;
     if (data.descripcion === '') data.descripcion = null;
     if (data.unidad_medida_id === '') data.unidad_medida_id = null;
     if (data.incremento_minimo_venta === '' || data.incremento_minimo_venta == null) {
@@ -246,6 +250,7 @@ export class ProductoFormSheetComponent implements OnInit {
       delete updateData.activo; // Not in the update schema
 
       updateData.cambiar_codigo_barras = this.form.get('codigo_barras')?.dirty ?? false;
+      updateData.cambiar_imagen_url = this.form.get('imagen_url')?.dirty ?? false;
       updateData.cambiar_descripcion = this.form.get('descripcion')?.dirty ?? false;
       updateData.cambiar_unidad_medida_id = this.form.get('unidad_medida_id')?.dirty ?? false;
       updateData.cambiar_incremento_minimo_venta = this.form.get('incremento_minimo_venta')?.dirty ?? false;

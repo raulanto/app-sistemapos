@@ -27,6 +27,7 @@ import { ZardButtonComponent } from '../../../shared/components/button/button.co
 import { ZardAlertComponent } from '../../../shared/components/alert/alert.component';
 import { ZardEmptyComponent } from '../../../shared/components/empty/empty.component';
 import { ZardSeparatorComponent } from '../../../shared/components/separator/separator.component';
+import { ZardAvatarComponent } from '../../../shared/components/avatar/avatar.component';
 
 /** En una presentación, el campo de equivalencia del modo activo debe ser > 0. */
 function equivalenciaUnidadValidator(control: AbstractControl): ValidationErrors | null {
@@ -51,7 +52,8 @@ function equivalenciaUnidadValidator(control: AbstractControl): ValidationErrors
     ZardButtonComponent,
     ZardAlertComponent,
     ZardEmptyComponent,
-    ZardSeparatorComponent
+    ZardSeparatorComponent,
+    ZardAvatarComponent
   ],
   templateUrl: './producto-create.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -76,6 +78,7 @@ export class ProductoCreateComponent implements OnInit {
   form = this.fb.group({
     sku: ['', Validators.required],
     codigo_barras: [''],
+    imagen_url: [''],
     nombre: ['', Validators.required],
     descripcion: [''],
     categoria_id: ['', Validators.required],
@@ -317,6 +320,7 @@ export class ProductoCreateComponent implements OnInit {
     delete data.unidades;
 
     if (data.codigo_barras === '') data.codigo_barras = null;
+    if (data.imagen_url === '') data.imagen_url = null;
     if (data.descripcion === '') data.descripcion = null;
     if (data.unidad_medida_id === '') data.unidad_medida_id = null;
     if (data.incremento_minimo_venta === '' || data.incremento_minimo_venta == null) {
