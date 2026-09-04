@@ -4,9 +4,11 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { HttpParams } from '@angular/common/http';
-import { 
-  MovimientoResponse, 
-  ApiResponse 
+import {
+  MovimientoResponse,
+  ApiResponse,
+  AplicarMovimientoRequest,
+  TransferenciaRequest
 } from './inventario.models';
 
 export interface MovimientoQuery {
@@ -54,11 +56,11 @@ export class MovimientoService {
     );
   }
 
-  aplicar(movimiento: any): Observable<any> {
-    return this.http.post<ApiResponse<any>>(this.API_URL, movimiento);
+  aplicar(movimiento: AplicarMovimientoRequest): Observable<ApiResponse<MovimientoResponse>> {
+    return this.http.post<ApiResponse<MovimientoResponse>>(this.API_URL, movimiento);
   }
 
-  transferir(transferencia: any): Observable<any> {
-    return this.http.post<ApiResponse<any>>(`${this.API_URL}/transferencia`, transferencia);
+  transferir(transferencia: TransferenciaRequest): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(`${this.API_URL}/transferencia`, transferencia);
   }
 }

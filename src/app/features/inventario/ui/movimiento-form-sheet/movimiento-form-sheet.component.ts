@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 
@@ -11,10 +12,13 @@ import { ZardFieldImports } from '../../../../shared/components/field/field.impo
 import { ZardInputComponent } from '../../../../shared/components/input/input.component';
 import { ZardSelectImports } from '../../../../shared/components/select/select.imports';
 import { ZardTextareaComponent } from '../../../../shared/components/textarea/textarea.component';
+import { ZardCheckboxComponent } from '../../../../shared/components/checkbox/checkbox.component';
 
 export interface MovimientoSheetData {
   productoId: string;
 }
+
+type TipoMovimiento = 'entrada' | 'salida' | 'ajuste_positivo' | 'ajuste_negativo' | 'merma';
 
 @Component({
   selector: 'app-movimiento-form-sheet',
@@ -24,28 +28,51 @@ export interface MovimientoSheetData {
     ...ZardFieldImports,
     ZardInputComponent,
     ...ZardSelectImports,
-    ZardTextareaComponent
+    ZardTextareaComponent,
+    ZardCheckboxComponent,
   ],
   templateUrl: './movimiento-form-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  exportAs: 'movimientoFormSheet'
+  exportAs: 'movimientoFormSheet',
 })
 export class MovimientoFormSheetComponent implements OnInit {
   private fb = inject(FormBuilder);
   private movimientoService = inject(MovimientoService);
+  private destroyRef = inject(DestroyRef);
   public sucursalService = inject(SucursalService);
-  
+
   public sheetData = injectSheetData<MovimientoSheetData>();
 
+  readonly tipo = signal<TipoMovimiento>('entrada');
+  readonly esEntrada = computed(() => this.tipo() === 'entrada');
+
   form = this.fb.group({
-    tipo: ['entrada', Validators.required],
+    tipo: ['entrada' as TipoMovimiento, Validators.required],
     sucursal_id: ['', Validators.required],
     cantidad: [0, [Validators.required, Validators.min(0.01)]],
-    referencia_tipo: ['Ajuste manual', Validators.required],
-    motivo: ['']
+    referencia_tipo: ['Ajuste manual', [Validators.required, Validators.maxLength(20)]],
+    costo_unitario: [null as number | null],
+    actualizar_costo: [false],
+    nuevo_precio_venta: [null as number | null],
+    stock_minimo: [null as number | null],
+    stock_maximo: [null as number | null],
+    motivo: [''],
   });
 
+  /** El backend rechaza actualizar_costo sin costo_unitario o fuera de una entrada. */
+  costoUpdateInvalido(): boolean {
+    const v = this.form.getRawValue();
+    return !!v.actualizar_costo && (!this.esEntrada() || v.costo_unitario == null || Number(v.costo_unitario) < 0);
+  }
+
   ngOnInit() {
+    this.form.controls.tipo.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(v => {
+      this.tipo.set((v as TipoMovimiento) ?? 'entrada');
+      if (v !== 'entrada' && this.form.controls.actualizar_costo.value) {
+        this.form.controls.actualizar_costo.setValue(false);
+      }
+    });
+
     const currentSucursalId = this.sucursalService.selectedSucursalId();
     if (currentSucursalId) {
       this.form.patchValue({ sucursal_id: currentSucursalId });
@@ -57,21 +84,35 @@ export class MovimientoFormSheetComponent implements OnInit {
     }
   }
 
-  save(): Observable<any> | void {
-    if (this.form.invalid) {
+  save(): Observable<unknown> | void {
+    if (this.form.invalid || this.costoUpdateInvalido()) {
       this.form.markAllAsTouched();
       return;
     }
-    
-    const data = this.form.value as Partial<AplicarMovimientoRequest>;
+
+    const data = this.form.getRawValue();
+    const num = (v: number | null) => (v === null || v === undefined || (v as unknown) === '' ? null : Number(v));
+
     const payload: AplicarMovimientoRequest = {
       producto_id: this.sheetData.productoId,
-      tipo: data.tipo as 'entrada' | 'salida' | 'ajuste_positivo' | 'ajuste_negativo' | 'merma',
+      tipo: data.tipo!,
       sucursal_id: data.sucursal_id!,
       cantidad: data.cantidad!,
       referencia_tipo: data.referencia_tipo!,
-      motivo: data.motivo || null
+      motivo: data.motivo || null,
     };
+
+    const costoUnitario = num(data.costo_unitario);
+    if (this.esEntrada() && costoUnitario !== null) payload.costo_unitario = costoUnitario;
+    if (this.esEntrada() && data.actualizar_costo) payload.actualizar_costo = true;
+
+    const nuevoPrecio = num(data.nuevo_precio_venta);
+    if (nuevoPrecio !== null) payload.nuevo_precio_venta = nuevoPrecio;
+
+    const stockMin = num(data.stock_minimo);
+    const stockMax = num(data.stock_maximo);
+    if (stockMin !== null) payload.stock_minimo = stockMin;
+    if (stockMax !== null) payload.stock_maximo = stockMax;
 
     return this.movimientoService.aplicar(payload);
   }

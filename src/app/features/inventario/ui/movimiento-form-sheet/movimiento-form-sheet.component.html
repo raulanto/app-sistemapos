@@ -25,19 +25,58 @@
     <div z-field>
       <label z-field-label for="cantidad">Cantidad *</label>
       <input z-input id="cantidad" type="number" step="0.01" min="0.01" formControlName="cantidad" placeholder="0.00">
+      <p class="text-[0.8rem] text-muted-foreground">En la unidad base del producto.</p>
     </div>
   </div>
 
   <div class="grid grid-cols-1 gap-4">
     <div z-field>
       <label z-field-label for="referencia_tipo">Referencia *</label>
-      <input z-input id="referencia_tipo" type="text" formControlName="referencia_tipo" placeholder="Ej. Ajuste manual">
+      <input z-input id="referencia_tipo" type="text" maxlength="20" formControlName="referencia_tipo" placeholder="Ej. compra, Ajuste manual">
+    </div>
+  </div>
+
+  @if (esEntrada()) {
+    <div class="grid grid-cols-1 gap-4 rounded-md border border-border p-3">
+      <div z-field>
+        <label z-field-label for="costo_unitario">Costo unitario (opcional)</label>
+        <input z-input id="costo_unitario" type="number" step="0.01" min="0" formControlName="costo_unitario" placeholder="Costo de compra por unidad base">
+      </div>
+      <div class="flex items-center gap-2">
+        <z-checkbox id="actualizar_costo" formControlName="actualizar_costo"></z-checkbox>
+        <label for="actualizar_costo" class="text-sm font-medium leading-none cursor-pointer select-none">
+          Actualizar el costo del producto con este valor
+        </label>
+      </div>
+      @if (costoUpdateInvalido()) {
+        <p class="text-[0.8rem] font-medium text-destructive">
+          Para actualizar el costo debes indicar un costo unitario válido.
+        </p>
+      }
+    </div>
+  }
+
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label for="nuevo_precio_venta">Nuevo precio de venta (opcional)</label>
+      <input z-input id="nuevo_precio_venta" type="number" step="0.01" min="0" formControlName="nuevo_precio_venta" placeholder="Fija producto.precio_venta">
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label for="stock_minimo">Stock mínimo (opcional)</label>
+      <input z-input id="stock_minimo" type="number" step="0.01" min="0" formControlName="stock_minimo" placeholder="Umbral de reorden">
+    </div>
+    <div z-field>
+      <label z-field-label for="stock_maximo">Stock máximo (opcional)</label>
+      <input z-input id="stock_maximo" type="number" step="0.01" min="0" formControlName="stock_maximo" placeholder="Umbral superior">
     </div>
   </div>
 
   <div class="grid grid-cols-1 gap-4">
     <div z-field>
-      <label z-field-label for="motivo">Motivo (Opcional)</label>
+      <label z-field-label for="motivo">Motivo (opcional)</label>
       <textarea z-textarea id="motivo" rows="3" formControlName="motivo" placeholder="Explica el motivo del movimiento"></textarea>
     </div>
   </div>

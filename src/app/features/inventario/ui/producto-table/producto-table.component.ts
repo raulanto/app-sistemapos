@@ -1,9 +1,19 @@
 import { ChangeDetectionStrategy, Component, input, output, computed } from '@angular/core';
-import { DecimalPipe, LowerCasePipe } from '@angular/common';
+import { CurrencyPipe, DecimalPipe, LowerCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucidePencil, lucideTrash, lucideCircleCheck, lucideX, lucideActivity } from '@ng-icons/lucide';
+import {
+  lucidePencil,
+  lucideCircleCheck,
+  lucideX,
+  lucideActivity,
+  lucideBan,
+  lucideChevronsUpDown,
+  lucideChevronUp,
+  lucideChevronDown,
+  lucideLayers,
+} from '@ng-icons/lucide';
 import { ProductoResponse } from '../../data-access/inventario.models';
 import { ZardTableImports } from '../../../../shared/components/table/table.imports';
 import { ZardPaginationImports } from '../../../../shared/components/pagination/pagination.imports';
@@ -12,6 +22,8 @@ import { ZardHoverCardDirective, ZardHoverCardComponent } from '../../../../shar
 import { ZardCheckboxComponent } from '../../../../shared/components/checkbox/checkbox.component';
 import { ZardButtonComponent } from '../../../../shared/components/button/button.component';
 import { ZardBadgeComponent } from '@/shared/components/badge';
+import { ZardSkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
+import { ZardEmptyComponent } from '../../../../shared/components/empty/empty.component';
 import { SucursalService } from '../../../../core/sucursal/sucursal.service';
 import { inject } from '@angular/core';
 
@@ -22,6 +34,7 @@ import { inject } from '@angular/core';
     FormsModule,
     RouterLink,
     NgIcon,
+    CurrencyPipe,
     DecimalPipe,
     LowerCasePipe,
     ...ZardTableImports,
@@ -31,10 +44,22 @@ import { inject } from '@angular/core';
     ZardHoverCardComponent,
     ZardCheckboxComponent,
     ZardButtonComponent,
-    ZardBadgeComponent
+    ZardBadgeComponent,
+    ZardSkeletonComponent,
+    ZardEmptyComponent
   ],
   viewProviders: [
-    provideIcons({ lucidePencil, lucideTrash, lucideCircleCheck, lucideX, lucideActivity })
+    provideIcons({
+      lucidePencil,
+      lucideCircleCheck,
+      lucideX,
+      lucideActivity,
+      lucideBan,
+      lucideChevronsUpDown,
+      lucideChevronUp,
+      lucideChevronDown,
+      lucideLayers,
+    })
   ],
   templateUrl: './producto-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -69,10 +94,17 @@ export class ProductoTableComponent {
     return sucursal ? sucursal.nombre : 'Desconocida';
   }
 
-  getSortIcon(field: string): string {
+  sortState(field: string): 'asc' | 'desc' | 'none' {
     const current = this.sort();
-    if (!current.startsWith(field)) return '';
-    return current.endsWith(':asc') ? '↑' : '↓';
+    if (!current.startsWith(field)) return 'none';
+    return current.endsWith(':asc') ? 'asc' : 'desc';
+  }
+
+  sortIconName(field: string): string {
+    const state = this.sortState(field);
+    if (state === 'asc') return 'lucideChevronUp';
+    if (state === 'desc') return 'lucideChevronDown';
+    return 'lucideChevronsUpDown';
   }
 
   getTotalExistencias(producto: ProductoResponse): number {

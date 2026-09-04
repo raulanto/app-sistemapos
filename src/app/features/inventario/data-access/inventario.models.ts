@@ -38,26 +38,52 @@ export interface UnidadResponse {
   id: string;
   producto_id: string;
   nombre: string;
+  /** Unidad de medida propia de la presentación (ej. "pieza", "litro"). 1-20 chars. */
+  unidad_medida: string;
+  /** Unidades base del producto padre por 1 de esta presentación (precisión 6). */
   factor: string;
+  /** Recíproco: cuántas de esta presentación entran en 1 unidad base. Puede venir null. */
+  unidades_por_base?: string | null;
   precio_venta: string;
   codigo_barras?: string | null;
   activo: boolean;
   producto?: ProductoResponse;
 }
 
+/**
+ * Equivalencia: enviar EXACTAMENTE uno de `factor` o `unidades_por_base`.
+ * - `factor`: unidades base por 1 presentación (Reja x24 sobre base "lata" => 24).
+ * - `unidades_por_base`: su recíproco (reja de 6 latas, presentación "lata" => 6).
+ * El backend siempre persiste `factor` (unidades_por_base 6 => 0.166667).
+ */
 export interface AgregarUnidadRequest {
   nombre: string;
-  factor: number | string;
+  unidad_medida: string;
   precio_venta: number | string;
+  factor?: number | string | null;
+  unidades_por_base?: number | string | null;
   codigo_barras?: string | null;
 }
 
 export interface ActualizarUnidadRequest {
   nombre?: string;
-  factor?: number | string;
+  unidad_medida?: string;
+  factor?: number | string | null;
+  unidades_por_base?: number | string | null;
   precio_venta?: number | string;
   codigo_barras?: string | null;
+  cambiar_codigo_barras?: boolean;
   activo?: boolean;
+}
+
+/** Resultado de POS al escanear un código de barras (producto o presentación). */
+export interface ResolucionCodigoResponse {
+  producto_id: string;
+  unidad_id?: string | null;
+  nombre_unidad: string;
+  unidad_medida: string;
+  factor: string;
+  precio_venta: string;
 }
 
 export interface CrearProductoRequest {
@@ -182,11 +208,22 @@ export interface AplicarMovimientoRequest {
   producto_id: string;
   tipo: string;
   sucursal_id: string;
-  cantidad: number | string;
+  cantidad?: number | string | null;
+  /** Alternativa a `cantidad`: fija el saldo resultante (ajustes por conteo). */
+  cantidad_final?: number | string | null;
   referencia_tipo: string;
+  referencia_id?: string | null;
   motivo?: string | null;
-  stock_minimo?: number | null;
-  stock_maximo?: number | null;
+  costo_unitario?: number | string | null;
+  stock_minimo?: number | string | null;
+  stock_maximo?: number | string | null;
+  /**
+   * Solo en `entrada` con `costo_unitario`: hace `producto.costo = costo_unitario`
+   * dentro de la misma transacción. 400 si falta costo_unitario o el tipo no es entrada.
+   */
+  actualizar_costo?: boolean;
+  /** Fija `producto.precio_venta` en cualquier tipo de movimiento. >= 0. */
+  nuevo_precio_venta?: number | string | null;
 }
 export interface TransferenciaRequest {
   producto_id: string;

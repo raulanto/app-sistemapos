@@ -2,7 +2,28 @@ import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, C
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucidePackage, lucideActivity, lucideCalendar, lucideMapPin, lucideEdit, lucidePlus, lucideSettings2 } from '@ng-icons/lucide';
+import {
+  lucideArrowLeft,
+  lucidePackage,
+  lucideActivity,
+  lucideCalendar,
+  lucideMapPin,
+  lucideEdit,
+  lucidePlus,
+  lucideSettings2,
+  lucideArrowRightLeft,
+  lucideTrash,
+  lucideTag,
+  lucideBarcode,
+  lucidePercent,
+  lucideLayers,
+  lucideStore,
+  lucideTrendingUp,
+  lucideBoxes,
+  lucideHistory,
+  lucidePackageOpen,
+  lucideWallet,
+} from '@ng-icons/lucide';
 
 import { ProductoService } from '../data-access/producto.service';
 import { MovimientoService } from '../data-access/movimiento.service';
@@ -26,6 +47,8 @@ import { UnidadFormSheetComponent } from '../ui/unidad-form-sheet/unidad-form-sh
 import { ZardButtonComponent } from '../../../shared/components/button/button.component';
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
 import { ZardChartImports } from '../../../shared/components/chart/chart.imports';
+import { ZardEmptyComponent } from '../../../shared/components/empty/empty.component';
+import { ZardSkeletonComponent } from '../../../shared/components/skeleton/skeleton.component';
 import { ComponenteResponse } from '../data-access/inventario.models';
 
 @Component({
@@ -41,11 +64,36 @@ import { ComponenteResponse } from '../data-access/inventario.models';
     ...ZardTabsImports,
     ZardAlertComponent,
     ZardButtonComponent,
+    ZardEmptyComponent,
+    ZardSkeletonComponent,
     ...ZardChartImports
   ],
   templateUrl: './producto-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ lucideArrowLeft, lucidePackage, lucideActivity, lucideCalendar, lucideMapPin, lucideEdit, lucidePlus, lucideSettings2 })]
+  viewProviders: [
+    provideIcons({
+      lucideArrowLeft,
+      lucidePackage,
+      lucideActivity,
+      lucideCalendar,
+      lucideMapPin,
+      lucideEdit,
+      lucidePlus,
+      lucideSettings2,
+      lucideArrowRightLeft,
+      lucideTrash,
+      lucideTag,
+      lucideBarcode,
+      lucidePercent,
+      lucideLayers,
+      lucideStore,
+      lucideTrendingUp,
+      lucideBoxes,
+      lucideHistory,
+      lucidePackageOpen,
+      lucideWallet,
+    }),
+  ]
 })
 export class ProductoDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -190,6 +238,21 @@ export class ProductoDetailComponent implements OnInit {
         console.error('Error al cargar unidades:', err);
       }
     });
+  }
+
+  private fmtNum(n: number): string {
+    return Number.isFinite(n) ? Number(n.toFixed(6)).toString() : '—';
+  }
+
+  /** Texto legible de la equivalencia de una presentación con la unidad base. */
+  describirEquivalencia(u: UnidadResponse): string {
+    const base = this.producto()?.unidad_medida ?? 'base';
+    const factor = Number(u.factor);
+    if (factor >= 1) {
+      return `1 ${u.unidad_medida} = ${this.fmtNum(factor)} ${base}`;
+    }
+    const upb = u.unidades_por_base != null ? Number(u.unidades_por_base) : factor > 0 ? 1 / factor : 0;
+    return `${this.fmtNum(upb)} ${u.unidad_medida} = 1 ${base}`;
   }
 
   getNombreSucursal(id: string): string {
@@ -378,7 +441,7 @@ export class ProductoDetailComponent implements OnInit {
       zTitle: 'Agregar Presentación',
       zDescription: `Nueva presentación de venta para ${prod.nombre}.`,
       zContent: UnidadFormSheetComponent,
-      zData: { productoId: prod.id },
+      zData: { productoId: prod.id, unidadBase: prod.unidad_medida },
       zOkText: 'Guardar',
       zCancelText: 'Cancelar',
       zOnOk: (instance: any) => {
@@ -404,7 +467,7 @@ export class ProductoDetailComponent implements OnInit {
       zTitle: 'Editar Presentación',
       zDescription: `Actualiza los datos de la presentación.`,
       zContent: UnidadFormSheetComponent,
-      zData: { productoId: prod.id, unidad },
+      zData: { productoId: prod.id, unidadBase: prod.unidad_medida, unidad },
       zOkText: 'Guardar',
       zCancelText: 'Cancelar',
       zOnOk: (instance: any) => {

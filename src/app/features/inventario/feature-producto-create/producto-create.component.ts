@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormArray, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Observable, forkJoin, of } from 'rxjs';
 import { map, switchMap, retry } from 'rxjs/operators';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideSave, lucidePlus, lucideTrash } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideSave, lucidePlus, lucideTrash, lucidePackage, lucideLayers } from '@ng-icons/lucide';
 
 import { ProductoService } from '../data-access/producto.service';
 import { CategoriaService } from '../data-access/categoria.service';
@@ -21,6 +21,16 @@ import { ZardInputComponent } from '../../../shared/components/input/input.compo
 import { ZardSelectImports } from '../../../shared/components/select/select.imports';
 import { ZardSwitchComponent } from '../../../shared/components/switch/switch.component';
 import { ZardButtonComponent } from '../../../shared/components/button/button.component';
+import { ZardAlertComponent } from '../../../shared/components/alert/alert.component';
+import { ZardEmptyComponent } from '../../../shared/components/empty/empty.component';
+import { ZardSeparatorComponent } from '../../../shared/components/separator/separator.component';
+
+/** En una presentación, el campo de equivalencia del modo activo debe ser > 0. */
+function equivalenciaUnidadValidator(control: AbstractControl): ValidationErrors | null {
+  const campo = control.get('modo')?.value === 'factor' ? 'factor' : 'unidades_por_base';
+  const valor = Number(control.get(campo)?.value);
+  return Number.isFinite(valor) && valor > 0 ? null : { equivalencia: true };
+}
 
 @Component({
   selector: 'app-producto-create',
@@ -35,11 +45,14 @@ import { ZardButtonComponent } from '../../../shared/components/button/button.co
     ZardInputComponent,
     ...ZardSelectImports,
     ZardSwitchComponent,
-    ZardButtonComponent
+    ZardButtonComponent,
+    ZardAlertComponent,
+    ZardEmptyComponent,
+    ZardSeparatorComponent
   ],
   templateUrl: './producto-create.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ lucideArrowLeft, lucideSave, lucidePlus, lucideTrash })]
+  viewProviders: [provideIcons({ lucideArrowLeft, lucideSave, lucidePlus, lucideTrash, lucidePackage, lucideLayers })]
 })
 export class ProductoCreateComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -68,7 +81,8 @@ export class ProductoCreateComponent implements OnInit {
     activo: [true],
     tipo: ['simple', Validators.required],
     existencias: this.fb.array([]),
-    componentes: this.fb.array([])
+    componentes: this.fb.array([]),
+    unidades: this.fb.array([])
   });
 
   private formEvents = toSignal(this.form.events);
@@ -95,12 +109,47 @@ export class ProductoCreateComponent implements OnInit {
   impuestoTasaError = this.getFieldError('impuesto_tasa');
   tipoError = this.getFieldError('tipo');
 
+  /** Se activa tras un intento de envío fallido para mostrar el resumen de errores. */
+  readonly intentoEnvio = signal(false);
+
+  private readonly etiquetasCampos: Record<string, string> = {
+    sku: 'SKU',
+    nombre: 'Nombre',
+    categoria_id: 'Categoría',
+    tipo: 'Tipo',
+    unidad_medida: 'Unidad de medida',
+    precio_venta: 'Precio de venta',
+    costo: 'Costo',
+    impuesto_tasa: 'Impuesto',
+  };
+
+  /** Lista de secciones/campos con error para el aviso superior. */
+  readonly resumenErrores = computed<string[]>(() => {
+    this.formEvents();
+    if (!this.intentoEnvio()) return [];
+
+    const errores: string[] = [];
+    for (const [campo, etiqueta] of Object.entries(this.etiquetasCampos)) {
+      if (this.form.get(campo)?.invalid) errores.push(etiqueta);
+    }
+    if (this.unidadesArray.controls.some(c => c.invalid)) errores.push('Presentaciones de venta');
+    if (this.existenciasArray.controls.some(c => c.invalid)) errores.push('Inventario inicial');
+    if (this.form.get('tipo')?.value === 'kit' && this.componentesArray.controls.some(c => c.invalid)) {
+      errores.push('Receta del kit');
+    }
+    return errores;
+  });
+
   get existenciasArray() {
     return this.form.get('existencias') as FormArray;
   }
 
   get componentesArray() {
     return this.form.get('componentes') as FormArray;
+  }
+
+  get unidadesArray() {
+    return this.form.get('unidades') as FormArray;
   }
 
   ngOnInit() {
@@ -132,6 +181,7 @@ export class ProductoCreateComponent implements OnInit {
       referencia_tipo: ['inventario_inicial', Validators.required],
       motivo: ['Inventario inicial'],
       cantidad: [0, [Validators.required, Validators.min(0)]],
+      costo_unitario: [0, [Validators.min(0)]],
       stock_minimo: [0, [Validators.min(0)]],
       stock_maximo: [0, [Validators.min(0)]]
     });
@@ -154,18 +204,41 @@ export class ProductoCreateComponent implements OnInit {
     this.componentesArray.removeAt(index);
   }
 
+  agregarUnidad() {
+    const group = this.fb.group(
+      {
+        nombre: ['', [Validators.required, Validators.maxLength(50)]],
+        unidad_medida: ['pieza', [Validators.required, Validators.maxLength(20)]],
+        modo: ['unidades_por_base', Validators.required],
+        unidades_por_base: [6 as number | null],
+        factor: [null as number | null],
+        precio_venta: [0, [Validators.required, Validators.min(0)]],
+        codigo_barras: ['']
+      },
+      { validators: equivalenciaUnidadValidator }
+    );
+    this.unidadesArray.push(group);
+  }
+
+  removerUnidad(index: number) {
+    this.unidadesArray.removeAt(index);
+  }
+
   guardar() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.intentoEnvio.set(true);
       this.sonner.error('Verifica los campos requeridos');
       return;
     }
-    
+
+    this.intentoEnvio.set(false);
     this.loading.set(true);
 
     const data = { ...this.form.value } as any;
     delete data.existencias;
     delete data.componentes;
+    delete data.unidades;
 
     if (data.codigo_barras === '') data.codigo_barras = null;
     if (data.descripcion === '') data.descripcion = null;
@@ -176,35 +249,34 @@ export class ProductoCreateComponent implements OnInit {
         
         this.existenciasArray.controls.forEach(c => {
           const sucursal_id = c.get('sucursal_id')?.value;
-          const cantidad = c.get('cantidad')?.value;
-          const stock_minimo = c.get('stock_minimo')?.value;
-          const stock_maximo = c.get('stock_maximo')?.value;
+          const cantidad = Number(c.get('cantidad')?.value) || 0;
+          const costo_unitario = Number(c.get('costo_unitario')?.value) || 0;
+          const stock_minimo = Number(c.get('stock_minimo')?.value) || 0;
+          const stock_maximo = Number(c.get('stock_maximo')?.value) || 0;
           const tipo = c.get('tipo')?.value;
           const referencia_tipo = c.get('referencia_tipo')?.value;
           const motivo = c.get('motivo')?.value;
 
           if (cantidad > 0) {
-            const movObs$ = this.movimientoService.aplicar({
-               producto_id: prodRes.id,
-               sucursal_id: sucursal_id,
-               tipo: tipo,
-               cantidad: cantidad,
-               referencia_tipo: referencia_tipo,
-               motivo: motivo
-            }).pipe(
-              retry({ count: 3, delay: 1000 }),
-              switchMap(() => {
-                if (stock_minimo > 0 || stock_maximo > 0) {
-                  const umbralesPayload: any = {};
-                  if (stock_minimo > 0) umbralesPayload.stock_minimo = stock_minimo;
-                  if (stock_maximo > 0) umbralesPayload.stock_maximo = stock_maximo;
-                  
-                  return this.productoService.actualizarUmbrales(prodRes.id, sucursal_id, umbralesPayload);
-                }
-                return of(null);
-              })
+            // El movimiento crea la existencia con saldo, umbrales y costo de una sola vez.
+            const payload: any = {
+              producto_id: prodRes.id,
+              sucursal_id,
+              tipo,
+              cantidad,
+              referencia_tipo,
+              motivo
+            };
+            if (stock_minimo > 0) payload.stock_minimo = stock_minimo;
+            if (stock_maximo > 0) payload.stock_maximo = stock_maximo;
+            if (tipo === 'entrada' && costo_unitario > 0) {
+              payload.costo_unitario = costo_unitario;
+              payload.actualizar_costo = true;
+            }
+
+            operations.push(
+              this.movimientoService.aplicar(payload).pipe(retry({ count: 3, delay: 1000 }))
             );
-            operations.push(movObs$);
           } else if (stock_minimo > 0 || stock_maximo > 0) {
             this.sonner.warning('Algunos umbrales fueron ignorados porque requieren registrar un stock inicial mayor a 0 primero.');
           }
@@ -220,6 +292,23 @@ export class ProductoCreateComponent implements OnInit {
                 cantidad
               }));
             }
+          });
+        } else {
+          // Presentaciones de venta (producto_unidad): la unidad base ya vive en el propio producto.
+          this.unidadesArray.controls.forEach(c => {
+            const nombre = (c.get('nombre')?.value || '').trim();
+            if (!nombre) return;
+            const usaFactor = c.get('modo')?.value === 'factor';
+            const equivalencia = usaFactor
+              ? { factor: Number(c.get('factor')?.value) }
+              : { unidades_por_base: Number(c.get('unidades_por_base')?.value) };
+            operations.push(this.productoService.agregarUnidad(prodRes.id, {
+              nombre,
+              unidad_medida: c.get('unidad_medida')?.value,
+              precio_venta: Number(c.get('precio_venta')?.value) || 0,
+              codigo_barras: c.get('codigo_barras')?.value || null,
+              ...equivalencia
+            }));
           });
         }
 

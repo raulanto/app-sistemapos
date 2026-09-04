@@ -1,48 +1,62 @@
 <div class="flex flex-wrap items-center gap-3">
-  <input
-    z-input
-    type="text"
-    placeholder="Buscar producto..."
-    class="w-full sm:w-64"
-    [ngModel]="q()"
-    (ngModelChange)="qChange.emit($event)"
-  />
+  <!-- Búsqueda -->
+  <z-input-group class="w-full sm:w-72">
+    <z-input-group-addon>
+      <ng-icon name="lucideSearch" />
+    </z-input-group-addon>
+    <input
+      z-input
+      type="text"
+      placeholder="Buscar producto..."
+      [ngModel]="q()"
+      (ngModelChange)="qChange.emit($event)"
+    />
+    @if (q()) {
+      <z-input-group-addon zAlign="inline-end">
+        <button z-input-group-button zSize="icon-xs" (click)="limpiarBusqueda()" aria-label="Limpiar búsqueda">
+          <ng-icon name="lucideX" />
+        </button>
+      </z-input-group-addon>
+    }
+  </z-input-group>
 
-  <z-select
+  <!-- Categoría (buscable, multi) -->
+  <z-combobox
+    class="w-full sm:w-56"
     [zMultiple]="true"
+    [options]="categoriaOptions()"
     [ngModel]="categoriaId()"
     (ngModelChange)="categoriaIdChange.emit($event)"
     placeholder="Categoría"
-    class="w-full sm:w-56"
-  >
-    @for (c of categorias(); track c.id) {
-      <z-select-item [zValue]="c.id">{{ c.nombre }}</z-select-item>
-    }
-  </z-select>
+    searchPlaceholder="Buscar categoría..."
+    emptyText="Sin resultados"
+  />
 
-  <z-select
-    [zMultiple]="true"
-    [ngModel]="activo()"
-    (ngModelChange)="activoChange.emit($event)"
-    placeholder="Estado"
-    class="w-full sm:w-32"
-  >
-    <z-select-item [zValue]="'true'">Activos</z-select-item>
-    <z-select-item [zValue]="'false'">Inactivos</z-select-item>
-  </z-select>
+  <!-- Estado (segmentado) -->
+  <z-toggle-group
+    zMode="single"
+    zType="outline"
+    [zItems]="estadoItems"
+    [ngModel]="estadoValue()"
+    (ngModelChange)="onEstadoChange($event)"
+    aria-label="Filtrar por estado"
+  />
 
-  <div
-    class="flex items-center gap-2 ml-auto bg-muted/50 px-3 py-1.5 rounded-md border border-border"
-  >
-    <z-checkbox
-      id="todasSucursales"
+  @if (hayFiltrosActivos()) {
+    <button z-button zType="ghost" zSize="sm" (click)="limpiarFiltros()">
+      <ng-icon name="lucideFilterX" class="mr-1.5 size-4" />
+      Limpiar filtros
+    </button>
+  }
+
+  <!-- Alcance de sucursales -->
+  <div class="flex items-center gap-2 ml-auto">
+    <z-switch
+      zId="todasSucursales"
       [ngModel]="todasLasSucursales()"
       (ngModelChange)="todasLasSucursalesChange.emit($event)"
-    ></z-checkbox>
-    <label
-      for="todasSucursales"
-      class="text-sm font-medium leading-none cursor-pointer select-none"
-    >
+    />
+    <label for="todasSucursales" class="text-sm font-medium leading-none cursor-pointer select-none">
       Todas las sucursales
     </label>
   </div>

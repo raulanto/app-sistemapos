@@ -16,7 +16,8 @@ import {
   ActualizarComponenteRequest,
   UnidadResponse,
   AgregarUnidadRequest,
-  ActualizarUnidadRequest
+  ActualizarUnidadRequest,
+  ResolucionCodigoResponse
 } from './inventario.models';
 
 @Injectable({
@@ -65,6 +66,14 @@ export class ProductoService {
     return this.http.get<ApiResponse<ProductoKpiResponse>>(`${this.API_URL}/kpis`, { params }).pipe(
       map(res => res.data)
     );
+  }
+
+  /** Escaneo POS: resuelve un código de barras a producto/presentación + factor + precio. */
+  resolverCodigo(codigo_barras: string): Observable<ResolucionCodigoResponse> {
+    const params = new HttpParams().set('codigo_barras', codigo_barras);
+    return this.http
+      .get<ApiResponse<ResolucionCodigoResponse>>(`${this.API_URL}/resolver-codigo`, { params })
+      .pipe(map(res => res.data));
   }
 
   obtenerPorId(id: string, include?: string): Observable<ProductoResponse> {

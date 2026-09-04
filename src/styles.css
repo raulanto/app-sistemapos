@@ -6,6 +6,13 @@
 @custom-variant dark (&:is(.dark *));
 
 
+@font-face {
+  font-family: 'SF Pro Rounded';
+  src: url('/assets/font/FontsFree-Net-SF-Pro-Rounded-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -79,6 +86,7 @@
 
 
 @theme inline {
+  --font-sans: 'SF Pro Rounded', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -123,7 +131,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
 
   input[type="number"]::-webkit-inner-spin-button,

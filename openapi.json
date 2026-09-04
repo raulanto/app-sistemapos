@@ -4268,6 +4268,10 @@
             "anyOf": [{ "type": "string", "maxLength": 50, "minLength": 1 }, { "type": "null" }],
             "title": "Nombre"
           },
+          "unidad_medida": {
+            "anyOf": [{ "type": "string", "maxLength": 20, "minLength": 1 }, { "type": "null" }],
+            "title": "Unidad Medida"
+          },
           "factor": {
             "anyOf": [
               { "type": "number", "exclusiveMinimum": 0.0 },
@@ -4275,6 +4279,14 @@
               { "type": "null" }
             ],
             "title": "Factor"
+          },
+          "unidades_por_base": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Unidades Por Base"
           },
           "precio_venta": {
             "anyOf": [
@@ -4321,12 +4333,11 @@
       "AgregarUnidadRequest": {
         "properties": {
           "nombre": { "type": "string", "maxLength": 50, "minLength": 1, "title": "Nombre" },
-          "factor": {
-            "anyOf": [
-              { "type": "number", "exclusiveMinimum": 0.0 },
-              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
-            ],
-            "title": "Factor"
+          "unidad_medida": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Unidad Medida"
           },
           "precio_venta": {
             "anyOf": [
@@ -4335,6 +4346,22 @@
             ],
             "title": "Precio Venta"
           },
+          "factor": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Factor"
+          },
+          "unidades_por_base": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Unidades Por Base"
+          },
           "codigo_barras": {
             "anyOf": [{ "type": "string", "maxLength": 50 }, { "type": "null" }],
             "title": "Codigo Barras"
@@ -4342,8 +4369,9 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": ["nombre", "factor", "precio_venta"],
-        "title": "AgregarUnidadRequest"
+        "required": ["nombre", "unidad_medida", "precio_venta"],
+        "title": "AgregarUnidadRequest",
+        "description": "`factor` = unidades base por 1 presentación (Reja x24 => 24).\n`unidades_por_base` = su recíproco (6 latas por reja => 6). Indicá uno."
       },
       "AnularVentaRequest": {
         "properties": {
@@ -4874,6 +4902,15 @@
               { "type": "null" }
             ],
             "title": "Stock Maximo"
+          },
+          "actualizar_costo": { "type": "boolean", "title": "Actualizar Costo", "default": false },
+          "nuevo_precio_venta": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Nuevo Precio Venta"
           }
         },
         "type": "object",
@@ -6144,6 +6181,7 @@
             "title": "Unidad Id"
           },
           "nombre_unidad": { "type": "string", "title": "Nombre Unidad" },
+          "unidad_medida": { "type": "string", "title": "Unidad Medida" },
           "factor": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -6156,7 +6194,14 @@
           }
         },
         "type": "object",
-        "required": ["producto_id", "unidad_id", "nombre_unidad", "factor", "precio_venta"],
+        "required": [
+          "producto_id",
+          "unidad_id",
+          "nombre_unidad",
+          "unidad_medida",
+          "factor",
+          "precio_venta"
+        ],
         "title": "ResolucionCodigoResponse"
       },
       "ResumenTurnoResponse": {
@@ -6282,36 +6327,18 @@
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
           "nombre": { "type": "string", "title": "Nombre" },
+          "unidad_medida": { "type": "string", "title": "Unidad Medida" },
           "factor": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Factor"
           },
-          "precio_venta": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Precio Venta"
-          },
-          "codigo_barras": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Codigo Barras"
-          },
-          "activo": { "type": "boolean", "title": "Activo" }
-        },
-        "type": "object",
-        "required": ["id", "producto_id", "nombre", "factor", "precio_venta", "activo"],
-        "title": "UnidadEmbed",
-        "description": "Presentación de venta de un producto (`?include=unidades`)."
-      },
-      "UnidadResponse": {
-        "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
-          "nombre": { "type": "string", "title": "Nombre" },
-          "factor": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Factor"
+          "unidades_por_base": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Unidades Por Base"
           },
           "precio_venta": {
             "type": "string",
@@ -6329,6 +6356,49 @@
           "id",
           "producto_id",
           "nombre",
+          "unidad_medida",
+          "factor",
+          "precio_venta",
+          "activo"
+        ],
+        "title": "UnidadEmbed",
+        "description": "Presentación de venta de un producto (`?include=unidades`)."
+      },
+      "UnidadResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
+          "nombre": { "type": "string", "title": "Nombre" },
+          "unidad_medida": { "type": "string", "title": "Unidad Medida" },
+          "factor": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Factor"
+          },
+          "unidades_por_base": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Unidades Por Base"
+          },
+          "precio_venta": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Precio Venta"
+          },
+          "codigo_barras": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Codigo Barras"
+          },
+          "activo": { "type": "boolean", "title": "Activo" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "producto_id",
+          "nombre",
+          "unidad_medida",
           "factor",
           "precio_venta",
           "codigo_barras",

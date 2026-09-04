@@ -2,41 +2,73 @@
   <div class="grid grid-cols-1 gap-4">
     <div z-field>
       <label z-field-label>Nombre de la presentación *</label>
-      <input z-input formControlName="nombre" placeholder="Ej. Reja x24, Six-pack" />
+      <input z-input formControlName="nombre" placeholder="Ej. Lata 355ml, Reja x24" />
       @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
-        <p class="text-[0.8rem] font-medium text-destructive">El nombre es obligatorio.</p>
+        <p class="text-[0.8rem] font-medium text-destructive">El nombre es obligatorio (máx. 50).</p>
       }
     </div>
   </div>
 
-  <div class="grid grid-cols-1 gap-4">
+  <div class="grid grid-cols-2 gap-4">
     <div z-field>
-      <label z-field-label>Factor (cantidad de unidades base) *</label>
-      <input z-input type="number" formControlName="factor" min="2" placeholder="Ej. 24" />
-      <p class="text-[0.8rem] text-muted-foreground">
-        ¿Cuántas unidades base contiene esta presentación? (Debe ser mayor a 1).
-      </p>
-      @if (form.controls.factor.invalid && form.controls.factor.touched) {
-        <p class="text-[0.8rem] font-medium text-destructive">El factor es obligatorio y debe ser mayor a 1.</p>
+      <label z-field-label>Unidad de medida *</label>
+      <input z-input formControlName="unidad_medida" maxlength="20" placeholder="Ej. pieza, litro" />
+      @if (form.controls.unidad_medida.invalid && form.controls.unidad_medida.touched) {
+        <p class="text-[0.8rem] font-medium text-destructive">Obligatoria (1–20 caracteres).</p>
       }
     </div>
-  </div>
 
-  <div class="grid grid-cols-1 gap-4">
     <div z-field>
-      <label z-field-label>Precio de Venta *</label>
+      <label z-field-label>Precio de venta *</label>
       <input z-input type="number" formControlName="precio_venta" min="0" step="0.01" />
       @if (form.controls.precio_venta.invalid && form.controls.precio_venta.touched) {
         <p class="text-[0.8rem] font-medium text-destructive">El precio de venta es obligatorio.</p>
       }
     </div>
   </div>
-  
+
   <div class="grid grid-cols-1 gap-4">
     <div z-field>
-      <label z-field-label>Código de Barras (Opcional)</label>
-      <input z-input formControlName="codigo_barras" placeholder="Código de barras para esta presentación" />
+      <label z-field-label>Equivalencia con la unidad base ({{ unidadBase() }}) *</label>
+      <z-select formControlName="modo" placeholder="Selecciona el tipo de equivalencia">
+        <z-select-item zValue="unidades_por_base">Más pequeña que la base (varias por {{ unidadBase() }})</z-select-item>
+        <z-select-item zValue="factor">Más grande que la base (contiene varias {{ unidadBase() }})</z-select-item>
+      </z-select>
     </div>
   </div>
 
+  @if (modo() === 'unidades_por_base') {
+    <div class="grid grid-cols-1 gap-4">
+      <div z-field>
+        <label z-field-label>Unidades por {{ unidadBase() }} *</label>
+        <input z-input type="number" formControlName="unidades_por_base" min="0" step="any" placeholder="Ej. 6" />
+        <p class="text-[0.8rem] text-muted-foreground">
+          ¿Cuántas de esta presentación entran en 1 {{ unidadBase() }}? Ej. una reja de 6 latas → 6.
+        </p>
+      </div>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 gap-4">
+      <div z-field>
+        <label z-field-label>Unidades base ({{ unidadBase() }}) por presentación *</label>
+        <input z-input type="number" formControlName="factor" min="0" step="any" placeholder="Ej. 24" />
+        <p class="text-[0.8rem] text-muted-foreground">
+          ¿Cuántas {{ unidadBase() }} contiene 1 de esta presentación? Ej. "Reja x24" → 24.
+        </p>
+      </div>
+    </div>
+  }
+
+  @if (form.hasError('equivalencia') && form.touched) {
+    <p class="text-[0.8rem] font-medium text-destructive -mt-3">
+      Indica un valor mayor a 0 para la equivalencia.
+    </p>
+  }
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Código de barras (opcional)</label>
+      <input z-input formControlName="codigo_barras" placeholder="Código de barras de esta presentación" />
+    </div>
+  </div>
 </form>
