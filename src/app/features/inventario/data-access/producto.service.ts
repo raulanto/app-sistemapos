@@ -17,7 +17,11 @@ import {
   UnidadResponse,
   AgregarUnidadRequest,
   ActualizarUnidadRequest,
-  ResolucionCodigoResponse
+  ResolucionCodigoResponse,
+  ImagenResponse,
+  AgregarImagenRequest,
+  ActualizarImagenRequest,
+  ReemplazarRecetaRequest
 } from './inventario.models';
 
 @Injectable({
@@ -98,8 +102,12 @@ export class ProductoService {
     );
   }
 
-  desactivar(id: string): Observable<void> {
-    return this.http.patch<void>(`${this.API_URL}/${id}/desactivar`, {});
+  desactivar(id: string, confirmarConStock = false): Observable<void> {
+    let params = new HttpParams();
+    if (confirmarConStock) {
+      params = params.set('confirmar_con_stock', 'true');
+    }
+    return this.http.patch<void>(`${this.API_URL}/${id}/desactivar`, {}, { params });
   }
 
   activar(id: string): Observable<void> {
@@ -120,6 +128,13 @@ export class ProductoService {
 
   agregarComponente(kit_id: string, request: AgregarComponenteRequest): Observable<ComponenteResponse> {
     return this.http.post<ApiResponse<ComponenteResponse>>(`${this.API_URL}/${kit_id}/componentes`, request).pipe(
+      map(res => res.data)
+    );
+  }
+
+  /** Reemplaza la receta completa del kit en una sola llamada atómica. */
+  reemplazarReceta(kit_id: string, request: ReemplazarRecetaRequest): Observable<ComponenteResponse[]> {
+    return this.http.put<ApiResponse<ComponenteResponse[]>>(`${this.API_URL}/${kit_id}/componentes`, request).pipe(
       map(res => res.data)
     );
   }
@@ -166,5 +181,53 @@ export class ProductoService {
 
   eliminarUnidad(producto_id: string, unidad_id: string): Observable<void> {
     return this.http.delete<void>(`${this.API_URL}/${producto_id}/unidades/${unidad_id}`);
+  }
+
+  // --- IMÁGENES (galería del producto) ---
+
+  listarImagenes(producto_id: string): Observable<ImagenResponse[]> {
+    return this.http.get<ApiResponse<ImagenResponse[]>>(`${this.API_URL}/${producto_id}/imagenes`).pipe(
+      map(res => res.data)
+    );
+  }
+
+  agregarImagen(producto_id: string, request: AgregarImagenRequest): Observable<ImagenResponse> {
+    return this.http.post<ApiResponse<ImagenResponse>>(`${this.API_URL}/${producto_id}/imagenes`, request).pipe(
+      map(res => res.data)
+    );
+  }
+
+  actualizarImagen(producto_id: string, imagen_id: string, request: ActualizarImagenRequest): Observable<ImagenResponse> {
+    return this.http.patch<ApiResponse<ImagenResponse>>(`${this.API_URL}/${producto_id}/imagenes/${imagen_id}`, request).pipe(
+      map(res => res.data)
+    );
+  }
+
+  eliminarImagen(producto_id: string, imagen_id: string): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/${producto_id}/imagenes/${imagen_id}`);
+  }
+
+  // --- IMÁGENES de una presentación (producto_unidad) ---
+
+  listarImagenesUnidad(producto_id: string, unidad_id: string): Observable<ImagenResponse[]> {
+    return this.http.get<ApiResponse<ImagenResponse[]>>(`${this.API_URL}/${producto_id}/unidades/${unidad_id}/imagenes`).pipe(
+      map(res => res.data)
+    );
+  }
+
+  agregarImagenUnidad(producto_id: string, unidad_id: string, request: AgregarImagenRequest): Observable<ImagenResponse> {
+    return this.http.post<ApiResponse<ImagenResponse>>(`${this.API_URL}/${producto_id}/unidades/${unidad_id}/imagenes`, request).pipe(
+      map(res => res.data)
+    );
+  }
+
+  actualizarImagenUnidad(producto_id: string, unidad_id: string, imagen_id: string, request: ActualizarImagenRequest): Observable<ImagenResponse> {
+    return this.http.patch<ApiResponse<ImagenResponse>>(`${this.API_URL}/${producto_id}/unidades/${unidad_id}/imagenes/${imagen_id}`, request).pipe(
+      map(res => res.data)
+    );
+  }
+
+  eliminarImagenUnidad(producto_id: string, unidad_id: string, imagen_id: string): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/${producto_id}/unidades/${unidad_id}/imagenes/${imagen_id}`);
   }
 }

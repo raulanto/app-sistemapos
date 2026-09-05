@@ -263,14 +263,17 @@ export class ProductoListComponent implements OnInit {
   }
 
   desactivar(producto: ProductoResponse) {
+    const conStock = (producto.existencias ?? []).some(e => Number(e.cantidad) > 0);
     this.alertDialog.confirm({
       zTitle: `¿Desactivar producto ${producto.sku}?`,
-      zDescription: 'Esta acción cambiará el estado del producto a inactivo.',
+      zDescription: conStock
+        ? 'Este producto todavía tiene existencias. Se desactivará de todos modos y pasará a estado inactivo.'
+        : 'Esta acción cambiará el estado del producto a inactivo.',
       zOkText: 'Desactivar',
       zOkDestructive: true,
       zOnOk: () => {
         this.inventarioAction.handleAction(
-          this.productoService.desactivar(producto.id),
+          this.productoService.desactivar(producto.id, conStock),
           'Producto desactivado correctamente',
           'Error al desactivar el producto',
           () => this.refreshTrigger.update(v => v + 1)

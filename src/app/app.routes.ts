@@ -40,6 +40,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/auditoria/auditoria.routes').then((m) => m.AUDITORIA_ROUTES),
       },
+      {
+        path: 'sucursales',
+        loadChildren: () =>
+          import('./features/sucursales/sucursales.routes').then((m) => m.SUCURSALES_ROUTES),
+      },
       { path: '', redirectTo: '/ventas', pathMatch: 'full' },
     ],
   },

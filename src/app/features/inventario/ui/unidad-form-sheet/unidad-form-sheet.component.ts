@@ -10,6 +10,7 @@ import { AgregarUnidadRequest, ActualizarUnidadRequest, UnidadResponse } from '.
 import { ZardFieldImports } from '../../../../shared/components/field/field.imports';
 import { ZardInputComponent } from '../../../../shared/components/input/input.component';
 import { ZardSelectImports } from '../../../../shared/components/select/select.imports';
+import { ImagenGaleriaComponent } from '../imagen-galeria/imagen-galeria.component';
 
 export interface UnidadSheetData {
   productoId: string;
@@ -31,7 +32,7 @@ function equivalenciaValidator(control: AbstractControl): ValidationErrors | nul
 @Component({
   selector: 'app-unidad-form-sheet',
   standalone: true,
-  imports: [ReactiveFormsModule, ...ZardFieldImports, ZardInputComponent, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, ...ZardFieldImports, ZardInputComponent, ...ZardSelectImports, ImagenGaleriaComponent],
   templateUrl: './unidad-form-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   exportAs: 'unidadFormSheet',

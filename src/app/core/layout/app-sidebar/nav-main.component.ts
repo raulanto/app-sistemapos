@@ -2,14 +2,15 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { 
-  lucideLayoutDashboard, 
-  lucideShoppingCart, 
-  lucidePackage, 
-  lucideUsers, 
-  lucideBarChart3, 
+import {
+  lucideLayoutDashboard,
+  lucideShoppingCart,
+  lucidePackage,
+  lucideUsers,
+  lucideBarChart3,
   lucideShieldCheck,
-  lucideChevronRight 
+  lucideStore,
+  lucideChevronRight
 } from '@ng-icons/lucide';
 
 import { ZardCollapsibleImports } from '../../../shared/components/collapsible/collapsible.imports';
@@ -33,14 +34,15 @@ export interface Sidebar07NavItem {
   standalone: true,
   imports: [...ZardSidebarImports, ...ZardCollapsibleImports, NgIcon, RouterLink, RouterLinkActive],
   viewProviders: [
-    provideIcons({ 
-      lucideLayoutDashboard, 
-      lucideShoppingCart, 
-      lucidePackage, 
-      lucideUsers, 
-      lucideBarChart3, 
+    provideIcons({
+      lucideLayoutDashboard,
+      lucideShoppingCart,
+      lucidePackage,
+      lucideUsers,
+      lucideBarChart3,
       lucideShieldCheck,
-      lucideChevronRight 
+      lucideStore,
+      lucideChevronRight
     }),
   ],
   template: `

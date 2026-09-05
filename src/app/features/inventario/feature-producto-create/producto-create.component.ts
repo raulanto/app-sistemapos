@@ -27,7 +27,7 @@ import { ZardButtonComponent } from '../../../shared/components/button/button.co
 import { ZardAlertComponent } from '../../../shared/components/alert/alert.component';
 import { ZardEmptyComponent } from '../../../shared/components/empty/empty.component';
 import { ZardSeparatorComponent } from '../../../shared/components/separator/separator.component';
-import { ZardAvatarComponent } from '../../../shared/components/avatar/avatar.component';
+import { ZardCheckboxComponent } from '../../../shared/components/checkbox/checkbox.component';
 
 /** En una presentación, el campo de equivalencia del modo activo debe ser > 0. */
 function equivalenciaUnidadValidator(control: AbstractControl): ValidationErrors | null {
@@ -53,7 +53,7 @@ function equivalenciaUnidadValidator(control: AbstractControl): ValidationErrors
     ZardAlertComponent,
     ZardEmptyComponent,
     ZardSeparatorComponent,
-    ZardAvatarComponent
+    ZardCheckboxComponent
   ],
   templateUrl: './producto-create.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -78,7 +78,6 @@ export class ProductoCreateComponent implements OnInit {
   form = this.fb.group({
     sku: ['', Validators.required],
     codigo_barras: [''],
-    imagen_url: [''],
     nombre: ['', Validators.required],
     descripcion: [''],
     categoria_id: ['', Validators.required],
@@ -94,7 +93,8 @@ export class ProductoCreateComponent implements OnInit {
     tipo: ['simple' as TipoProducto, Validators.required],
     existencias: this.fb.array([]),
     componentes: this.fb.array([]),
-    unidades: this.fb.array([])
+    unidades: this.fb.array([]),
+    imagenes: this.fb.array([])
   });
 
   private formEvents = toSignal(this.form.events);
@@ -146,6 +146,7 @@ export class ProductoCreateComponent implements OnInit {
     }
     if (this.unidadesArray.controls.some(c => c.invalid)) errores.push('Presentaciones de venta');
     if (this.existenciasArray.controls.some(c => c.invalid)) errores.push('Inventario inicial');
+    if (this.imagenesArray.controls.some(c => c.invalid)) errores.push('Fotos');
     if (this.form.get('tipo')?.value === 'kit' && this.componentesArray.controls.some(c => c.invalid)) {
       errores.push('Receta del kit');
     }
@@ -162,6 +163,32 @@ export class ProductoCreateComponent implements OnInit {
 
   get unidadesArray() {
     return this.form.get('unidades') as FormArray;
+  }
+
+  get imagenesArray() {
+    return this.form.get('imagenes') as FormArray;
+  }
+
+  agregarImagenFila() {
+    const group = this.fb.group({
+      url: ['', [Validators.required, Validators.pattern(/^https?:\/\/.+/i)]],
+      alt_texto: [''],
+      es_principal: [this.imagenesArray.length === 0],
+    });
+    this.imagenesArray.push(group);
+  }
+
+  removerImagenFila(index: number) {
+    const era_principal = this.imagenesArray.at(index).get('es_principal')?.value;
+    this.imagenesArray.removeAt(index);
+    // Si se quitó la portada, la primera que quede toma su lugar.
+    if (era_principal && this.imagenesArray.length > 0) {
+      this.imagenesArray.at(0).get('es_principal')?.setValue(true);
+    }
+  }
+
+  marcarPortada(index: number) {
+    this.imagenesArray.controls.forEach((c, i) => c.get('es_principal')?.setValue(i === index));
   }
 
   /** `fraccionable`/`simple`: puede tener venta fraccionada. `kit`/`servicio`: no aplica. */
@@ -318,9 +345,9 @@ export class ProductoCreateComponent implements OnInit {
     delete data.existencias;
     delete data.componentes;
     delete data.unidades;
+    delete data.imagenes;
 
     if (data.codigo_barras === '') data.codigo_barras = null;
-    if (data.imagen_url === '') data.imagen_url = null;
     if (data.descripcion === '') data.descripcion = null;
     if (data.unidad_medida_id === '') data.unidad_medida_id = null;
     if (data.incremento_minimo_venta === '' || data.incremento_minimo_venta == null) {
@@ -329,15 +356,40 @@ export class ProductoCreateComponent implements OnInit {
       data.incremento_minimo_venta = Number(data.incremento_minimo_venta);
     }
 
+    // Imágenes: filas válidas + portada (la primera si nadie la marcó).
+    const imagenesFilas = this.imagenesArray.controls
+      .map(c => ({
+        url: (c.get('url')?.value || '').trim(),
+        alt_texto: (c.get('alt_texto')?.value || '').trim() || null,
+        es_principal: !!c.get('es_principal')?.value,
+      }))
+      .filter(f => f.url);
+    if (imagenesFilas.length > 0 && !imagenesFilas.some(f => f.es_principal)) {
+      imagenesFilas[0].es_principal = true;
+    }
+    // Deja poblado el campo denormalizado para que el listado/detalle muestren portada sin pedir la galería.
+    data.imagen_url = imagenesFilas.find(f => f.es_principal)?.url ?? null;
+
     const esServicio = data.tipo === 'servicio';
 
     this.productoService.crear(data).pipe(
       switchMap(prodRes => {
         const operations: Observable<any>[] = [];
 
+        imagenesFilas.forEach((f, i) => {
+          operations.push(this.productoService.agregarImagen(prodRes.id, {
+            url: f.url,
+            alt_texto: f.alt_texto,
+            orden: i,
+            es_principal: f.es_principal,
+          }));
+        });
+
         // Un servicio nunca mueve inventario ni tiene presentaciones de venta.
         if (esServicio) {
-          return of(prodRes);
+          return operations.length > 0
+            ? forkJoin(operations).pipe(map(() => prodRes))
+            : of(prodRes);
         }
 
         this.existenciasArray.controls.forEach(c => {
@@ -376,16 +428,16 @@ export class ProductoCreateComponent implements OnInit {
         });
 
         if (data.tipo === 'kit') {
-          this.componentesArray.controls.forEach(c => {
-            const producto_componente_id = c.get('producto_componente_id')?.value;
-            const cantidad = c.get('cantidad')?.value;
-            if (producto_componente_id && cantidad > 0) {
-              operations.push(this.productoService.agregarComponente(prodRes.id, {
-                producto_componente_id,
-                cantidad
-              }));
-            }
-          });
+          const componentes = this.componentesArray.controls
+            .map(c => ({
+              producto_componente_id: c.get('producto_componente_id')?.value,
+              cantidad: Number(c.get('cantidad')?.value) || 0,
+            }))
+            .filter(l => l.producto_componente_id && l.cantidad > 0);
+          if (componentes.length > 0) {
+            // Una sola llamada atómica que reemplaza toda la receta.
+            operations.push(this.productoService.reemplazarReceta(prodRes.id, { componentes }));
+          }
         } else {
           // Presentaciones de venta (producto_unidad): la unidad base ya vive en el propio producto.
           this.unidadesArray.controls.forEach(c => {

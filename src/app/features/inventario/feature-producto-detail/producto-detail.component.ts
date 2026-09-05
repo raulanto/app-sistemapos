@@ -56,6 +56,7 @@ import { ZardEmptyComponent } from '../../../shared/components/empty/empty.compo
 import { ZardSkeletonComponent } from '../../../shared/components/skeleton/skeleton.component';
 import { ZardSeparatorComponent } from '../../../shared/components/separator/separator.component';
 import { ZardAlertDialogService } from '../../../shared/components/alert-dialog/alert-dialog.service';
+import { ImagenGaleriaComponent } from '../ui/imagen-galeria/imagen-galeria.component';
 import { ComponenteResponse } from '../data-access/inventario.models';
 
 @Component({
@@ -74,6 +75,7 @@ import { ComponenteResponse } from '../data-access/inventario.models';
     ZardEmptyComponent,
     ZardSkeletonComponent,
     ZardSeparatorComponent,
+    ImagenGaleriaComponent,
     ...ZardChartImports
   ],
   templateUrl: './producto-detail.component.html',
@@ -130,8 +132,16 @@ export class ProductoDetailComponent implements OnInit {
   unidadesMedidaCatalogo = signal<UnidadMedidaResponse[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
-  /** Se activa si `imagen_url` no carga (link roto, CORS, etc.); cae al icono por defecto. */
+  /** Se activa si la portada no carga (link roto, CORS, etc.); cae al icono por defecto. */
   imagenError = signal(false);
+
+  /** Portada: primero la galería (`imagenes`), luego el campo denormalizado `imagen_url`. */
+  imagenPrincipal = computed(() => {
+    const prod = this.producto();
+    if (!prod) return null;
+    const principal = (prod.imagenes ?? []).find(i => i.es_principal) ?? (prod.imagenes ?? [])[0];
+    return principal?.url ?? prod.imagen_url ?? null;
+  });
 
   totalStock = computed(() => {
     const prod = this.producto();
@@ -235,7 +245,7 @@ export class ProductoDetailComponent implements OnInit {
     this.imagenError.set(false);
     this.cdr.markForCheck(); // force check
 
-    this.productoService.obtenerPorId(id, 'categoria,existencias,componentes').subscribe({
+    this.productoService.obtenerPorId(id, 'categoria,existencias,componentes,imagenes').subscribe({
       next: (prod) => {
         this.producto.set(prod);
         this.cargarMovimientos(id);
@@ -322,19 +332,32 @@ export class ProductoDetailComponent implements OnInit {
   desactivarProducto() {
     const prod = this.producto();
     if (!prod) return;
+    const conStock = (prod.existencias ?? []).some(e => Number(e.cantidad) > 0);
     this.alertDialog.confirm({
       zTitle: `¿Desactivar producto ${prod.sku}?`,
-      zDescription: 'El producto dejará de estar disponible para la venta.',
+      zDescription: conStock
+        ? 'Este producto todavía tiene existencias en una o más sucursales. Se desactivará de todos modos y dejará de estar disponible para la venta.'
+        : 'El producto dejará de estar disponible para la venta.',
       zOkText: 'Desactivar',
       zOkDestructive: true,
       zOnOk: () => {
         this.inventarioAction.handleAction(
-          this.productoService.desactivar(prod.id),
+          this.productoService.desactivar(prod.id, conStock),
           'Producto desactivado correctamente',
           'Error al desactivar el producto',
           () => this.cargarDatos(prod.id)
         );
       }
+    });
+  }
+
+  /** La galería cambió la portada: sincroniza `imagen_url` (para el listado) y recarga. */
+  onImagenPrincipalCambiada(url: string | null) {
+    const prod = this.producto();
+    if (!prod) return;
+    this.productoService.actualizar(prod.id, { imagen_url: url, cambiar_imagen_url: true }).subscribe({
+      next: () => this.cargarDatos(prod.id),
+      error: () => this.cargarDatos(prod.id),
     });
   }
 

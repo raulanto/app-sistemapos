@@ -28,6 +28,37 @@ export interface ProductoResponse {
   existencias?: ExistenciaResponse[] | null;
   componentes?: ComponenteResponse[] | null; // Added componentes
   unidades?: UnidadResponse[] | null; // Added unidades
+  /** Galería de imágenes (llega con `?include=imagenes`). */
+  imagenes?: ImagenResponse[] | null;
+}
+
+/** Imagen de la galería de un producto o de una presentación. */
+export interface ImagenResponse {
+  id: string;
+  producto_id?: string | null;
+  producto_unidad_id?: string | null;
+  url: string;
+  alt_texto?: string | null;
+  orden: number;
+  es_principal: boolean;
+}
+
+export interface AgregarImagenRequest {
+  /** URL absoluta (http/https), máx. 2083 caracteres. */
+  url: string;
+  alt_texto?: string | null;
+  orden?: number;
+  /** Solo puede haber una principal: marcar otra desmarca la anterior. */
+  es_principal?: boolean;
+}
+
+export interface ActualizarImagenRequest {
+  url?: string | null;
+  alt_texto?: string | null;
+  /** Sin este flag, `alt_texto` null significa "no tocar"; con el flag, null lo borra. */
+  cambiar_alt_texto?: boolean;
+  orden?: number | null;
+  es_principal?: boolean | null;
 }
 
 export interface ComponenteResponse {
@@ -44,6 +75,11 @@ export interface AgregarComponenteRequest {
 
 export interface ActualizarComponenteRequest {
   cantidad: number | string;
+}
+
+/** Reemplaza la receta completa de un kit en una sola llamada (PUT /componentes). */
+export interface ReemplazarRecetaRequest {
+  componentes: Array<{ producto_componente_id: string; cantidad: number | string }>;
 }
 
 export interface UnidadResponse {
@@ -231,7 +267,7 @@ export interface ProductoQuery {
   page?: number;
   page_size?: number;
   sort?: string;
-  include?: Array<'existencias' | 'categoria' | 'componentes' | { type: 'existencias'; sucursal_id: string }>;
+  include?: Array<'existencias' | 'categoria' | 'componentes' | 'unidades' | 'imagenes' | { type: 'existencias'; sucursal_id: string }>;
 }
 
 export interface ApiResponse<T> {

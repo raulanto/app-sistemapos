@@ -1,0 +1,86 @@
+<div class="space-y-4">
+  <!-- Alta de imagen (div, no <form>: este componente se embebe dentro de otros formularios) -->
+  <div [formGroup]="form" class="grid gap-3 rounded-md border border-border p-3 sm:grid-cols-[1fr_1fr_auto]">
+    <div z-field>
+      <label z-field-label for="img-url">URL de la imagen *</label>
+      <input z-input id="img-url" type="url" formControlName="url" placeholder="https://tu-cdn.com/foto.jpg" />
+      @if (form.controls.url.invalid && form.controls.url.touched) {
+        <p class="text-[0.8rem] font-medium text-destructive">Ingresa una URL http(s) válida.</p>
+      }
+    </div>
+    <div z-field>
+      <label z-field-label for="img-alt">Texto alternativo</label>
+      <input z-input id="img-alt" type="text" formControlName="alt_texto" maxlength="255" placeholder="Descripción para accesibilidad" />
+    </div>
+    <div class="flex items-end gap-3">
+      <label class="flex items-center gap-2 pb-2 text-sm">
+        <z-checkbox formControlName="es_principal"></z-checkbox>
+        Portada
+      </label>
+      <button z-button type="button" zType="outline" [zLoading]="guardando()" [zDisabled]="guardando()" (click)="agregar()">
+        <ng-icon name="lucidePlus" class="mr-1.5" />
+        Agregar
+      </button>
+    </div>
+  </div>
+
+  <!-- Grilla -->
+  @if (cargando()) {
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+      <div class="aspect-square animate-pulse rounded-md bg-muted"></div>
+      <div class="aspect-square animate-pulse rounded-md bg-muted"></div>
+      <div class="aspect-square animate-pulse rounded-md bg-muted"></div>
+    </div>
+  } @else if (ordenadas().length === 0) {
+    <z-empty
+      zIcon="lucideImageOff"
+      zTitle="Sin imágenes"
+      zDescription="Agrega la URL de una imagen ya alojada (CDN, S3, etc.). La primera se marca como portada."
+      class="rounded-md border border-dashed py-10" />
+  } @else {
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+      @for (img of ordenadas(); track img.id; let first = $first; let last = $last) {
+        <div class="group relative overflow-hidden rounded-md border border-border">
+          <div class="aspect-square bg-muted">
+            @if (rotas().has(img.id)) {
+              <div class="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
+                <ng-icon name="lucideImageOff" class="size-6" />
+                <span class="text-[0.7rem]">No carga</span>
+              </div>
+            } @else {
+              <img [src]="img.url" [alt]="img.alt_texto || ''" class="h-full w-full object-cover" (error)="marcarRota(img.id)" />
+            }
+          </div>
+
+          @if (img.es_principal) {
+            <z-badge zType="default" class="absolute left-1.5 top-1.5 gap-1 text-[10px]">
+              <ng-icon name="lucideStar" class="size-3" />
+              Portada
+            </z-badge>
+          }
+
+          <div class="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-background/85 p-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <div class="flex gap-0.5">
+              <button z-button zType="ghost" zSize="icon-sm" [zDisabled]="first || guardando()" title="Subir" (click)="mover(img, -1)">
+                <ng-icon name="lucideArrowUp" class="size-4" />
+              </button>
+              <button z-button zType="ghost" zSize="icon-sm" [zDisabled]="last || guardando()" title="Bajar" (click)="mover(img, 1)">
+                <ng-icon name="lucideArrowDown" class="size-4" />
+              </button>
+            </div>
+            <div class="flex gap-0.5">
+              @if (!img.es_principal) {
+                <button z-button zType="ghost" zSize="icon-sm" [zDisabled]="guardando()" title="Marcar como portada" (click)="marcarPrincipal(img)">
+                  <ng-icon name="lucideStar" class="size-4" />
+                </button>
+              }
+              <button z-button zType="ghost" zSize="icon-sm" class="text-destructive hover:bg-destructive/10" [zDisabled]="guardando()" title="Eliminar" (click)="eliminar(img)">
+                <ng-icon name="lucideTrash" class="size-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

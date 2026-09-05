@@ -1,0 +1,154 @@
+<div class="relative mt-4 flex flex-col gap-4">
+  <div class="overflow-hidden rounded-xl border">
+    <div class="overflow-x-auto">
+      <table z-table>
+        <thead z-table-header class="sticky top-0 z-10 bg-muted/50 backdrop-blur">
+          <tr z-table-row>
+            <th z-table-head>
+              <button type="button" class="-ml-1 inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 font-medium select-none hover:bg-muted" (click)="sortChange.emit('nombre')">
+                Sucursal
+                <ng-icon [name]="sortIconName('nombre')" class="size-3.5 text-muted-foreground" />
+              </button>
+            </th>
+            <th z-table-head>Dirección</th>
+            <th z-table-head>Teléfono</th>
+            <th z-table-head>Estado</th>
+            <th z-table-head>
+              <button type="button" class="-ml-1 inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 font-medium select-none hover:bg-muted" (click)="sortChange.emit('created_at')">
+                Creada
+                <ng-icon [name]="sortIconName('created_at')" class="size-3.5 text-muted-foreground" />
+              </button>
+            </th>
+            <th z-table-head class="text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody z-table-body>
+          @if (loading()) {
+            @for (row of [1, 2, 3, 4, 5]; track row) {
+              <tr z-table-row>
+                <td z-table-cell><z-skeleton class="h-4 w-32" /></td>
+                <td z-table-cell><z-skeleton class="h-4 w-48" /></td>
+                <td z-table-cell><z-skeleton class="h-4 w-24" /></td>
+                <td z-table-cell><z-skeleton class="h-5 w-16 rounded-full" /></td>
+                <td z-table-cell><z-skeleton class="h-4 w-20" /></td>
+                <td z-table-cell><z-skeleton class="ml-auto h-4 w-16" /></td>
+              </tr>
+            }
+          } @else {
+            @for (sucursal of sucursales(); track sucursal.id) {
+              <tr z-table-row>
+                <td z-table-cell class="font-medium">
+                  <span class="flex items-center gap-2">
+                    <ng-icon name="lucideMapPin" class="size-4 text-muted-foreground" />
+                    {{ sucursal.nombre }}
+                  </span>
+                </td>
+                <td z-table-cell class="text-muted-foreground">{{ sucursal.direccion }}</td>
+                <td z-table-cell class="text-muted-foreground">
+                  <span class="flex items-center gap-1.5">
+                    <ng-icon name="lucidePhone" class="size-3.5" />
+                    {{ sucursal.telefono }}
+                  </span>
+                </td>
+                <td z-table-cell>
+                  <z-badge zType="outline" class="gap-1.5 px-1.5 text-muted-foreground">
+                    <span
+                      class="size-1.5 rounded-full"
+                      [class.bg-green-500]="sucursal.activo"
+                      [class.bg-destructive]="!sucursal.activo"
+                    ></span>
+                    {{ sucursal.activo ? 'Activa' : 'Inactiva' }}
+                  </z-badge>
+                </td>
+                <td z-table-cell class="text-xs text-muted-foreground">{{ sucursal.created_at | date:'dd/MM/yyyy' }}</td>
+                <td z-table-cell>
+                  <div class="flex items-center justify-end gap-1">
+                    @if (canEditar()) {
+                      <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Editar" (click)="editar.emit(sucursal)">
+                        <ng-icon name="lucidePencil" class="size-4" />
+                      </button>
+                      @if (sucursal.activo) {
+                        <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-destructive" title="Desactivar" (click)="desactivar.emit(sucursal)">
+                          <ng-icon name="lucideBan" class="size-4" />
+                        </button>
+                      } @else {
+                        <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-green-600" title="Activar" (click)="activar.emit(sucursal)">
+                          <ng-icon name="lucideCircleCheck" class="size-4" />
+                        </button>
+                      }
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr z-table-row>
+                <td z-table-cell colspan="6" class="p-0">
+                  <z-empty
+                    zIcon="lucideX"
+                    zTitle="Sin resultados"
+                    zDescription="No hay sucursales que coincidan con los filtros aplicados."
+                    class="py-12" />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalItems() > 0) {
+      <div class="flex flex-col items-center justify-between gap-4 border-t p-4 sm:flex-row">
+        <div class="text-sm text-muted-foreground">
+          {{ totalItems() }} sucursal(es) en total.
+        </div>
+
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium">Filas por página</span>
+            <z-select
+              [ngModel]="pageSize().toString()"
+              (ngModelChange)="pageSizeChange.emit($event)"
+            >
+              <z-select-item [zValue]="'10'">10</z-select-item>
+              <z-select-item [zValue]="'20'">20</z-select-item>
+              <z-select-item [zValue]="'50'">50</z-select-item>
+            </z-select>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-medium tabular-nums">Página {{ page() }} de {{ totalPages() }}</span>
+
+            <z-pagination [zTotal]="totalPages()" [zPageIndex]="page()" [zContent]="content" />
+
+            <ng-template #content>
+              <ul z-pagination-content>
+                <li z-pagination-item>
+                  <z-pagination-previous (click)="goToPrevious()" [zDisabled]="page() === 1" />
+                </li>
+
+                @for (p of pages(); track p) {
+                  <li z-pagination-item>
+                    <button type="button" z-pagination-button [zActive]="p === page()" (click)="goToPage(p)">
+                      <span class="sr-only">Ir a página</span>
+                      {{ p }}
+                    </button>
+                  </li>
+                }
+
+                @if (pages().length > 0 && pages()[pages().length - 1] < totalPages()) {
+                  <li z-pagination-item>
+                    <z-pagination-ellipsis />
+                  </li>
+                }
+
+                <li z-pagination-item>
+                  <z-pagination-next (click)="goToNext()" [zDisabled]="page() === totalPages()" />
+                </li>
+              </ul>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

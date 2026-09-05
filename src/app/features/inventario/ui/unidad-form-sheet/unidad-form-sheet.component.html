@@ -71,4 +71,11 @@
       <input z-input formControlName="codigo_barras" placeholder="Código de barras de esta presentación" />
     </div>
   </div>
+
+  @if (isEditing && sheetData?.unidad) {
+    <div class="grid grid-cols-1 gap-2">
+      <label z-field-label>Fotos de la presentación</label>
+      <app-imagen-galeria [productoId]="sheetData!.productoId" [unidadId]="sheetData!.unidad!.id" />
+    </div>
+  }
 </form>

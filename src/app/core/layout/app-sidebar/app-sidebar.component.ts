@@ -46,11 +46,6 @@ export class AppSidebarComponent {
       icon: 'lucideSearch',
     },
     {
-      title: 'Sucursales',
-      url: '/sucursales',
-      icon: 'lucideStore',
-    },
-    {
       title: 'Configuración',
       url: '/config',
       icon: 'lucideSettings',
@@ -78,6 +73,11 @@ export class AppSidebarComponent {
         { title: 'Nuevo Producto', url: '/inventario/productos/nuevo' },
         { title: 'Categorías', url: '/inventario/categorias' },
       ],
+    },
+    {
+      title: 'Sucursales',
+      url: '/sucursales',
+      icon: 'lucideStore',
     },
     {
       title: 'Clientes',

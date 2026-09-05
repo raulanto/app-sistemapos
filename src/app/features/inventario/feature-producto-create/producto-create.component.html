@@ -53,19 +53,44 @@
               <input z-input id="descripcion" type="text" formControlName="descripcion" placeholder="Opcional">
             </div>
 
-            <div z-field class="md:col-span-2">
-              <label z-field-label for="imagen_url">Imagen principal (URL)</label>
-              <div class="flex items-center gap-3">
-                <z-avatar
-                  [zSrc]="form.get('imagen_url')?.value || ''"
-                  zFallback="IMG"
-                  zSize="lg"
-                  zAlt="Vista previa de la imagen principal"
-                  class="shrink-0"
-                ></z-avatar>
-                <input z-input id="imagen_url" type="url" formControlName="imagen_url" placeholder="https://…" class="flex-1">
+            <div class="md:col-span-2">
+              <div class="mb-2 flex items-center justify-between gap-4">
+                <div>
+                  <p class="text-sm font-medium">Fotos</p>
+                  <p class="text-[0.8rem] text-muted-foreground">Opcional. Pega URLs de imágenes ya alojadas (CDN, S3, etc.). La marcada como portada aparece en el listado.</p>
+                </div>
+                <button type="button" z-button zType="outline" zSize="sm" (click)="agregarImagenFila()">
+                  <ng-icon name="lucidePlus" class="mr-1.5" />
+                  Agregar foto
+                </button>
               </div>
-              <p z-field-description>Opcional. Pega la URL de una imagen ya alojada (CDN, S3, etc.).</p>
+
+              <div formArrayName="imagenes" class="flex flex-col gap-3">
+                @for (fila of imagenesArray.controls; track $index) {
+                  <div [formGroupName]="$index" class="grid gap-3 rounded-md border p-3 sm:grid-cols-[1fr_1fr_auto]">
+                    <div z-field>
+                      <label z-field-label>URL *</label>
+                      <input z-input type="url" formControlName="url" placeholder="https://tu-cdn.com/foto.jpg">
+                      @if (fila.get('url')?.invalid && fila.get('url')?.touched) {
+                        <p class="text-[0.8rem] font-medium text-destructive">URL http(s) inválida.</p>
+                      }
+                    </div>
+                    <div z-field>
+                      <label z-field-label>Texto alternativo</label>
+                      <input z-input type="text" formControlName="alt_texto" maxlength="255" placeholder="Descripción">
+                    </div>
+                    <div class="flex items-end gap-3">
+                      <label class="flex items-center gap-2 pb-2 text-sm">
+                        <z-checkbox formControlName="es_principal" (checkChange)="$event && marcarPortada($index)"></z-checkbox>
+                        Portada
+                      </label>
+                      <button type="button" z-button zType="ghost" zSize="icon-sm" class="text-destructive hover:bg-destructive/10" (click)="removerImagenFila($index)" aria-label="Quitar foto">
+                        <ng-icon name="lucideTrash" class="size-4" />
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
             </div>
 
             <div z-field [attr.data-invalid]="categoriaError().length ? 'true' : null">

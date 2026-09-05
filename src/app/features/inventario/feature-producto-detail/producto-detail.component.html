@@ -27,9 +27,9 @@
     <!-- ENCABEZADO -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div class="flex items-start gap-4">
-        @if (prod.imagen_url && !imagenError()) {
+        @if (imagenPrincipal() && !imagenError()) {
           <img
-            [src]="prod.imagen_url"
+            [src]="imagenPrincipal()"
             [alt]="prod.nombre"
             class="size-16 shrink-0 rounded-xl border border-border object-cover"
             (error)="imagenError.set(true)"
@@ -431,6 +431,26 @@
                     </tbody>
                   </table>
                 </div>
+              </div>
+            </div>
+          </z-tab>
+
+          <z-tab label="Imágenes">
+            <div class="pt-4">
+              <div z-card>
+                <z-card-content class="pt-6">
+                  @if (canEditar()) {
+                    <app-imagen-galeria [productoId]="prod.id" (cambio)="onImagenPrincipalCambiada($event)" />
+                  } @else if (prod.imagenes?.length) {
+                    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                      @for (img of prod.imagenes; track img.id) {
+                        <img [src]="img.url" [alt]="img.alt_texto || ''" class="aspect-square w-full rounded-md border border-border object-cover" />
+                      }
+                    </div>
+                  } @else {
+                    <z-empty zIcon="lucidePackageOpen" zTitle="Sin imágenes" zDescription="Este producto no tiene fotos cargadas." class="py-10" />
+                  }
+                </z-card-content>
               </div>
             </div>
           </z-tab>

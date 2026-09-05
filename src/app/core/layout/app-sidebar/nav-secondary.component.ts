@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleHelp, lucideSearch, lucideSettings, lucideStore } from '@ng-icons/lucide';
+import { lucideCircleHelp, lucideSearch, lucideSettings } from '@ng-icons/lucide';
 
 import { ZardSidebarImports } from '../../../shared/components/sidebar/sidebar.imports';
 
@@ -11,7 +11,7 @@ import type { Sidebar07NavItem } from './nav-main.component';
   selector: 'lib-sidebar-07-nav-secondary',
   standalone: true,
   imports: [...ZardSidebarImports, NgIcon],
-  viewProviders: [provideIcons({ lucideCircleHelp, lucideSearch, lucideSettings, lucideStore })],
+  viewProviders: [provideIcons({ lucideCircleHelp, lucideSearch, lucideSettings })],
   template: `
     <div z-sidebar-group [class]="class()">
       <div z-sidebar-group-content>
