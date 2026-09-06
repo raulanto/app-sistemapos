@@ -36,7 +36,7 @@ import { SucursalService } from '../../sucursal/sucursal.service';
           <div
             class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
           >
-            <ng-icon name="lucideStore" class="size-4" />
+            <img src="ico.svg" alt="Logo" class="size-5" />
           </div>
           <div class="grid flex-1 text-left text-sm leading-tight">
             <span class="truncate font-medium">{{ sucursalService.selectedSucursal()?.nombre }}</span>
