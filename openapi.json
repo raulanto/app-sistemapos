@@ -825,10 +825,28 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "description": "Busca en nombre, dirección y teléfono",
+              "description": "Busca en nombre, código, dirección y teléfono",
               "title": "Q"
             },
-            "description": "Busca en nombre, dirección y teléfono"
+            "description": "Busca en nombre, código, dirección y teléfono"
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "$ref": "#/components/schemas/TipoSucursal" }, { "type": "null" }],
+              "title": "Tipo"
+            }
+          },
+          {
+            "name": "sucursal_padre_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Sucursal Padre Id"
+            }
           },
           {
             "name": "page",
@@ -863,11 +881,11 @@
             "required": false,
             "schema": {
               "type": "string",
-              "description": "Orden `campo:asc|desc`. Campos: created_at, nombre",
+              "description": "Orden `campo:asc|desc`. Campos: codigo, created_at, nombre",
               "default": "nombre:asc",
               "title": "Sort"
             },
-            "description": "Orden `campo:asc|desc`. Campos: created_at, nombre"
+            "description": "Orden `campo:asc|desc`. Campos: codigo, created_at, nombre"
           }
         ],
         "responses": {
@@ -1035,6 +1053,82 @@
         "tags": ["sucursales"],
         "summary": "Reactivar Sucursal",
         "operationId": "reactivar_sucursal_api_v1_sucursales__sucursal_id__reactivar_patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "sucursal_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Sucursal Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_SucursalResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sucursales/{sucursal_id}/fachada": {
+      "post": {
+        "tags": ["sucursales"],
+        "summary": "Subir Fachada",
+        "operationId": "subir_fachada_api_v1_sucursales__sucursal_id__fachada_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "sucursal_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Sucursal Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_subir_fachada_api_v1_sucursales__sucursal_id__fachada_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_SucursalResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["sucursales"],
+        "summary": "Eliminar Fachada",
+        "operationId": "eliminar_fachada_api_v1_sucursales__sucursal_id__fachada_delete",
         "security": [{ "OAuth2PasswordBearer": [] }],
         "parameters": [
           {
@@ -2876,6 +2970,344 @@
         ],
         "responses": {
           "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/productos/{producto_id}/instancias": {
+      "get": {
+        "tags": ["inventario"],
+        "summary": "Listar Instancias Producto",
+        "operationId": "listar_instancias_producto_api_v1_inventario_productos__producto_id__instancias_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "producto_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Producto Id" }
+          },
+          {
+            "name": "sucursal_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "array", "items": { "type": "string", "format": "uuid" } },
+                { "type": "null" }
+              ],
+              "title": "Sucursal Id"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "$ref": "#/components/schemas/EstadoInstancia" }, { "type": "null" }],
+              "title": "Estado"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Número de página (1-indexada)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Número de página (1-indexada)"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Tamaño de página",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Tamaño de página"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Orden `campo:asc|desc`. Campos: abierta_at, created_at, saldo",
+              "default": "abierta_at:desc",
+              "title": "Sort"
+            },
+            "description": "Orden `campo:asc|desc`. Campos: abierta_at, created_at, saldo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_list_InstanciaResponse__" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/productos/{producto_id}/instancias/abrir": {
+      "post": {
+        "tags": ["inventario"],
+        "summary": "Abrir Instancia",
+        "operationId": "abrir_instancia_api_v1_inventario_productos__producto_id__instancias_abrir_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "producto_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Producto Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AbrirInstanciaRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_InstanciaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/instancias/{instancia_id}": {
+      "get": {
+        "tags": ["inventario"],
+        "summary": "Obtener Instancia",
+        "operationId": "obtener_instancia_api_v1_inventario_instancias__instancia_id__get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "instancia_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Instancia Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_InstanciaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/instancias/{instancia_id}/consumir": {
+      "post": {
+        "tags": ["inventario"],
+        "summary": "Consumir Instancia",
+        "operationId": "consumir_instancia_api_v1_inventario_instancias__instancia_id__consumir_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "instancia_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Instancia Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ConsumirInstanciaRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_InstanciaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/instancias/{instancia_id}/merma": {
+      "post": {
+        "tags": ["inventario"],
+        "summary": "Mermar Instancia",
+        "operationId": "mermar_instancia_api_v1_inventario_instancias__instancia_id__merma_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "instancia_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Instancia Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MermarInstanciaRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_InstanciaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/instancias/{instancia_id}/ajustar": {
+      "post": {
+        "tags": ["inventario"],
+        "summary": "Ajustar Instancia",
+        "operationId": "ajustar_instancia_api_v1_inventario_instancias__instancia_id__ajustar_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "instancia_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Instancia Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AjustarInstanciaRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_InstanciaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/instancias/{instancia_id}/descartar": {
+      "post": {
+        "tags": ["inventario"],
+        "summary": "Descartar Instancia",
+        "operationId": "descartar_instancia_api_v1_inventario_instancias__instancia_id__descartar_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "instancia_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Instancia Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DescartarInstanciaRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_InstanciaResponse_" }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -5045,6 +5477,37 @@
         "required": ["saldo_inicial"],
         "title": "AbrirCajaTurnoRequest"
       },
+      "AbrirInstanciaRequest": {
+        "properties": {
+          "sucursal_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Sucursal Id"
+          },
+          "producto_unidad_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Producto Unidad Id"
+          },
+          "capacidad": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Capacidad"
+          },
+          "lote_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Lote Id"
+          },
+          "motivo": {
+            "anyOf": [{ "type": "string", "maxLength": 255 }, { "type": "null" }],
+            "title": "Motivo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AbrirInstanciaRequest"
+      },
       "ActualizarCategoriaRequest": {
         "properties": {
           "nombre": {
@@ -5247,6 +5710,23 @@
             "anyOf": [{ "type": "boolean" }, { "type": "null" }],
             "title": "Requiere Lote"
           },
+          "rastrea_instancia_abierta": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Rastrea Instancia Abierta"
+          },
+          "instancia_capacidad_default": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Instancia Capacidad Default"
+          },
+          "cambiar_instancia_capacidad_default": {
+            "type": "boolean",
+            "title": "Cambiar Instancia Capacidad Default",
+            "default": false
+          },
           "codigo_barras": {
             "anyOf": [{ "type": "string", "maxLength": 50 }, { "type": "null" }],
             "title": "Codigo Barras"
@@ -5279,7 +5759,93 @@
           "telefono": {
             "anyOf": [{ "type": "string", "maxLength": 20, "minLength": 1 }, { "type": "null" }],
             "title": "Telefono"
-          }
+          },
+          "tipo": {
+            "anyOf": [{ "$ref": "#/components/schemas/TipoSucursal" }, { "type": "null" }]
+          },
+          "permite_ventas": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Permite Ventas"
+          },
+          "codigo": {
+            "anyOf": [{ "type": "string", "maxLength": 20, "minLength": 1 }, { "type": "null" }],
+            "title": "Codigo"
+          },
+          "cambiar_codigo": { "type": "boolean", "title": "Cambiar Codigo", "default": false },
+          "descripcion": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Descripcion"
+          },
+          "cambiar_descripcion": {
+            "type": "boolean",
+            "title": "Cambiar Descripcion",
+            "default": false
+          },
+          "colonia": {
+            "anyOf": [{ "type": "string", "maxLength": 100 }, { "type": "null" }],
+            "title": "Colonia"
+          },
+          "cambiar_colonia": { "type": "boolean", "title": "Cambiar Colonia", "default": false },
+          "ciudad": {
+            "anyOf": [{ "type": "string", "maxLength": 100 }, { "type": "null" }],
+            "title": "Ciudad"
+          },
+          "cambiar_ciudad": { "type": "boolean", "title": "Cambiar Ciudad", "default": false },
+          "estado": {
+            "anyOf": [{ "type": "string", "maxLength": 100 }, { "type": "null" }],
+            "title": "Estado"
+          },
+          "cambiar_estado": { "type": "boolean", "title": "Cambiar Estado", "default": false },
+          "codigo_postal": {
+            "anyOf": [{ "type": "string", "maxLength": 10 }, { "type": "null" }],
+            "title": "Codigo Postal"
+          },
+          "cambiar_codigo_postal": {
+            "type": "boolean",
+            "title": "Cambiar Codigo Postal",
+            "default": false
+          },
+          "pais": {
+            "anyOf": [{ "type": "string", "maxLength": 60 }, { "type": "null" }],
+            "title": "Pais"
+          },
+          "cambiar_pais": { "type": "boolean", "title": "Cambiar Pais", "default": false },
+          "latitud": {
+            "anyOf": [
+              { "type": "number", "maximum": 90.0, "minimum": -90.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Latitud"
+          },
+          "longitud": {
+            "anyOf": [
+              { "type": "number", "maximum": 180.0, "minimum": -180.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Longitud"
+          },
+          "cambiar_geo": { "type": "boolean", "title": "Cambiar Geo", "default": false },
+          "email": {
+            "anyOf": [{ "type": "string", "format": "email" }, { "type": "null" }],
+            "title": "Email"
+          },
+          "cambiar_email": { "type": "boolean", "title": "Cambiar Email", "default": false },
+          "horario_apertura": {
+            "anyOf": [{ "type": "string", "format": "time" }, { "type": "null" }],
+            "title": "Horario Apertura"
+          },
+          "horario_cierre": {
+            "anyOf": [{ "type": "string", "format": "time" }, { "type": "null" }],
+            "title": "Horario Cierre"
+          },
+          "cambiar_horario": { "type": "boolean", "title": "Cambiar Horario", "default": false },
+          "sucursal_padre_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Sucursal Padre Id"
+          },
+          "cambiar_padre": { "type": "boolean", "title": "Cambiar Padre", "default": false }
         },
         "additionalProperties": false,
         "type": "object",
@@ -5435,6 +6001,25 @@
         "title": "AgregarUnidadRequest",
         "description": "`factor` = unidades base por 1 presentación (Reja x24 => 24).\n`unidades_por_base` = su recíproco (6 latas por reja => 6). Indicá uno."
       },
+      "AjustarInstanciaRequest": {
+        "properties": {
+          "saldo_medido": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Saldo Medido"
+          },
+          "motivo": {
+            "anyOf": [{ "type": "string", "maxLength": 255 }, { "type": "null" }],
+            "title": "Motivo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["saldo_medido"],
+        "title": "AjustarInstanciaRequest"
+      },
       "AnularVentaRequest": {
         "properties": {
           "motivo": {
@@ -5522,6 +6107,17 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[ImagenResponse]"
+      },
+      "ApiResponse_InstanciaResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/InstanciaResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[InstanciaResponse]"
       },
       "ApiResponse_InventarioValorizadoResponse_": {
         "properties": {
@@ -5799,6 +6395,21 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[list[ImagenResponse]]"
+      },
+      "ApiResponse_list_InstanciaResponse__": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": {
+            "items": { "$ref": "#/components/schemas/InstanciaResponse" },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[list[InstanciaResponse]]"
       },
       "ApiResponse_list_LogAuditoriaResponse__": {
         "properties": {
@@ -6137,6 +6748,18 @@
         "type": "object",
         "required": ["username", "password"],
         "title": "Body_login_oauth2_api_v1_usuarios_token_post"
+      },
+      "Body_subir_fachada_api_v1_sucursales__sucursal_id__fachada_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": ["file"],
+        "title": "Body_subir_fachada_api_v1_sucursales__sucursal_id__fachada_post"
       },
       "Body_subir_imagen_producto_api_v1_inventario_productos__producto_id__imagenes_upload_post": {
         "properties": {
@@ -6484,6 +7107,25 @@
         "required": ["stock_minimo"],
         "title": "ConfigurarUmbralesRequest"
       },
+      "ConsumirInstanciaRequest": {
+        "properties": {
+          "cantidad": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Cantidad"
+          },
+          "motivo": {
+            "anyOf": [{ "type": "string", "maxLength": 255 }, { "type": "null" }],
+            "title": "Motivo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["cantidad"],
+        "title": "ConsumirInstanciaRequest"
+      },
       "CorteDeCajaResponse": {
         "properties": {
           "caja_turno_id": { "type": "string", "format": "uuid", "title": "Caja Turno Id" },
@@ -6657,6 +7299,19 @@
             "title": "Incremento Minimo Venta"
           },
           "requiere_lote": { "type": "boolean", "title": "Requiere Lote", "default": false },
+          "rastrea_instancia_abierta": {
+            "type": "boolean",
+            "title": "Rastrea Instancia Abierta",
+            "default": false
+          },
+          "instancia_capacidad_default": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Instancia Capacidad Default"
+          },
           "codigo_barras": {
             "anyOf": [{ "type": "string", "maxLength": 50 }, { "type": "null" }],
             "title": "Codigo Barras"
@@ -6703,8 +7358,72 @@
         "properties": {
           "nombre": { "type": "string", "maxLength": 100, "minLength": 1, "title": "Nombre" },
           "direccion": { "type": "string", "maxLength": 255, "minLength": 1, "title": "Direccion" },
-          "telefono": { "type": "string", "maxLength": 20, "minLength": 1, "title": "Telefono" }
+          "telefono": { "type": "string", "maxLength": 20, "minLength": 1, "title": "Telefono" },
+          "tipo": { "$ref": "#/components/schemas/TipoSucursal", "default": "tienda" },
+          "codigo": {
+            "anyOf": [{ "type": "string", "maxLength": 20, "minLength": 1 }, { "type": "null" }],
+            "title": "Codigo"
+          },
+          "descripcion": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Descripcion"
+          },
+          "colonia": {
+            "anyOf": [{ "type": "string", "maxLength": 100 }, { "type": "null" }],
+            "title": "Colonia"
+          },
+          "ciudad": {
+            "anyOf": [{ "type": "string", "maxLength": 100 }, { "type": "null" }],
+            "title": "Ciudad"
+          },
+          "estado": {
+            "anyOf": [{ "type": "string", "maxLength": 100 }, { "type": "null" }],
+            "title": "Estado"
+          },
+          "codigo_postal": {
+            "anyOf": [{ "type": "string", "maxLength": 10 }, { "type": "null" }],
+            "title": "Codigo Postal"
+          },
+          "pais": {
+            "anyOf": [{ "type": "string", "maxLength": 60 }, { "type": "null" }],
+            "title": "Pais",
+            "default": "México"
+          },
+          "latitud": {
+            "anyOf": [
+              { "type": "number", "maximum": 90.0, "minimum": -90.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Latitud"
+          },
+          "longitud": {
+            "anyOf": [
+              { "type": "number", "maximum": 180.0, "minimum": -180.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Longitud"
+          },
+          "email": {
+            "anyOf": [{ "type": "string", "format": "email" }, { "type": "null" }],
+            "title": "Email"
+          },
+          "horario_apertura": {
+            "anyOf": [{ "type": "string", "format": "time" }, { "type": "null" }],
+            "title": "Horario Apertura"
+          },
+          "horario_cierre": {
+            "anyOf": [{ "type": "string", "format": "time" }, { "type": "null" }],
+            "title": "Horario Cierre"
+          },
+          "sucursal_padre_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Sucursal Padre Id"
+          },
+          "permite_ventas": { "type": "boolean", "title": "Permite Ventas", "default": true }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": ["nombre", "direccion", "telefono"],
         "title": "CrearSucursalRequest"
@@ -6772,6 +7491,15 @@
         "required": ["caja_turno_id", "lineas", "pagos"],
         "title": "CrearVentaRequest"
       },
+      "DescartarInstanciaRequest": {
+        "properties": {
+          "motivo": { "type": "string", "maxLength": 255, "minLength": 1, "title": "Motivo" }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["motivo"],
+        "title": "DescartarInstanciaRequest"
+      },
       "EditarRolRequest": {
         "properties": {
           "nombre": { "type": "string", "maxLength": 50, "minLength": 1, "title": "Nombre" },
@@ -6805,6 +7533,11 @@
         "additionalProperties": false,
         "type": "object",
         "title": "EditarUsuarioRequest"
+      },
+      "EstadoInstancia": {
+        "type": "string",
+        "enum": ["abierta", "agotada", "descartada"],
+        "title": "EstadoInstancia"
       },
       "EstadoVenta": {
         "type": "string",
@@ -6950,6 +7683,54 @@
         "type": "object",
         "required": ["id", "orden", "es_principal"],
         "title": "ImagenResponse"
+      },
+      "InstanciaResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
+          "sucursal_id": { "type": "string", "format": "uuid", "title": "Sucursal Id" },
+          "producto_unidad_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Producto Unidad Id"
+          },
+          "lote_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Lote Id"
+          },
+          "capacidad_inicial": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Capacidad Inicial"
+          },
+          "saldo": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Saldo"
+          },
+          "estado": { "$ref": "#/components/schemas/EstadoInstancia" },
+          "abierta_por": { "type": "string", "format": "uuid", "title": "Abierta Por" },
+          "abierta_at": { "type": "string", "format": "date-time", "title": "Abierta At" },
+          "cerrada_at": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Cerrada At"
+          },
+          "motivo_cierre": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Motivo Cierre"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "producto_id",
+          "sucursal_id",
+          "capacidad_inicial",
+          "saldo",
+          "estado",
+          "abierta_por",
+          "abierta_at"
+        ],
+        "title": "InstanciaResponse"
       },
       "InventarioValorizadoResponse": {
         "properties": {
@@ -7190,6 +7971,25 @@
         "required": ["id", "producto_id", "codigo_lote", "costo", "activo"],
         "title": "LoteResponse"
       },
+      "MermarInstanciaRequest": {
+        "properties": {
+          "cantidad": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Cantidad"
+          },
+          "motivo": {
+            "anyOf": [{ "type": "string", "maxLength": 255 }, { "type": "null" }],
+            "title": "Motivo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["cantidad"],
+        "title": "MermarInstanciaRequest"
+      },
       "Meta": {
         "properties": {
           "pagination": {
@@ -7265,6 +8065,10 @@
           "lote_id": {
             "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
             "title": "Lote Id"
+          },
+          "instancia_abierta_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Instancia Abierta Id"
           },
           "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
           "producto": {
@@ -7535,6 +8339,18 @@
             "title": "Incremento Minimo Venta"
           },
           "requiere_lote": { "type": "boolean", "title": "Requiere Lote", "default": false },
+          "rastrea_instancia_abierta": {
+            "type": "boolean",
+            "title": "Rastrea Instancia Abierta",
+            "default": false
+          },
+          "instancia_capacidad_default": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Instancia Capacidad Default"
+          },
           "activo": { "type": "boolean", "title": "Activo" },
           "imagen_principal": {
             "anyOf": [{ "$ref": "#/components/schemas/ImagenEmbed" }, { "type": "null" }]
@@ -7715,7 +8531,9 @@
       "SucursalEmbed": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "codigo": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Codigo" },
           "nombre": { "type": "string", "title": "Nombre" },
+          "tipo": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Tipo" },
           "direccion": { "type": "string", "title": "Direccion" },
           "telefono": { "type": "string", "title": "Telefono" },
           "activo": { "type": "boolean", "title": "Activo" }
@@ -7727,14 +8545,73 @@
       "SucursalResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "codigo": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Codigo" },
           "nombre": { "type": "string", "title": "Nombre" },
+          "tipo": { "$ref": "#/components/schemas/TipoSucursal" },
+          "descripcion": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Descripcion"
+          },
           "direccion": { "type": "string", "title": "Direccion" },
+          "colonia": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Colonia" },
+          "ciudad": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Ciudad" },
+          "estado": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Estado" },
+          "codigo_postal": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Codigo Postal"
+          },
+          "pais": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Pais" },
+          "latitud": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Latitud"
+          },
+          "longitud": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Longitud"
+          },
           "telefono": { "type": "string", "title": "Telefono" },
+          "email": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Email" },
+          "horario_apertura": {
+            "anyOf": [{ "type": "string", "format": "time" }, { "type": "null" }],
+            "title": "Horario Apertura"
+          },
+          "horario_cierre": {
+            "anyOf": [{ "type": "string", "format": "time" }, { "type": "null" }],
+            "title": "Horario Cierre"
+          },
+          "sucursal_padre_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Sucursal Padre Id"
+          },
+          "permite_ventas": { "type": "boolean", "title": "Permite Ventas" },
           "activo": { "type": "boolean", "title": "Activo" },
-          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "imagen_fachada_key": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Imagen Fachada Key"
+          },
+          "imagen_fachada_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Imagen Fachada Url"
+          }
         },
         "type": "object",
-        "required": ["id", "nombre", "direccion", "telefono", "activo", "created_at"],
+        "required": [
+          "id",
+          "nombre",
+          "tipo",
+          "direccion",
+          "telefono",
+          "permite_ventas",
+          "activo",
+          "created_at"
+        ],
         "title": "SucursalResponse"
       },
       "TipoMagnitud": {
@@ -7751,6 +8628,11 @@
         "type": "string",
         "enum": ["simple", "fraccionable", "kit", "servicio"],
         "title": "TipoProducto"
+      },
+      "TipoSucursal": {
+        "type": "string",
+        "enum": ["bodega_central", "tienda", "almacen", "cedis", "oficina"],
+        "title": "TipoSucursal"
       },
       "TokenResponse": {
         "properties": {

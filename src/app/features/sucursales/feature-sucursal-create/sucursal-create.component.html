@@ -1,0 +1,140 @@
+<div class="p-6 w-full max-w-3xl mx-auto space-y-6">
+  <div class="flex items-center gap-4">
+    <a routerLink="/sucursales" z-button zType="ghost" zSize="icon" aria-label="Volver">
+      <ng-icon name="lucideArrowLeft" class="size-5" />
+    </a>
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Nueva Sucursal</h1>
+      <p class="text-muted-foreground">Registra una sucursal y marca su ubicación en el mapa.</p>
+    </div>
+  </div>
+
+  <form [formGroup]="form" class="space-y-6" (ngSubmit)="guardar()">
+    <div z-card>
+      <z-card-header><z-card-title zTitle="Datos generales" class="text-base" /></z-card-header>
+      <z-card-content class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div z-field class="sm:col-span-2">
+          <label z-field-label for="nombre">Nombre *</label>
+          <input z-input id="nombre" type="text" formControlName="nombre" maxlength="100" placeholder="Ej. Sucursal Centro" />
+          @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
+            <p class="text-[0.8rem] font-medium text-destructive">El nombre es obligatorio.</p>
+          }
+        </div>
+        <div z-field>
+          <label z-field-label for="codigo">Código</label>
+          <input z-input id="codigo" type="text" formControlName="codigo" maxlength="20" placeholder="Ej. SUC-001" />
+        </div>
+        <div z-field>
+          <label z-field-label>Tipo *</label>
+          <z-select formControlName="tipo" placeholder="Selecciona un tipo">
+            @for (t of tipos; track t.value) {
+              <z-select-item [zValue]="t.value">{{ t.label }}</z-select-item>
+            }
+          </z-select>
+        </div>
+        <div z-field class="sm:col-span-2">
+          <label z-field-label for="descripcion">Descripción</label>
+          <input z-input id="descripcion" type="text" formControlName="descripcion" placeholder="Opcional" />
+        </div>
+        <div class="sm:col-span-2 flex items-center justify-between rounded-md border p-3">
+          <div>
+            <p class="text-sm font-medium">Permite ventas</p>
+            <p class="text-[0.8rem] text-muted-foreground">Si está apagado, la sucursal no puede facturar.</p>
+          </div>
+          <z-switch formControlName="permite_ventas" />
+        </div>
+      </z-card-content>
+    </div>
+
+    <div z-card>
+      <z-card-header><z-card-title zTitle="Contacto" class="text-base" /></z-card-header>
+      <z-card-content class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div z-field>
+          <label z-field-label for="telefono">Teléfono *</label>
+          <input z-input id="telefono" type="tel" formControlName="telefono" maxlength="20" placeholder="Ej. 55 1234 5678" />
+          @if (form.controls.telefono.invalid && form.controls.telefono.touched) {
+            <p class="text-[0.8rem] font-medium text-destructive">El teléfono es obligatorio.</p>
+          }
+        </div>
+        <div z-field>
+          <label z-field-label for="email">Correo</label>
+          <input z-input id="email" type="email" formControlName="email" placeholder="sucursal@empresa.com" />
+          @if (form.controls.email.invalid && form.controls.email.touched) {
+            <p class="text-[0.8rem] font-medium text-destructive">Correo inválido.</p>
+          }
+        </div>
+        <div z-field>
+          <label z-field-label for="horario_apertura">Apertura</label>
+          <input z-input id="horario_apertura" type="time" formControlName="horario_apertura" />
+        </div>
+        <div z-field>
+          <label z-field-label for="horario_cierre">Cierre</label>
+          <input z-input id="horario_cierre" type="time" formControlName="horario_cierre" />
+        </div>
+      </z-card-content>
+    </div>
+
+    <div z-card>
+      <z-card-header><z-card-title zTitle="Dirección y ubicación" class="text-base" /></z-card-header>
+      <z-card-content class="space-y-4">
+        <div z-field>
+          <label z-field-label for="direccion">Dirección *</label>
+          <input z-input id="direccion" type="text" formControlName="direccion" maxlength="255" placeholder="Calle y número" />
+          @if (form.controls.direccion.invalid && form.controls.direccion.touched) {
+            <p class="text-[0.8rem] font-medium text-destructive">La dirección es obligatoria.</p>
+          }
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div z-field>
+            <label z-field-label for="colonia">Colonia</label>
+            <input z-input id="colonia" type="text" formControlName="colonia" maxlength="100" />
+          </div>
+          <div z-field>
+            <label z-field-label for="ciudad">Ciudad</label>
+            <input z-input id="ciudad" type="text" formControlName="ciudad" maxlength="100" />
+          </div>
+          <div z-field>
+            <label z-field-label for="estado">Estado</label>
+            <input z-input id="estado" type="text" formControlName="estado" maxlength="100" />
+          </div>
+          <div z-field>
+            <label z-field-label for="codigo_postal">Código postal</label>
+            <input z-input id="codigo_postal" type="text" formControlName="codigo_postal" maxlength="10" />
+          </div>
+          <div z-field>
+            <label z-field-label for="pais">País</label>
+            <input z-input id="pais" type="text" formControlName="pais" maxlength="60" />
+          </div>
+        </div>
+
+        <div z-field>
+          <label z-field-label>Ubicación en el mapa</label>
+          <app-sucursal-mapa-picker
+            [lat]="form.controls.latitud.value"
+            [lon]="form.controls.longitud.value"
+            (coordsChange)="onCoords($event)"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div z-field>
+            <label z-field-label for="latitud">Latitud</label>
+            <input z-input id="latitud" type="number" step="any" formControlName="latitud" placeholder="Ej. 19.4326" />
+          </div>
+          <div z-field>
+            <label z-field-label for="longitud">Longitud</label>
+            <input z-input id="longitud" type="number" step="any" formControlName="longitud" placeholder="Ej. -99.1332" />
+          </div>
+        </div>
+      </z-card-content>
+    </div>
+
+    <div class="flex justify-end gap-2">
+      <a routerLink="/sucursales" z-button zType="outline">Cancelar</a>
+      <button z-button type="submit" [zLoading]="guardando()" [zDisabled]="guardando()">
+        <ng-icon name="lucideSave" class="mr-2 size-4" /> Crear sucursal
+      </button>
+    </div>
+  </form>
+</div>

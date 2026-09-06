@@ -38,10 +38,10 @@
             @for (sucursal of sucursales(); track sucursal.id) {
               <tr z-table-row>
                 <td z-table-cell class="font-medium">
-                  <span class="flex items-center gap-2">
+                  <a [routerLink]="['/sucursales', sucursal.id]" class="flex items-center gap-2 text-primary hover:underline">
                     <ng-icon name="lucideMapPin" class="size-4 text-muted-foreground" />
                     {{ sucursal.nombre }}
-                  </span>
+                  </a>
                 </td>
                 <td z-table-cell class="text-muted-foreground">{{ sucursal.direccion }}</td>
                 <td z-table-cell class="text-muted-foreground">

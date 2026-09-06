@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucidePlus, lucideStore, lucideCircleCheck, lucideBan } from '@ng-icons/lucide';
+import { lucidePlus, lucideStore, lucideCircleCheck, lucideBan, lucideList, lucideMap } from '@ng-icons/lucide';
 
 import { SucursalAdminService } from '../data-access/sucursal-admin.service';
 import { SucursalResponse, SucursalQuery } from '../data-access/sucursal.models';
@@ -16,19 +17,22 @@ import { ZardSheetService } from '../../../shared/components/sheet/sheet.service
 
 import { SucursalFiltrosComponent } from '../ui/sucursal-filtros/sucursal-filtros.component';
 import { SucursalTableComponent } from '../ui/sucursal-table/sucursal-table.component';
-import { SucursalFormSheetComponent } from '../ui/sucursal-form-sheet/sucursal-form-sheet.component';
+import { SucursalFormSheetComponent } from '../ui/sucursal-form-sheet/sucursal-form-sheet.component'; // usado en openEditSheet
+import { SucursalMapaListaComponent } from '../ui/sucursal-mapa-lista/sucursal-mapa-lista.component';
 
 @Component({
   selector: 'app-sucursal-list',
   standalone: true,
   imports: [
+    RouterLink,
     NgIconComponent,
     ...ZardCardImports,
     ZardButtonComponent,
     SucursalFiltrosComponent,
     SucursalTableComponent,
+    SucursalMapaListaComponent,
   ],
-  viewProviders: [provideIcons({ lucidePlus, lucideStore, lucideCircleCheck, lucideBan })],
+  viewProviders: [provideIcons({ lucidePlus, lucideStore, lucideCircleCheck, lucideBan, lucideList, lucideMap })],
   templateUrl: './sucursal-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -41,6 +45,9 @@ export class SucursalListComponent {
 
   readonly sucursales = signal<SucursalResponse[]>([]);
   readonly loading = signal(false);
+  readonly vista = signal<'tabla' | 'mapa'>('tabla');
+  /** Lista completa (sin paginar) para el mapa y el resumen. */
+  readonly todas = signal<SucursalResponse[]>([]);
 
   // Filtros y paginación
   readonly q = signal<string>('');
@@ -99,6 +106,7 @@ export class SucursalListComponent {
     this.sucursalService.listar({ page_size: 100 }).subscribe({
       next: res => {
         const data = res.data;
+        this.todas.set(data);
         this.totalSucursales.set(res.meta?.pagination?.total_items ?? data.length);
         this.totalActivas.set(data.filter(s => s.activo).length);
         this.totalInactivas.set(data.filter(s => !s.activo).length);
@@ -138,34 +146,6 @@ export class SucursalListComponent {
       this.sort.set(`${field}:asc`);
     }
     this.page.set(1);
-  }
-
-  openCreateSheet() {
-    this.sheetService.create({
-      zTitle: 'Nueva Sucursal',
-      zDescription: 'Registra una nueva sucursal en el sistema.',
-      zContent: SucursalFormSheetComponent,
-      zOkText: 'Crear',
-      zCancelText: 'Cancelar',
-      zOnOk: (instance: any) => {
-        const obs = instance.save();
-        if (!obs) return false;
-        return new Promise<void>((resolve, reject) => {
-          obs.subscribe({
-            next: () => {
-              this.sonner.success('Sucursal creada exitosamente');
-              this.refrescarTodo();
-              resolve();
-            },
-            error: (err: any) => {
-              console.error(err);
-              this.sonner.error('Error al crear la sucursal');
-              reject(err);
-            },
-          });
-        });
-      },
-    });
   }
 
   openEditSheet(sucursal: SucursalResponse) {

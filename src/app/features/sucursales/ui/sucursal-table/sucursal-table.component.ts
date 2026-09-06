@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucidePencil,
@@ -28,6 +29,7 @@ import { ZardEmptyComponent } from '../../../../shared/components/empty/empty.co
   standalone: true,
   imports: [
     FormsModule,
+    RouterLink,
     DatePipe,
     NgIconComponent,
     ...ZardTableImports,

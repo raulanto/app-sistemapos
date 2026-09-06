@@ -5,9 +5,17 @@
       <p class="text-muted-foreground">Administra las sucursales del negocio.</p>
     </div>
     <div class="flex items-center gap-2">
-      <button z-button zType="default" (click)="openCreateSheet()">
+      <div class="flex rounded-md border p-0.5">
+        <button z-button [zType]="vista() === 'tabla' ? 'secondary' : 'ghost'" zSize="sm" (click)="vista.set('tabla')">
+          <ng-icon name="lucideList" class="mr-1.5 size-4" /> Tabla
+        </button>
+        <button z-button [zType]="vista() === 'mapa' ? 'secondary' : 'ghost'" zSize="sm" (click)="vista.set('mapa')">
+          <ng-icon name="lucideMap" class="mr-1.5 size-4" /> Mapa
+        </button>
+      </div>
+      <a z-button zType="default" routerLink="/sucursales/nuevo">
         <ng-icon name="lucidePlus" class="mr-2" /> Nueva Sucursal
-      </button>
+      </a>
     </div>
   </div>
 
@@ -50,26 +58,30 @@
     </div>
   </div>
 
-  <app-sucursal-filtros
-    [q]="q()"
-    [activo]="activo()"
-    (qChange)="updateSearch($event)"
-    (activoChange)="updateActivo($event)"
-  ></app-sucursal-filtros>
+  @if (vista() === 'tabla') {
+    <app-sucursal-filtros
+      [q]="q()"
+      [activo]="activo()"
+      (qChange)="updateSearch($event)"
+      (activoChange)="updateActivo($event)"
+    ></app-sucursal-filtros>
 
-  <app-sucursal-table
-    [sucursales]="sucursales()"
-    [loading]="loading()"
-    [sort]="sort()"
-    [totalItems]="totalItems()"
-    [totalPages]="totalPages()"
-    [page]="page()"
-    [pageSize]="pageSize()"
-    (sortChange)="toggleSort($event)"
-    (pageChange)="page.set($event)"
-    (pageSizeChange)="updatePageSize($event)"
-    (editar)="openEditSheet($event)"
-    (desactivar)="desactivar($event)"
-    (activar)="activar($event)"
-  ></app-sucursal-table>
+    <app-sucursal-table
+      [sucursales]="sucursales()"
+      [loading]="loading()"
+      [sort]="sort()"
+      [totalItems]="totalItems()"
+      [totalPages]="totalPages()"
+      [page]="page()"
+      [pageSize]="pageSize()"
+      (sortChange)="toggleSort($event)"
+      (pageChange)="page.set($event)"
+      (pageSizeChange)="updatePageSize($event)"
+      (editar)="openEditSheet($event)"
+      (desactivar)="desactivar($event)"
+      (activar)="activar($event)"
+    ></app-sucursal-table>
+  } @else {
+    <app-sucursal-mapa-lista [sucursales]="todas()" />
+  }
 </div>

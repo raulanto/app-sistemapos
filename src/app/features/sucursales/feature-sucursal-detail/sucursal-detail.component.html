@@ -1,0 +1,132 @@
+<div class="p-6 w-full space-y-6">
+  <a routerLink="/sucursales" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+    <ng-icon name="lucideArrowLeft" class="size-4" /> Sucursales
+  </a>
+
+  @if (loading()) {
+    <z-skeleton class="h-8 w-64" />
+    <z-skeleton class="h-56 w-full" />
+  } @else if (sucursal(); as s) {
+    <div
+      class="relative overflow-hidden rounded-xl border bg-cover bg-center"
+      [style.background-image]="s.imagen_fachada_url && !fachadaRota() ? 'url(' + s.imagen_fachada_url + ')' : null"
+      [class.bg-muted]="!s.imagen_fachada_url || fachadaRota()"
+    >
+      <div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-black/10"></div>
+
+      <label
+        z-button
+        zType="secondary"
+        zSize="icon-sm"
+        class="absolute right-3 top-3 z-10 cursor-pointer shadow"
+        [class.pointer-events-none]="subiendo()"
+        [title]="s.imagen_fachada_url ? 'Cambiar imagen' : 'Subir imagen'"
+      >
+        <ng-icon [name]="subiendo() ? 'lucideLoader' : 'lucidePencil'" class="size-4" [class.animate-spin]="subiendo()" />
+        <input type="file" class="hidden" accept="image/jpeg,image/png,image/webp" (change)="onFachadaInput($event)" />
+      </label>
+
+      <div class="relative flex min-h-56 flex-col justify-end gap-3 p-5 sm:flex-row sm:items-end sm:justify-between">
+        <div class="space-y-1 text-white drop-shadow">
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="text-2xl font-bold tracking-tight">{{ s.nombre }}</h1>
+            <z-badge zType="secondary">{{ tipoLabel() }}</z-badge>
+            <z-badge zType="outline" class="gap-1.5 border-white/40 px-1.5 text-white">
+              <span class="size-1.5 rounded-full" [class.bg-green-400]="s.activo" [class.bg-destructive]="!s.activo"></span>
+              {{ s.activo ? 'Activa' : 'Inactiva' }}
+            </z-badge>
+            @if (!s.permite_ventas) {
+              <z-badge zType="outline" class="border-white/40 text-white">Sin ventas</z-badge>
+            }
+          </div>
+          <p class="text-sm text-white/80">
+            {{ s.codigo || 'Sin código' }} · Creada {{ s.created_at | date:'dd/MM/yyyy' }}
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button z-button zType="secondary" zSize="sm" (click)="editar()">
+            <ng-icon name="lucidePencil" class="mr-2 size-4" /> Editar
+          </button>
+          @if (s.activo) {
+            <button z-button zType="secondary" zSize="sm" class="text-destructive" (click)="toggleActivo()">
+              <ng-icon name="lucideBan" class="mr-2 size-4" /> Desactivar
+            </button>
+          } @else {
+            <button z-button zType="secondary" zSize="sm" (click)="toggleActivo()">
+              <ng-icon name="lucideCircleCheck" class="mr-2 size-4" /> Reactivar
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+      <!-- Info -->
+      <div z-card class="lg:col-span-2">
+        <z-card-header>
+          <z-card-title zTitle="Información" class="text-base" />
+        </z-card-header>
+        <z-card-content class="space-y-4 text-sm">
+          @if (s.descripcion) {
+            <p class="text-muted-foreground">{{ s.descripcion }}</p>
+            <z-separator />
+          }
+
+          <div class="flex items-start gap-2">
+            <ng-icon name="lucideMapPin" class="mt-0.5 size-4 text-muted-foreground" />
+            <div>
+              <p>{{ s.direccion }}</p>
+              <p class="text-muted-foreground">{{ direccionLarga() }}</p>
+            </div>
+          </div>
+
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div class="flex items-center gap-2">
+              <ng-icon name="lucidePhone" class="size-4 text-muted-foreground" />
+              <span>{{ s.telefono }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <ng-icon name="lucideMail" class="size-4 text-muted-foreground" />
+              <span>{{ s.email || '—' }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <ng-icon name="lucideClock" class="size-4 text-muted-foreground" />
+              <span>
+                @if (s.horario_apertura && s.horario_cierre) {
+                  {{ s.horario_apertura.slice(0,5) }} – {{ s.horario_cierre.slice(0,5) }}
+                } @else { Sin horario }
+              </span>
+            </div>
+          </div>
+        </z-card-content>
+      </div>
+
+      <!-- Mapa -->
+      <div z-card>
+        <z-card-header>
+          <z-card-title zTitle="Ubicación" class="text-base" />
+          <z-card-description [zDescription]="coords() ? (coords()!.lat + ', ' + coords()!.lon) : 'Sin coordenadas registradas'" />
+        </z-card-header>
+        <z-card-content>
+          @if (mapaUrl(); as url) {
+            <iframe
+              [src]="url"
+              class="h-72 w-full rounded-md border"
+              title="Mapa de la sucursal"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+            ></iframe>
+            <a [href]="mapaLink()" target="_blank" rel="noopener" class="mt-2 inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+              Abrir en OpenStreetMap <ng-icon name="lucideExternalLink" class="size-3.5" />
+            </a>
+          } @else {
+            <p class="py-8 text-center text-sm text-muted-foreground">
+              Agrega latitud y longitud en "Editar" para ver el mapa.
+            </p>
+          }
+        </z-card-content>
+      </div>
+    </div>
+  }
+</div>

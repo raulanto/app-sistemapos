@@ -1,21 +1,43 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
 import { RouterOutlet } from '@angular/router';
-
 import { ZardBreadcrumbImports } from '../../shared/components/breadcrumb/breadcrumb.imports';
 import { ZardSeparatorComponent } from '../../shared/components/separator/separator.component';
 import { ZardSidebarImports } from '../../shared/components/sidebar/sidebar.imports';
-
 import { AppSidebarComponent } from './app-sidebar/app-sidebar.component';
-
+import {
+  lucideBadgeCheck,
+  lucideBell,
+  lucideChevronsUpDown,
+  lucideCreditCard,
+  lucideLogOut,
+  lucideSparkles,
+  lucideSun,
+  lucideMoon,
+} from '@ng-icons/lucide';
+import { ThemeService } from '../theme/theme.service';
 @Component({
   selector: 'app-layout',
   standalone: true,
   imports: [
     RouterOutlet,
-    ...ZardSidebarImports, 
-    ...ZardBreadcrumbImports, 
-    ZardSeparatorComponent, 
-    AppSidebarComponent
+    ...ZardSidebarImports,
+    ...ZardBreadcrumbImports,
+    ZardSeparatorComponent,
+    NgIcon,
+    AppSidebarComponent,
+  ],
+  providers: [
+    provideIcons({
+      lucideBadgeCheck,
+      lucideBell,
+      lucideChevronsUpDown,
+      lucideCreditCard,
+      lucideLogOut,
+      lucideSparkles,
+      lucideSun,
+      lucideMoon,
+    }),
   ],
   template: `
     <z-sidebar-provider>
@@ -25,7 +47,7 @@ import { AppSidebarComponent } from './app-sidebar/app-sidebar.component';
         <header
           class="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12"
         >
-          <div class="flex items-center gap-2 px-4">
+          <div class="flex items-center w-full gap-2 px-4">
             <button z-sidebar-trigger class="-ml-1" aria-label="Toggle Sidebar"></button>
 
             <z-separator
@@ -39,6 +61,17 @@ import { AppSidebarComponent } from './app-sidebar/app-sidebar.component';
               </z-breadcrumb-item>
               <!-- Breadcrumbs can be dynamic based on current route later -->
             </z-breadcrumb>
+            <button
+              class="ml-auto flex items-center justify-center p-2 rounded-md hover:bg-accent hover:text-accent-foreground"
+              (click)="toggleTheme()"
+              title="Cambiar tema"
+            >
+              @if (isDarkTheme()) {
+                <ng-icon name="lucideSun" class="size-4" />
+              } @else {
+                <ng-icon name="lucideMoon" class="size-4" />
+              }
+            </button>
           </div>
         </header>
 
@@ -50,4 +83,10 @@ import { AppSidebarComponent } from './app-sidebar/app-sidebar.component';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LayoutComponent {}
+export class LayoutComponent {
+  readonly isDarkTheme = computed(() => this.themeService.currentTheme() === 'dark');
+  private themeService = inject(ThemeService);
+  toggleTheme() {
+    this.themeService.toggleTheme();
+  }
+}

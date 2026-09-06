@@ -29,6 +29,7 @@ export class SucursalAdminService {
     if (query) {
       if (query.q) params = params.set('q', query.q);
       if (query.activo !== undefined && query.activo !== null) params = params.set('activo', query.activo);
+      if (query.tipo) params = params.set('tipo', query.tipo);
       if (query.page) params = params.set('page', query.page);
       if (query.page_size) params = params.set('page_size', query.page_size);
       if (query.sort) params = params.set('sort', query.sort);
@@ -67,6 +68,21 @@ export class SucursalAdminService {
 
   reactivar(id: string): Observable<SucursalResponse> {
     return this.http.patch<ApiResponse<SucursalResponse>>(`${this.API_URL}/${id}/reactivar`, {}).pipe(
+      map(res => res.data)
+    );
+  }
+
+  /** Sube la foto de fachada (multipart). No setear Content-Type: el navegador pone el boundary. */
+  subirFachada(id: string, file: File): Observable<SucursalResponse> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<ApiResponse<SucursalResponse>>(`${this.API_URL}/${id}/fachada`, fd).pipe(
+      map(res => res.data)
+    );
+  }
+
+  eliminarFachada(id: string): Observable<SucursalResponse> {
+    return this.http.delete<ApiResponse<SucursalResponse>>(`${this.API_URL}/${id}/fachada`).pipe(
       map(res => res.data)
     );
   }
