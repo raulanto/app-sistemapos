@@ -5,6 +5,7 @@ import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucidePencil,
   lucideBan,
+  lucideCircleCheck,
   lucideShieldCheck,
   lucideMail,
   lucideChevronsUpDown,
@@ -43,6 +44,7 @@ import { ZardEmptyComponent } from '../../../../shared/components/empty/empty.co
     provideIcons({
       lucidePencil,
       lucideBan,
+      lucideCircleCheck,
       lucideShieldCheck,
       lucideMail,
       lucideChevronsUpDown,
@@ -69,6 +71,7 @@ export class UsuarioTableComponent {
   editar = output<UsuarioResponse>();
   cambiarRol = output<UsuarioResponse>();
   desactivar = output<UsuarioResponse>();
+  activar = output<UsuarioResponse>();
 
   sortState(field: string): 'asc' | 'desc' | 'none' {
     const current = this.sort();

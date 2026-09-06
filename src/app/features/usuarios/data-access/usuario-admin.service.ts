@@ -64,4 +64,8 @@ export class UsuarioAdminService {
   desactivar(id: string): Observable<UsuarioResponse> {
     return this.http.patch<ApiResponse<UsuarioResponse>>(`${this.API_URL}/${id}/desactivar`, {}).pipe(map(res => res.data));
   }
+
+  reactivar(id: string): Observable<UsuarioResponse> {
+    return this.http.patch<ApiResponse<UsuarioResponse>>(`${this.API_URL}/${id}/reactivar`, {}).pipe(map(res => res.data));
+  }
 }

@@ -81,10 +81,16 @@
                         <ng-icon name="lucideShieldCheck" class="size-4" />
                       </button>
                     }
-                    @if (canDesactivar() && usuario.activo) {
-                      <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-destructive" title="Desactivar" (click)="desactivar.emit(usuario)">
-                        <ng-icon name="lucideBan" class="size-4" />
-                      </button>
+                    @if (canDesactivar()) {
+                      @if (usuario.activo) {
+                        <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-destructive" title="Desactivar" (click)="desactivar.emit(usuario)">
+                          <ng-icon name="lucideBan" class="size-4" />
+                        </button>
+                      } @else {
+                        <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-green-600" title="Activar" (click)="activar.emit(usuario)">
+                          <ng-icon name="lucideCircleCheck" class="size-4" />
+                        </button>
+                      }
                     }
                   </div>
                 </td>

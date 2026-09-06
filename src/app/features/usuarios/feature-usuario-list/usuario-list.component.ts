@@ -202,4 +202,24 @@ export class UsuarioListComponent {
       },
     });
   }
+
+  activar(usuario: UsuarioResponse) {
+    this.alertDialog.confirm({
+      zTitle: `¿Reactivar a ${usuario.nombre}?`,
+      zDescription: 'El usuario volverá a poder iniciar sesión.',
+      zOkText: 'Reactivar',
+      zOnOk: () => {
+        this.usuarioService.reactivar(usuario.id).subscribe({
+          next: () => {
+            this.sonner.success('Usuario reactivado correctamente');
+            this.refrescarTodo();
+          },
+          error: err => {
+            console.error(err);
+            this.sonner.error(err?.error?.error?.message ?? 'Error al reactivar el usuario');
+          },
+        });
+      },
+    });
+  }
 }
