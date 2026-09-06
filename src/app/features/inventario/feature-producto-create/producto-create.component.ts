@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder, FormArray, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
@@ -6,14 +6,14 @@ import { Router, RouterLink } from '@angular/router';
 import { Observable, forkJoin, of } from 'rxjs';
 import { map, switchMap, retry } from 'rxjs/operators';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideSave, lucidePlus, lucideTrash, lucidePackage, lucideLayers } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideSave, lucidePlus, lucideTrash, lucidePackage, lucideLayers, lucideStar, lucideUpload } from '@ng-icons/lucide';
 
 import { ProductoService } from '../data-access/producto.service';
 import { CategoriaService } from '../data-access/categoria.service';
 import { UnidadMedidaService } from '../data-access/unidad-medida.service';
 import { SucursalService } from '../../../core/sucursal/sucursal.service';
 import { MovimientoService } from '../data-access/movimiento.service';
-import { CategoriaResponse, ProductoResponse, UnidadMedidaResponse, TipoProducto } from '../data-access/inventario.models';
+import { CategoriaResponse, ProductoResponse, UnidadMedidaResponse, TipoProducto, IMAGEN_MAX_BYTES, IMAGEN_TIPOS_PERMITIDOS } from '../data-access/inventario.models';
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
 import { ZardSheetService } from '../../../shared/components/sheet/sheet.service';
 import { UnidadMedidaFormSheetComponent } from '../ui/unidad-medida-form-sheet/unidad-medida-form-sheet.component';
@@ -27,7 +27,6 @@ import { ZardButtonComponent } from '../../../shared/components/button/button.co
 import { ZardAlertComponent } from '../../../shared/components/alert/alert.component';
 import { ZardEmptyComponent } from '../../../shared/components/empty/empty.component';
 import { ZardSeparatorComponent } from '../../../shared/components/separator/separator.component';
-import { ZardCheckboxComponent } from '../../../shared/components/checkbox/checkbox.component';
 
 /** En una presentación, el campo de equivalencia del modo activo debe ser > 0. */
 function equivalenciaUnidadValidator(control: AbstractControl): ValidationErrors | null {
@@ -52,12 +51,11 @@ function equivalenciaUnidadValidator(control: AbstractControl): ValidationErrors
     ZardButtonComponent,
     ZardAlertComponent,
     ZardEmptyComponent,
-    ZardSeparatorComponent,
-    ZardCheckboxComponent
+    ZardSeparatorComponent
   ],
   templateUrl: './producto-create.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ lucideArrowLeft, lucideSave, lucidePlus, lucideTrash, lucidePackage, lucideLayers })]
+  viewProviders: [provideIcons({ lucideArrowLeft, lucideSave, lucidePlus, lucideTrash, lucidePackage, lucideLayers, lucideStar, lucideUpload })]
 })
 export class ProductoCreateComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -74,6 +72,10 @@ export class ProductoCreateComponent implements OnInit {
   productosSimples = signal<ProductoResponse[]>([]);
   unidadesMedida = signal<UnidadMedidaResponse[]>([]);
   loading = signal(false);
+
+  /** Fotos elegidas del equipo, aún sin subir (se suben tras crear el producto). */
+  readonly imagenesNuevas = signal<{ file: File; alt: string; portada: boolean; previewUrl: string }[]>([]);
+  readonly imagenError = signal<string | null>(null);
 
   form = this.fb.group({
     sku: ['', Validators.required],
@@ -93,11 +95,16 @@ export class ProductoCreateComponent implements OnInit {
     tipo: ['simple' as TipoProducto, Validators.required],
     existencias: this.fb.array([]),
     componentes: this.fb.array([]),
-    unidades: this.fb.array([]),
-    imagenes: this.fb.array([])
+    unidades: this.fb.array([])
   });
 
   private formEvents = toSignal(this.form.events);
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      this.imagenesNuevas().forEach(x => URL.revokeObjectURL(x.previewUrl));
+    });
+  }
 
   getFieldError(controlName: string) {
     return computed(() => {
@@ -146,7 +153,6 @@ export class ProductoCreateComponent implements OnInit {
     }
     if (this.unidadesArray.controls.some(c => c.invalid)) errores.push('Presentaciones de venta');
     if (this.existenciasArray.controls.some(c => c.invalid)) errores.push('Inventario inicial');
-    if (this.imagenesArray.controls.some(c => c.invalid)) errores.push('Fotos');
     if (this.form.get('tipo')?.value === 'kit' && this.componentesArray.controls.some(c => c.invalid)) {
       errores.push('Receta del kit');
     }
@@ -165,30 +171,48 @@ export class ProductoCreateComponent implements OnInit {
     return this.form.get('unidades') as FormArray;
   }
 
-  get imagenesArray() {
-    return this.form.get('imagenes') as FormArray;
-  }
+  onImagenesSeleccionadas(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    this.imagenError.set(null);
 
-  agregarImagenFila() {
-    const group = this.fb.group({
-      url: ['', [Validators.required, Validators.pattern(/^https?:\/\/.+/i)]],
-      alt_texto: [''],
-      es_principal: [this.imagenesArray.length === 0],
-    });
-    this.imagenesArray.push(group);
-  }
-
-  removerImagenFila(index: number) {
-    const era_principal = this.imagenesArray.at(index).get('es_principal')?.value;
-    this.imagenesArray.removeAt(index);
-    // Si se quitó la portada, la primera que quede toma su lugar.
-    if (era_principal && this.imagenesArray.length > 0) {
-      this.imagenesArray.at(0).get('es_principal')?.setValue(true);
+    for (const file of files) {
+      if (!(IMAGEN_TIPOS_PERMITIDOS as readonly string[]).includes(file.type)) {
+        this.imagenError.set('Formato no permitido. Usa JPG, PNG o WebP.');
+        continue;
+      }
+      if (file.size > IMAGEN_MAX_BYTES) {
+        this.imagenError.set(`"${file.name}" supera 5 MiB.`);
+        continue;
+      }
+      const portada = this.imagenesNuevas().length === 0;
+      this.imagenesNuevas.update(list => [
+        ...list,
+        { file, alt: '', portada, previewUrl: URL.createObjectURL(file) },
+      ]);
     }
   }
 
+  actualizarAltImagen(index: number, alt: string) {
+    this.imagenesNuevas.update(list => list.map((x, i) => (i === index ? { ...x, alt } : x)));
+  }
+
+  removerImagen(index: number) {
+    this.imagenesNuevas.update(list => {
+      const quitada = list[index];
+      if (quitada) URL.revokeObjectURL(quitada.previewUrl);
+      const rest = list.filter((_, i) => i !== index);
+      // Si se quitó la portada, la primera que quede toma su lugar.
+      if (quitada?.portada && rest.length > 0 && !rest.some(x => x.portada)) {
+        rest[0] = { ...rest[0], portada: true };
+      }
+      return rest;
+    });
+  }
+
   marcarPortada(index: number) {
-    this.imagenesArray.controls.forEach((c, i) => c.get('es_principal')?.setValue(i === index));
+    this.imagenesNuevas.update(list => list.map((x, i) => ({ ...x, portada: i === index })));
   }
 
   /** `fraccionable`/`simple`: puede tener venta fraccionada. `kit`/`servicio`: no aplica. */
@@ -345,7 +369,6 @@ export class ProductoCreateComponent implements OnInit {
     delete data.existencias;
     delete data.componentes;
     delete data.unidades;
-    delete data.imagenes;
 
     if (data.codigo_barras === '') data.codigo_barras = null;
     if (data.descripcion === '') data.descripcion = null;
@@ -356,19 +379,9 @@ export class ProductoCreateComponent implements OnInit {
       data.incremento_minimo_venta = Number(data.incremento_minimo_venta);
     }
 
-    // Imágenes: filas válidas + portada (la primera si nadie la marcó).
-    const imagenesFilas = this.imagenesArray.controls
-      .map(c => ({
-        url: (c.get('url')?.value || '').trim(),
-        alt_texto: (c.get('alt_texto')?.value || '').trim() || null,
-        es_principal: !!c.get('es_principal')?.value,
-      }))
-      .filter(f => f.url);
-    if (imagenesFilas.length > 0 && !imagenesFilas.some(f => f.es_principal)) {
-      imagenesFilas[0].es_principal = true;
-    }
-    // Deja poblado el campo denormalizado para que el listado/detalle muestren portada sin pedir la galería.
-    data.imagen_url = imagenesFilas.find(f => f.es_principal)?.url ?? null;
+    // Fotos: se suben tras crear el producto; portada = la marcada, o la primera.
+    const fotos = this.imagenesNuevas();
+    const hayPortada = fotos.some(f => f.portada);
 
     const esServicio = data.tipo === 'servicio';
 
@@ -376,12 +389,12 @@ export class ProductoCreateComponent implements OnInit {
       switchMap(prodRes => {
         const operations: Observable<any>[] = [];
 
-        imagenesFilas.forEach((f, i) => {
-          operations.push(this.productoService.agregarImagen(prodRes.id, {
-            url: f.url,
-            alt_texto: f.alt_texto,
+        fotos.forEach((f, i) => {
+          operations.push(this.productoService.subirImagen(prodRes.id, {
+            file: f.file,
+            alt_texto: f.alt.trim() || null,
             orden: i,
-            es_principal: f.es_principal,
+            es_principal: f.portada || (!hayPortada && i === 0),
           }));
         });
 

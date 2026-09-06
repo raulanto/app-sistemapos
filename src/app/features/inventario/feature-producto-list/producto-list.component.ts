@@ -299,6 +299,41 @@ export class ProductoListComponent implements OnInit {
     });
   }
 
+  eliminar(producto: ProductoResponse) {
+    this.alertDialog.confirm({
+      zTitle: `¿Eliminar producto ${producto.sku}?`,
+      zDescription:
+        'Se borrará permanentemente el producto junto con sus imágenes, presentaciones, receta, lotes y existencias. ' +
+        'No se puede si tiene movimientos de inventario o es componente de un kit: en ese caso, desactívalo.',
+      zOkText: 'Eliminar',
+      zOkDestructive: true,
+      zOnOk: () => {
+        this.productoService.eliminar(producto.id).subscribe({
+          next: () => {
+            this.sonner.success('Producto eliminado correctamente');
+            this.selectedIds.update(set => {
+              const next = new Set(set);
+              next.delete(producto.id);
+              return next;
+            });
+            this.refreshTrigger.update(v => v + 1);
+          },
+          error: (err) => {
+            console.error('Error al eliminar el producto', err);
+            if (err?.status === 409) {
+              this.sonner.error(
+                err?.error?.error?.message ??
+                  'El producto tiene historial y no se puede eliminar. Desactívalo en su lugar.',
+              );
+            } else {
+              this.sonner.error('Error al eliminar el producto');
+            }
+          }
+        });
+      }
+    });
+  }
+
   openEditSheet(prod: ProductoResponse) {
     this.sheetService.create({
       zTitle: `Editar ${prod.sku}`,

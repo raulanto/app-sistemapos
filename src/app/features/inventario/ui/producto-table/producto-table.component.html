@@ -40,7 +40,12 @@
               <tr z-table-row>
                 <td z-table-cell><z-skeleton class="size-4 rounded" /></td>
                 <td z-table-cell><z-skeleton class="h-4 w-24" /></td>
-                <td z-table-cell><z-skeleton class="h-4 w-40" /></td>
+                <td z-table-cell>
+                  <div class="flex items-center gap-3">
+                    <z-skeleton class="size-10 shrink-0 rounded-md" />
+                    <z-skeleton class="h-4 w-40" />
+                  </div>
+                </td>
                 <td z-table-cell><z-skeleton class="h-4 w-20" /></td>
                 <td z-table-cell><z-skeleton class="ml-auto h-4 w-16" /></td>
                 <td z-table-cell><z-skeleton class="h-5 w-16 rounded-full" /></td>
@@ -62,22 +67,37 @@
                   <div class="text-xs text-muted-foreground tabular-nums">{{ producto.codigo_barras || '—' }}</div>
                 </td>
                 <td z-table-cell>
-                  <div class="flex items-center gap-2">
-                    <a routerLink="/inventario/productos/{{ producto.id }}" class="font-medium text-primary hover:underline">
-                      {{ producto.nombre }}
+                  <div class="flex items-center gap-3">
+                    <a
+                      routerLink="/inventario/productos/{{ producto.id }}"
+                      class="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted"
+                      [attr.aria-label]="'Ver ' + producto.nombre"
+                    >
+                      @if (imagenMiniatura(producto); as src) {
+                        <img [src]="src" [alt]="producto.nombre" class="size-full object-cover" (error)="marcarImagenRota(producto.id)" />
+                      } @else {
+                        <ng-icon name="lucidePackage" class="size-4 text-muted-foreground" />
+                      }
                     </a>
-                    @if (producto.tipo === 'kit') {
-                      <z-badge zType="secondary" class="gap-1 text-[10px]">
-                        <ng-icon name="lucideLayers" />
-                        Kit
-                      </z-badge>
-                    }
-                  </div>
-                  <div
-                    class="max-w-55 truncate text-xs text-muted-foreground"
-                    [title]="producto.descripcion || ''"
-                  >
-                    {{ producto.descripcion || 'Sin descripción' }}
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-2">
+                        <a routerLink="/inventario/productos/{{ producto.id }}" class="font-medium text-primary hover:underline">
+                          {{ producto.nombre }}
+                        </a>
+                        @if (producto.tipo === 'kit') {
+                          <z-badge zType="secondary" class="gap-1 text-[10px]">
+                            <ng-icon name="lucideLayers" />
+                            Kit
+                          </z-badge>
+                        }
+                      </div>
+                      <div
+                        class="max-w-55 truncate text-xs text-muted-foreground"
+                        [title]="producto.descripcion || ''"
+                      >
+                        {{ producto.descripcion || 'Sin descripción' }}
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td z-table-cell class="text-muted-foreground">{{ producto.categoria?.nombre || 'Sin categoría' }}</td>
@@ -144,6 +164,9 @@
                           <ng-icon name="lucideCircleCheck" class="size-4" />
                         </button>
                       }
+                      <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-destructive" title="Eliminar" (click)="eliminar.emit(producto)">
+                        <ng-icon name="lucideTrash2" class="size-4" />
+                      </button>
                     }
                   </div>
                 </td>

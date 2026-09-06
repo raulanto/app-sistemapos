@@ -1,27 +1,48 @@
 <div class="space-y-4">
-  <!-- Alta de imagen (div, no <form>: este componente se embebe dentro de otros formularios) -->
-  <div [formGroup]="form" class="grid gap-3 rounded-md border border-border p-3 sm:grid-cols-[1fr_1fr_auto]">
-    <div z-field>
-      <label z-field-label for="img-url">URL de la imagen *</label>
-      <input z-input id="img-url" type="url" formControlName="url" placeholder="https://tu-cdn.com/foto.jpg" />
-      @if (form.controls.url.invalid && form.controls.url.touched) {
-        <p class="text-[0.8rem] font-medium text-destructive">Ingresa una URL http(s) válida.</p>
-      }
-    </div>
-    <div z-field>
-      <label z-field-label for="img-alt">Texto alternativo</label>
-      <input z-input id="img-alt" type="text" formControlName="alt_texto" maxlength="255" placeholder="Descripción para accesibilidad" />
-    </div>
-    <div class="flex items-end gap-3">
-      <label class="flex items-center gap-2 pb-2 text-sm">
-        <z-checkbox formControlName="es_principal"></z-checkbox>
-        Portada
-      </label>
-      <button z-button type="button" zType="outline" [zLoading]="guardando()" [zDisabled]="guardando()" (click)="agregar()">
-        <ng-icon name="lucidePlus" class="mr-1.5" />
-        Agregar
-      </button>
-    </div>
+  <!-- Zona de carga por archivo (div, no <form>: este componente se embebe dentro de otros formularios) -->
+  <div
+    class="grid gap-3 rounded-md border border-border p-3"
+    (dragover)="$event.preventDefault()"
+    (drop)="onDrop($event)">
+    <label
+      class="flex cursor-pointer flex-col items-center gap-1.5 rounded-md border border-dashed border-border py-6 text-center text-sm text-muted-foreground transition-colors hover:bg-muted/40">
+      <ng-icon name="lucideUpload" class="size-5" />
+      <span>Arrastra una imagen o haz clic para elegir</span>
+      <span class="text-[0.75rem]">JPG, PNG o WebP · máx. 5 MiB</span>
+      <input type="file" class="hidden" accept="image/jpeg,image/png,image/webp" (change)="onFileInput($event)" />
+    </label>
+
+    @if (errorArchivo()) {
+      <p class="text-[0.8rem] font-medium text-destructive">{{ errorArchivo() }}</p>
+    }
+
+    @if (previewUrl(); as p) {
+      <div class="grid gap-3 sm:grid-cols-[6rem_1fr_auto]">
+        <img [src]="p" alt="" class="size-24 rounded-md border border-border object-cover" />
+        <div z-field>
+          <label z-field-label for="img-alt">Texto alternativo</label>
+          <input
+            z-input
+            id="img-alt"
+            type="text"
+            maxlength="255"
+            [ngModel]="altTexto()"
+            (ngModelChange)="altTexto.set($event)"
+            placeholder="Descripción para accesibilidad" />
+          <label class="mt-2 flex items-center gap-2 text-sm">
+            <z-checkbox [ngModel]="comoPortada()" (ngModelChange)="comoPortada.set($event)"></z-checkbox>
+            Marcar como portada
+          </label>
+        </div>
+        <div class="flex items-end gap-2">
+          <button z-button type="button" zType="ghost" [zDisabled]="guardando()" (click)="setArchivo(null)">Quitar</button>
+          <button z-button type="button" zType="outline" [zLoading]="guardando()" [zDisabled]="guardando()" (click)="agregar()">
+            <ng-icon name="lucidePlus" class="mr-1.5" />
+            Subir
+          </button>
+        </div>
+      </div>
+    }
   </div>
 
   <!-- Grilla -->
@@ -35,20 +56,20 @@
     <z-empty
       zIcon="lucideImageOff"
       zTitle="Sin imágenes"
-      zDescription="Agrega la URL de una imagen ya alojada (CDN, S3, etc.). La primera se marca como portada."
+      zDescription="Sube una imagen desde tu equipo. La primera se marca como portada."
       class="rounded-md border border-dashed py-10" />
   } @else {
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
       @for (img of ordenadas(); track img.id; let first = $first; let last = $last) {
         <div class="group relative overflow-hidden rounded-md border border-border">
           <div class="aspect-square bg-muted">
-            @if (rotas().has(img.id)) {
+            @if (rotas().has(img.id) || !miniatura(img)) {
               <div class="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
                 <ng-icon name="lucideImageOff" class="size-6" />
                 <span class="text-[0.7rem]">No carga</span>
               </div>
             } @else {
-              <img [src]="img.url" [alt]="img.alt_texto || ''" class="h-full w-full object-cover" (error)="marcarRota(img.id)" />
+              <img [src]="miniatura(img)" [alt]="img.alt_texto || ''" class="h-full w-full object-cover" (error)="marcarRota(img.id)" />
             }
           </div>
 

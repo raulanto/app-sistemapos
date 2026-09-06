@@ -214,16 +214,9 @@ export class ProductoFormSheetComponent implements OnInit {
     this.existenciasArray.removeAt(index);
   }
 
-  /** Mantiene sincronizado el campo denormalizado `imagen_url` cuando cambia la portada de la galería. */
-  onImagenPrincipalCambiada(url: string | null) {
-    const id = this.sheetData?.productoId;
-    if (!id) return;
-    this.productoService
-      .actualizar(id, { imagen_url: url, cambiar_imagen_url: true })
-      .subscribe({
-        next: () => this.sheetData?.onSaved?.(),
-        error: err => console.error('No se pudo sincronizar la portada', err),
-      });
+  /** La galería ya persistió el cambio (portada la deriva el backend de `es_principal`); solo refrescamos el listado. */
+  onImagenPrincipalCambiada(_url: string | null) {
+    this.sheetData?.onSaved?.();
   }
 
   save() {

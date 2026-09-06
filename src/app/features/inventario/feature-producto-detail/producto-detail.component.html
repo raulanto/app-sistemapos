@@ -85,6 +85,10 @@
               Activar
             </button>
           }
+          <button z-button zType="outline" zSize="sm" class="text-destructive hover:bg-destructive/10" (click)="eliminarProducto()">
+            <ng-icon name="lucideTrash" class="mr-2 size-4" />
+            Eliminar
+          </button>
         }
         @if (canCrearMovimiento()) {
           @if (canEditar()) {
@@ -444,7 +448,7 @@
                   } @else if (prod.imagenes?.length) {
                     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                       @for (img of prod.imagenes; track img.id) {
-                        <img [src]="img.url" [alt]="img.alt_texto || ''" class="aspect-square w-full rounded-md border border-border object-cover" />
+                        <img [src]="img.thumbnail_url || img.url" [alt]="img.alt_texto || ''" class="aspect-square w-full rounded-md border border-border object-cover" />
                       }
                     </div>
                   } @else {

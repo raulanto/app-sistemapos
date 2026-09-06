@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, computed, signal } from '@angular/core';
 import { CurrencyPipe, DecimalPipe, LowerCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -13,6 +13,8 @@ import {
   lucideChevronUp,
   lucideChevronDown,
   lucideLayers,
+  lucidePackage,
+  lucideTrash2,
 } from '@ng-icons/lucide';
 import { ProductoResponse } from '../../data-access/inventario.models';
 import { ZardTableImports } from '../../../../shared/components/table/table.imports';
@@ -59,6 +61,8 @@ import { inject } from '@angular/core';
       lucideChevronUp,
       lucideChevronDown,
       lucideLayers,
+      lucidePackage,
+      lucideTrash2,
     })
   ],
   templateUrl: './producto-table.component.html',
@@ -84,6 +88,7 @@ export class ProductoTableComponent {
   toggleAll = output<boolean>();
   desactivar = output<ProductoResponse>();
   activar = output<ProductoResponse>();
+  eliminar = output<ProductoResponse>();
   editar = output<ProductoResponse>();
   crearMovimiento = output<ProductoResponse>();
 
@@ -92,6 +97,19 @@ export class ProductoTableComponent {
   getSucursalNombre(id: string): string {
     const sucursal = this.sucursalService.sucursales().find(s => s.id === id);
     return sucursal ? sucursal.nombre : 'Desconocida';
+  }
+
+  /** Ids de productos cuya miniatura falló al cargar (URL prefirmada vencida, thumbnail aún no generado, etc.). */
+  private readonly imagenesRotas = signal<Set<string>>(new Set());
+
+  imagenMiniatura(producto: ProductoResponse): string | null {
+    if (this.imagenesRotas().has(producto.id)) return null;
+    const img = producto.imagen_principal;
+    return img?.thumbnail_url ?? img?.url ?? null;
+  }
+
+  marcarImagenRota(id: string) {
+    this.imagenesRotas.update(s => new Set(s).add(id));
   }
 
   sortState(field: string): 'asc' | 'desc' | 'none' {

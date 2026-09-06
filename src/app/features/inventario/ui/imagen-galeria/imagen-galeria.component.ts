@@ -1,11 +1,22 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+  untracked,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucidePlus, lucideStar, lucideTrash, lucideArrowUp, lucideArrowDown, lucideImageOff } from '@ng-icons/lucide';
+import { lucidePlus, lucideStar, lucideTrash, lucideArrowUp, lucideArrowDown, lucideImageOff, lucideUpload } from '@ng-icons/lucide';
 
 import { ProductoService } from '../../data-access/producto.service';
-import { ImagenResponse, AgregarImagenRequest } from '../../data-access/inventario.models';
+import { ImagenResponse, IMAGEN_MAX_BYTES, IMAGEN_TIPOS_PERMITIDOS, SubirImagenRequest } from '../../data-access/inventario.models';
 
 import { ZardFieldImports } from '../../../../shared/components/field/field.imports';
 import { ZardInputComponent } from '../../../../shared/components/input/input.component';
@@ -19,12 +30,16 @@ import { ZardSonnerService } from '../../../../shared/components/sonner/sonner.s
  * Galería de imágenes reutilizable para un producto o para una de sus presentaciones.
  * - Sin `unidadId` => imágenes del producto (`/productos/{id}/imagenes`).
  * - Con `unidadId`  => imágenes de la presentación (`/productos/{id}/unidades/{unidadId}/imagenes`).
+ *
+ * La carga es por archivo (`POST .../imagenes/upload`, multipart). Las URLs que
+ * devuelve el backend salen prefirmadas y expiran (~1 h): `recargar()` en cada
+ * apertura de la galería las refresca.
  */
 @Component({
   selector: 'app-imagen-galeria',
   standalone: true,
   imports: [
-    ReactiveFormsModule,
+    FormsModule,
     NgIconComponent,
     ...ZardFieldImports,
     ZardInputComponent,
@@ -35,10 +50,11 @@ import { ZardSonnerService } from '../../../../shared/components/sonner/sonner.s
   ],
   templateUrl: './imagen-galeria.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ lucidePlus, lucideStar, lucideTrash, lucideArrowUp, lucideArrowDown, lucideImageOff })],
+  viewProviders: [
+    provideIcons({ lucidePlus, lucideStar, lucideTrash, lucideArrowUp, lucideArrowDown, lucideImageOff, lucideUpload }),
+  ],
 })
 export class ImagenGaleriaComponent {
-  private fb = inject(FormBuilder);
   private productoService = inject(ProductoService);
   private sonner = inject(ZardSonnerService);
 
@@ -54,15 +70,16 @@ export class ImagenGaleriaComponent {
   /** Ids de imágenes cuyo <img> falló al cargar. */
   readonly rotas = signal<Set<string>>(new Set());
 
+  /** Archivo seleccionado, aún sin subir. */
+  readonly archivo = signal<File | null>(null);
+  readonly previewUrl = signal<string | null>(null);
+  readonly altTexto = signal('');
+  readonly comoPortada = signal(false);
+  readonly errorArchivo = signal<string | null>(null);
+
   readonly ordenadas = computed(() =>
     [...this.imagenes()].sort((a, b) => a.orden - b.orden || (a.es_principal === b.es_principal ? 0 : a.es_principal ? -1 : 1)),
   );
-
-  form = this.fb.group({
-    url: ['', [Validators.required, Validators.pattern(/^https?:\/\/.+/i)]],
-    alt_texto: [''],
-    es_principal: [false],
-  });
 
   constructor() {
     // Recarga cada vez que cambian los ids de entrada (producto o presentación).
@@ -71,6 +88,7 @@ export class ImagenGaleriaComponent {
       this.unidadId();
       untracked(() => this.recargar());
     });
+    inject(DestroyRef).onDestroy(() => this.revocarPreview());
   }
 
   recargar() {
@@ -93,16 +111,64 @@ export class ImagenGaleriaComponent {
     });
   }
 
-  private urlPrincipal(): string | null {
-    return this.imagenes().find(i => i.es_principal)?.url ?? this.imagenes()[0]?.url ?? null;
+  /** Miniatura preferida para la grilla: thumbnail si está, si no la imagen completa. */
+  miniatura(img: ImagenResponse): string | null {
+    return img.thumbnail_url ?? img.url ?? null;
   }
 
-  private ejecutar(obs: Observable<unknown>, okMsg: string) {
+  private urlPrincipal(): string | null {
+    const principal = this.imagenes().find(i => i.es_principal) ?? this.imagenes()[0];
+    return principal?.url ?? null;
+  }
+
+  private revocarPreview() {
+    const prev = this.previewUrl();
+    if (prev) URL.revokeObjectURL(prev);
+  }
+
+  setArchivo(file: File | null) {
+    this.revocarPreview();
+    this.errorArchivo.set(null);
+
+    if (!file) {
+      this.archivo.set(null);
+      this.previewUrl.set(null);
+      return;
+    }
+    if (!(IMAGEN_TIPOS_PERMITIDOS as readonly string[]).includes(file.type)) {
+      this.archivo.set(null);
+      this.previewUrl.set(null);
+      this.errorArchivo.set('Formato no permitido. Usa JPG, PNG o WebP.');
+      return;
+    }
+    if (file.size > IMAGEN_MAX_BYTES) {
+      this.archivo.set(null);
+      this.previewUrl.set(null);
+      this.errorArchivo.set('La imagen supera 5 MiB.');
+      return;
+    }
+    this.archivo.set(file);
+    this.previewUrl.set(URL.createObjectURL(file));
+  }
+
+  onFileInput(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    this.setArchivo(input.files?.[0] ?? null);
+    input.value = ''; // permite volver a elegir el mismo archivo
+  }
+
+  onDrop(ev: DragEvent) {
+    ev.preventDefault();
+    this.setArchivo(ev.dataTransfer?.files?.[0] ?? null);
+  }
+
+  private ejecutar(obs: Observable<unknown>, okMsg: string, onOk?: () => void) {
     this.guardando.set(true);
     obs.subscribe({
       next: () => {
         this.guardando.set(false);
         this.sonner.success(okMsg);
+        onOk?.();
         // Recargar y notificar tras un pequeño respiro para que el backend confirme.
         setTimeout(() => {
           this.recargar();
@@ -112,29 +178,35 @@ export class ImagenGaleriaComponent {
       error: err => {
         this.guardando.set(false);
         console.error(err);
-        this.sonner.error('No se pudo completar la operación con la imagen');
+        const msg = err?.status === 400
+          ? 'Formato no permitido o imagen mayor a 5 MiB.'
+          : 'No se pudo completar la operación con la imagen';
+        this.sonner.error(msg);
       },
     });
   }
 
   agregar() {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
+    const file = this.archivo();
+    if (!file || this.guardando()) return;
+
     const pid = this.productoId();
     const uid = this.unidadId();
-    const payload: AgregarImagenRequest = {
-      url: this.form.value.url!.trim(),
-      alt_texto: this.form.value.alt_texto?.trim() || null,
+    const primera = this.imagenes().length === 0;
+    const payload: SubirImagenRequest = {
+      file,
+      alt_texto: this.altTexto().trim() || null,
       orden: this.imagenes().length,
-      es_principal: !!this.form.value.es_principal || this.imagenes().length === 0,
+      es_principal: this.comoPortada() || primera,
     };
     const obs = uid
-      ? this.productoService.agregarImagenUnidad(pid, uid, payload)
-      : this.productoService.agregarImagen(pid, payload);
-    this.ejecutar(obs, 'Imagen agregada');
-    this.form.reset({ url: '', alt_texto: '', es_principal: false });
+      ? this.productoService.subirImagenUnidad(pid, uid, payload)
+      : this.productoService.subirImagen(pid, payload);
+    this.ejecutar(obs, 'Imagen subida', () => {
+      this.setArchivo(null);
+      this.altTexto.set('');
+      this.comoPortada.set(false);
+    });
   }
 
   marcarPrincipal(img: ImagenResponse) {

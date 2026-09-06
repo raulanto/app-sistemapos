@@ -135,12 +135,13 @@ export class ProductoDetailComponent implements OnInit {
   /** Se activa si la portada no carga (link roto, CORS, etc.); cae al icono por defecto. */
   imagenError = signal(false);
 
-  /** Portada: primero la galería (`imagenes`), luego el campo denormalizado `imagen_url`. */
+  /** Portada: `imagen_principal` (viene siempre), o la primera de la galería embebida. */
   imagenPrincipal = computed(() => {
     const prod = this.producto();
     if (!prod) return null;
-    const principal = (prod.imagenes ?? []).find(i => i.es_principal) ?? (prod.imagenes ?? [])[0];
-    return principal?.url ?? prod.imagen_url ?? null;
+    const principal =
+      prod.imagen_principal ?? (prod.imagenes ?? []).find(i => i.es_principal) ?? (prod.imagenes ?? [])[0];
+    return principal?.thumbnail_url ?? principal?.url ?? null;
   });
 
   totalStock = computed(() => {
@@ -351,13 +352,41 @@ export class ProductoDetailComponent implements OnInit {
     });
   }
 
-  /** La galería cambió la portada: sincroniza `imagen_url` (para el listado) y recarga. */
-  onImagenPrincipalCambiada(url: string | null) {
+  /** La galería ya persistió el cambio; solo recargamos para refrescar la portada y las URLs prefirmadas. */
+  onImagenPrincipalCambiada(_url: string | null) {
+    const prod = this.producto();
+    if (prod) this.cargarDatos(prod.id);
+  }
+
+  eliminarProducto() {
     const prod = this.producto();
     if (!prod) return;
-    this.productoService.actualizar(prod.id, { imagen_url: url, cambiar_imagen_url: true }).subscribe({
-      next: () => this.cargarDatos(prod.id),
-      error: () => this.cargarDatos(prod.id),
+    this.alertDialog.confirm({
+      zTitle: `¿Eliminar producto ${prod.sku}?`,
+      zDescription:
+        'Se borrará permanentemente junto con sus imágenes, presentaciones, receta, lotes y existencias. ' +
+        'No se puede si tiene movimientos de inventario o es componente de un kit: en ese caso, desactívalo.',
+      zOkText: 'Eliminar',
+      zOkDestructive: true,
+      zOnOk: () => {
+        this.productoService.eliminar(prod.id).subscribe({
+          next: () => {
+            this.sonner.success('Producto eliminado correctamente');
+            this.router.navigate(['/inventario/productos']);
+          },
+          error: (err) => {
+            console.error('Error al eliminar el producto', err);
+            if (err?.status === 409) {
+              this.sonner.error(
+                err?.error?.error?.message ??
+                  'El producto tiene historial y no se puede eliminar. Desactívalo en su lugar.',
+              );
+            } else {
+              this.sonner.error('Error al eliminar el producto');
+            }
+          },
+        });
+      },
     });
   }
 

@@ -21,6 +21,7 @@ import {
   ImagenResponse,
   AgregarImagenRequest,
   ActualizarImagenRequest,
+  SubirImagenRequest,
   ReemplazarRecetaRequest
 } from './inventario.models';
 
@@ -114,6 +115,16 @@ export class ProductoService {
     return this.http.patch<void>(`${this.API_URL}/${id}/activar`, {});
   }
 
+  /**
+   * Borrado físico del producto y su catálogo propio (imágenes S3, presentaciones,
+   * receta, lotes, existencias) en una transacción. 204 si borra.
+   * 409 si tiene historial (movimientos de inventario, o es componente de un kit):
+   * en ese caso hay que usar `desactivar` (baja lógica).
+   */
+  eliminar(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/${id}`);
+  }
+
   // --- COMPONENTES DE KIT ---
 
   listarComponentes(kit_id: string, include?: string): Observable<ComponenteResponse[]> {
@@ -197,6 +208,13 @@ export class ProductoService {
     );
   }
 
+  /** Sube un archivo a la galería del producto (S3). No setear Content-Type: el navegador pone el boundary multipart. */
+  subirImagen(producto_id: string, request: SubirImagenRequest): Observable<ImagenResponse> {
+    return this.http
+      .post<ApiResponse<ImagenResponse>>(`${this.API_URL}/${producto_id}/imagenes/upload`, toImagenFormData(request))
+      .pipe(map(res => res.data));
+  }
+
   actualizarImagen(producto_id: string, imagen_id: string, request: ActualizarImagenRequest): Observable<ImagenResponse> {
     return this.http.patch<ApiResponse<ImagenResponse>>(`${this.API_URL}/${producto_id}/imagenes/${imagen_id}`, request).pipe(
       map(res => res.data)
@@ -221,6 +239,16 @@ export class ProductoService {
     );
   }
 
+  /** Sube un archivo a la galería de una presentación (S3). */
+  subirImagenUnidad(producto_id: string, unidad_id: string, request: SubirImagenRequest): Observable<ImagenResponse> {
+    return this.http
+      .post<ApiResponse<ImagenResponse>>(
+        `${this.API_URL}/${producto_id}/unidades/${unidad_id}/imagenes/upload`,
+        toImagenFormData(request),
+      )
+      .pipe(map(res => res.data));
+  }
+
   actualizarImagenUnidad(producto_id: string, unidad_id: string, imagen_id: string, request: ActualizarImagenRequest): Observable<ImagenResponse> {
     return this.http.patch<ApiResponse<ImagenResponse>>(`${this.API_URL}/${producto_id}/unidades/${unidad_id}/imagenes/${imagen_id}`, request).pipe(
       map(res => res.data)
@@ -230,4 +258,13 @@ export class ProductoService {
   eliminarImagenUnidad(producto_id: string, unidad_id: string, imagen_id: string): Observable<void> {
     return this.http.delete<void>(`${this.API_URL}/${producto_id}/unidades/${unidad_id}/imagenes/${imagen_id}`);
   }
+}
+
+function toImagenFormData(req: SubirImagenRequest): FormData {
+  const fd = new FormData();
+  fd.append('file', req.file);
+  if (req.alt_texto) fd.append('alt_texto', req.alt_texto);
+  if (req.orden != null) fd.append('orden', String(req.orden));
+  if (req.es_principal != null) fd.append('es_principal', String(req.es_principal));
+  return fd;
 }
