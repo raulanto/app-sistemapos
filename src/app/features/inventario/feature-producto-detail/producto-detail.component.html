@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-6xl p-4 sm:p-6 space-y-6">
+<div class="mx-auto max-w-7xl p-4 sm:p-6 space-y-6">
   <a routerLink="/inventario/productos" z-button zType="ghost" zSize="sm" class="-ml-2 w-fit text-muted-foreground">
     <ng-icon name="lucideArrowLeft" class="mr-1.5 size-4" />
     Volver a productos
@@ -25,18 +25,18 @@
     <z-alert zType="destructive" zTitle="No se pudo cargar el producto" [zDescription]="error() || ''"></z-alert>
   } @else if (producto(); as prod) {
     <!-- ENCABEZADO -->
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <section class="flex flex-col gap-4 rounded-xl border bg-card p-5 sm:flex-row sm:items-start sm:justify-between">
       <div class="flex items-start gap-4">
         @if (imagenPrincipal() && !imagenError()) {
           <img
             [src]="imagenPrincipal()"
             [alt]="prod.nombre"
-            class="size-16 shrink-0 rounded-xl border border-border object-cover"
+            class="size-20 shrink-0 rounded-xl border border-border object-cover"
             (error)="imagenError.set(true)"
           />
         } @else {
-          <div class="grid size-16 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-            <ng-icon [name]="prod.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-7" />
+          <div class="grid size-20 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <ng-icon [name]="prod.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-8" />
           </div>
         }
         <div class="space-y-1.5">
@@ -104,7 +104,7 @@
           </button>
         }
       </div>
-    </div>
+    </section>
 
     <!-- INDICADORES -->
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -176,7 +176,12 @@
       <div class="space-y-6 lg:col-span-2">
         <z-tab-group class="w-full">
           <z-tab label="Existencias">
-            <div class="pt-4">
+            <div class="space-y-3 pt-4">
+              <div class="flex items-center gap-2">
+                <ng-icon name="lucideBoxes" class="size-4 text-muted-foreground" />
+                <h3 class="font-semibold">Stock por sucursal</h3>
+                <z-badge zType="secondary" class="tabular-nums">{{ prod.existencias?.length || 0 }}</z-badge>
+              </div>
               <div z-card class="overflow-hidden py-0">
                 <div class="overflow-x-auto">
                   <table z-table>
@@ -239,14 +244,19 @@
           @if (prod.tipo === 'kit') {
             <z-tab label="Receta">
               <div class="space-y-3 pt-4">
-                @if (canEditar()) {
-                  <div class="flex justify-end">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div class="flex items-center gap-2">
+                    <ng-icon name="lucideLayers" class="size-4 text-muted-foreground" />
+                    <h3 class="font-semibold">Componentes de la receta</h3>
+                    <z-badge zType="secondary" class="tabular-nums">{{ prod.componentes?.length || 0 }}</z-badge>
+                  </div>
+                  @if (canEditar()) {
                     <button z-button zType="outline" zSize="sm" (click)="openAddComponenteSheet()">
                       <ng-icon name="lucidePlus" class="mr-2 size-4" />
                       Agregar componente
                     </button>
-                  </div>
-                }
+                  }
+                </div>
                 <div z-card class="overflow-hidden py-0">
                   <div class="overflow-x-auto">
                     <table z-table>
@@ -301,14 +311,19 @@
           @if (prod.tipo !== 'kit') {
             <z-tab label="Presentaciones">
               <div class="space-y-3 pt-4">
-                @if (canEditar()) {
-                  <div class="flex justify-end">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div class="flex items-center gap-2">
+                    <ng-icon name="lucidePackageOpen" class="size-4 text-muted-foreground" />
+                    <h3 class="font-semibold">Presentaciones de venta</h3>
+                    <z-badge zType="secondary" class="tabular-nums">{{ unidades().length }}</z-badge>
+                  </div>
+                  @if (canEditar()) {
                     <button z-button zType="outline" zSize="sm" (click)="openAddUnidadSheet()">
                       <ng-icon name="lucidePlus" class="mr-2 size-4" />
                       Agregar presentación
                     </button>
-                  </div>
-                }
+                  }
+                </div>
                 <div z-card class="overflow-hidden py-0">
                   <div class="overflow-x-auto">
                     <table z-table>
@@ -370,7 +385,12 @@
           }
 
           <z-tab label="Movimientos">
-            <div class="pt-4">
+            <div class="space-y-3 pt-4">
+              <div class="flex items-center gap-2">
+                <ng-icon name="lucideHistory" class="size-4 text-muted-foreground" />
+                <h3 class="font-semibold">Historial de movimientos</h3>
+                <z-badge zType="secondary" class="tabular-nums">{{ movimientos().length }}</z-badge>
+              </div>
               <div z-card class="overflow-hidden py-0">
                 <div class="overflow-x-auto">
                   <table z-table>
@@ -440,7 +460,12 @@
           </z-tab>
 
           <z-tab label="Imágenes">
-            <div class="pt-4">
+            <div class="space-y-3 pt-4">
+              <div class="flex items-center gap-2">
+                <ng-icon name="lucidePackage" class="size-4 text-muted-foreground" />
+                <h3 class="font-semibold">Galería de imágenes</h3>
+                <z-badge zType="secondary" class="tabular-nums">{{ prod.imagenes?.length || 0 }}</z-badge>
+              </div>
               <div z-card>
                 <z-card-content class="pt-6">
                   @if (canEditar()) {

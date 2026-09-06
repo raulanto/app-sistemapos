@@ -240,13 +240,16 @@ export class ProductoDetailComponent implements OnInit {
     });
   }
 
+  private static readonly INCLUDES = 'categoria,existencias,componentes,imagenes';
+
+  /** Carga inicial: muestra skeleton mientras llega todo. */
   cargarDatos(id: string) {
     this.loading.set(true);
     this.error.set(null);
     this.imagenError.set(false);
     this.cdr.markForCheck(); // force check
 
-    this.productoService.obtenerPorId(id, 'categoria,existencias,componentes,imagenes').subscribe({
+    this.productoService.obtenerPorId(id, ProductoDetailComponent.INCLUDES).subscribe({
       next: (prod) => {
         this.producto.set(prod);
         this.cargarMovimientos(id);
@@ -260,6 +263,21 @@ export class ProductoDetailComponent implements OnInit {
         this.loading.set(false);
         this.cdr.markForCheck();
       }
+    });
+  }
+
+  /**
+   * Refresco parcial tras una edición: re-lee solo el producto (con sus relaciones)
+   * sin skeleton. Cabecera, KPIs, existencias, componentes e imágenes son `computed`
+   * sobre `producto()`, así que se actualizan solos.
+   */
+  refrescarProducto(id: string) {
+    this.productoService.obtenerPorId(id, ProductoDetailComponent.INCLUDES).subscribe({
+      next: (prod) => {
+        this.producto.set(prod);
+        this.cdr.markForCheck();
+      },
+      error: (err) => console.error('Error al refrescar producto:', err),
     });
   }
 
@@ -323,7 +341,7 @@ export class ProductoDetailComponent implements OnInit {
         productoId: prod.id,
         onSaved: () => {
           this.sonner.success('Producto actualizado exitosamente');
-          this.cargarDatos(prod.id);
+          this.refrescarProducto(prod.id);
         }
       },
       zHideFooter: true
@@ -346,16 +364,16 @@ export class ProductoDetailComponent implements OnInit {
           this.productoService.desactivar(prod.id, conStock),
           'Producto desactivado correctamente',
           'Error al desactivar el producto',
-          () => this.cargarDatos(prod.id)
+          () => this.producto.update(p => (p ? { ...p, activo: false } : p))
         );
       }
     });
   }
 
-  /** La galería ya persistió el cambio; solo recargamos para refrescar la portada y las URLs prefirmadas. */
+  /** La galería ya persistió el cambio; refresca solo el producto (portada + URLs prefirmadas). */
   onImagenPrincipalCambiada(_url: string | null) {
     const prod = this.producto();
-    if (prod) this.cargarDatos(prod.id);
+    if (prod) this.refrescarProducto(prod.id);
   }
 
   eliminarProducto() {
@@ -402,7 +420,7 @@ export class ProductoDetailComponent implements OnInit {
           this.productoService.activar(prod.id),
           'Producto activado correctamente',
           'Error al activar el producto',
-          () => this.cargarDatos(prod.id)
+          () => this.producto.update(p => (p ? { ...p, activo: true } : p))
         );
       }
     });
@@ -426,7 +444,8 @@ export class ProductoDetailComponent implements OnInit {
           () => {
             // Small delay to ensure backend transaction is fully committed before reading
             setTimeout(() => {
-              this.cargarDatos(prod.id);
+              this.refrescarProducto(prod.id);
+              this.cargarMovimientos(prod.id);
             }, 300);
           }
         );
@@ -455,7 +474,8 @@ export class ProductoDetailComponent implements OnInit {
           'Error al realizar la transferencia',
           () => {
             setTimeout(() => {
-              this.cargarDatos(prod.id);
+              this.refrescarProducto(prod.id);
+              this.cargarMovimientos(prod.id);
             }, 300);
           }
         );
@@ -485,7 +505,7 @@ export class ProductoDetailComponent implements OnInit {
           'Error al configurar umbrales',
           () => {
             setTimeout(() => {
-              this.cargarDatos(prod.id);
+              this.refrescarProducto(prod.id);
             }, 300);
           }
         );
@@ -511,7 +531,7 @@ export class ProductoDetailComponent implements OnInit {
           'Error al agregar componente',
           () => {
             setTimeout(() => {
-              this.cargarDatos(prod.id);
+              this.refrescarProducto(prod.id);
             }, 300);
           }
         );
@@ -537,7 +557,7 @@ export class ProductoDetailComponent implements OnInit {
           'Error al actualizar componente',
           () => {
             setTimeout(() => {
-              this.cargarDatos(prod.id);
+              this.refrescarProducto(prod.id);
             }, 300);
           }
         );
@@ -559,7 +579,7 @@ export class ProductoDetailComponent implements OnInit {
           this.productoService.quitarComponente(prod.id, comp.producto_componente_id),
           'Componente removido',
           'Error al remover componente',
-          () => this.cargarDatos(prod.id)
+          () => this.refrescarProducto(prod.id)
         );
       }
     });

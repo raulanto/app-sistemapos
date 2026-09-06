@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucidePencil, lucideTrash } from '@ng-icons/lucide';
 
@@ -15,15 +22,19 @@ import { PERMISOS } from '@/core/auth/permissions';
 @Component({
   selector: 'app-categoria-list',
   standalone: true,
-  imports: [NgIcon, ...ZardTableImports, ...ZardCardImports, ZardButtonComponent, ZardBadgeComponent],
-  viewProviders: [
-    provideIcons({ lucidePlus, lucidePencil, lucideTrash })
+  imports: [
+    NgIcon,
+    ...ZardTableImports,
+    ...ZardCardImports,
+    ZardButtonComponent,
+    ZardBadgeComponent,
   ],
+  viewProviders: [provideIcons({ lucidePlus, lucidePencil, lucideTrash })],
   template: `
     <div class="p-6 max-w-4xl mx-auto space-y-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold tracking-tight">Categorías</h1>
+          <h1 class="text-6xl font-extrabold">Categorías</h1>
           <p class="text-muted-foreground">Agrupa tus productos de forma organizada.</p>
         </div>
         @if (canCrear()) {
@@ -74,21 +85,23 @@ import { PERMISOS } from '@/core/auth/permissions';
       </div>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CategoriaListComponent implements OnInit {
   private categoriaService = inject(CategoriaService);
   private authService = inject(AuthService);
 
   readonly canCrear = computed(() => this.authService.hasPermission(...PERMISOS.inventario.crear));
-  readonly canEditar = computed(() => this.authService.hasPermission(...PERMISOS.inventario.editar));
+  readonly canEditar = computed(() =>
+    this.authService.hasPermission(...PERMISOS.inventario.editar),
+  );
 
   readonly categorias = signal<CategoriaResponse[]>([]);
 
   ngOnInit() {
     this.categoriaService.listar().subscribe({
       next: (data) => this.categorias.set(data),
-      error: (err) => console.error('Error al cargar categorias:', err)
+      error: (err) => console.error('Error al cargar categorias:', err),
     });
   }
 }
