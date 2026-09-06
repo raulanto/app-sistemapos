@@ -1,0 +1,135 @@
+<div class="relative mt-4 flex flex-col gap-4">
+  <div class="overflow-hidden rounded-xl border">
+    <div class="overflow-x-auto">
+      <table z-table>
+        <thead z-table-header class="sticky top-0 z-10 bg-muted/50 backdrop-blur">
+          <tr z-table-row>
+            <th z-table-head>
+              <button type="button" class="-ml-1 inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 font-medium select-none hover:bg-muted" (click)="sortChange.emit('nombre')">
+                Rol
+                <ng-icon [name]="sortIconName('nombre')" class="size-3.5 text-muted-foreground" />
+              </button>
+            </th>
+            <th z-table-head>
+              <button type="button" class="-ml-1 inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 font-medium select-none hover:bg-muted" (click)="sortChange.emit('codigo')">
+                Código
+                <ng-icon [name]="sortIconName('codigo')" class="size-3.5 text-muted-foreground" />
+              </button>
+            </th>
+            <th z-table-head>Descripción</th>
+            <th z-table-head class="text-right">Permisos</th>
+            <th z-table-head class="text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody z-table-body>
+          @if (loading()) {
+            @for (row of [1, 2, 3, 4, 5]; track row) {
+              <tr z-table-row>
+                <td z-table-cell><z-skeleton class="h-4 w-32" /></td>
+                <td z-table-cell><z-skeleton class="h-4 w-24" /></td>
+                <td z-table-cell><z-skeleton class="h-4 w-56" /></td>
+                <td z-table-cell><z-skeleton class="ml-auto h-4 w-10" /></td>
+                <td z-table-cell><z-skeleton class="ml-auto h-4 w-20" /></td>
+              </tr>
+            }
+          } @else {
+            @for (rol of roles(); track rol.id) {
+              <tr z-table-row>
+                <td z-table-cell class="font-medium">
+                  <span class="flex items-center gap-2">
+                    <ng-icon name="lucideShieldCheck" class="size-4 text-muted-foreground" />
+                    {{ rol.nombre }}
+                  </span>
+                </td>
+                <td z-table-cell class="text-muted-foreground">
+                  <code class="rounded bg-muted px-1.5 py-0.5 text-xs">{{ rol.codigo || '—' }}</code>
+                </td>
+                <td z-table-cell class="max-w-80 truncate text-muted-foreground" [title]="rol.descripcion">
+                  {{ rol.descripcion || 'Sin descripción' }}
+                </td>
+                <td z-table-cell class="text-right">
+                  <z-badge zType="secondary" class="tabular-nums">{{ rol.permisos.length }}</z-badge>
+                </td>
+                <td z-table-cell>
+                  <div class="flex items-center justify-end gap-1">
+                    @if (canGestionar()) {
+                      <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Editar" (click)="editar.emit(rol)">
+                        <ng-icon name="lucidePencil" class="size-4" />
+                      </button>
+                      <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Permisos" (click)="permisos.emit(rol)">
+                        <ng-icon name="lucideKey" class="size-4" />
+                      </button>
+                      <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-destructive" title="Eliminar" (click)="eliminar.emit(rol)">
+                        <ng-icon name="lucideTrash2" class="size-4" />
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr z-table-row>
+                <td z-table-cell colspan="5" class="p-0">
+                  <z-empty
+                    zIcon="lucideX"
+                    zTitle="Sin roles"
+                    zDescription="Crea un rol para empezar a asignar permisos."
+                    class="py-12" />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalItems() > 0) {
+      <div class="flex flex-col items-center justify-between gap-4 border-t p-4 sm:flex-row">
+        <div class="text-sm text-muted-foreground">{{ totalItems() }} rol(es) en total.</div>
+
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium">Filas por página</span>
+            <z-select [ngModel]="pageSize().toString()" (ngModelChange)="pageSizeChange.emit($event)">
+              <z-select-item [zValue]="'10'">10</z-select-item>
+              <z-select-item [zValue]="'20'">20</z-select-item>
+              <z-select-item [zValue]="'50'">50</z-select-item>
+            </z-select>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-medium tabular-nums">Página {{ page() }} de {{ totalPages() }}</span>
+
+            <z-pagination [zTotal]="totalPages()" [zPageIndex]="page()" [zContent]="content" />
+
+            <ng-template #content>
+              <ul z-pagination-content>
+                <li z-pagination-item>
+                  <z-pagination-previous (click)="goToPrevious()" [zDisabled]="page() === 1" />
+                </li>
+
+                @for (p of pages(); track p) {
+                  <li z-pagination-item>
+                    <button type="button" z-pagination-button [zActive]="p === page()" (click)="goToPage(p)">
+                      <span class="sr-only">Ir a página</span>
+                      {{ p }}
+                    </button>
+                  </li>
+                }
+
+                @if (pages().length > 0 && pages()[pages().length - 1] < totalPages()) {
+                  <li z-pagination-item>
+                    <z-pagination-ellipsis />
+                  </li>
+                }
+
+                <li z-pagination-item>
+                  <z-pagination-next (click)="goToNext()" [zDisabled]="page() === totalPages()" />
+                </li>
+              </ul>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

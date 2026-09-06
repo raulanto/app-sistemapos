@@ -88,6 +88,10 @@ export class AppSidebarComponent {
       title: 'Usuarios',
       url: '/usuarios',
       icon: 'lucideUsers',
+      items: [
+        { title: 'Usuarios', url: '/usuarios' },
+        { title: 'Roles y permisos', url: '/usuarios/roles' },
+      ],
     },
     {
       title: 'Reportes',

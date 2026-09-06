@@ -1,0 +1,58 @@
+<div class="grid min-h-0 flex-1 auto-rows-min gap-4 px-4 pb-4 overflow-y-auto">
+  <div class="flex items-center justify-between gap-3">
+    <p class="text-sm text-muted-foreground">
+      Permisos de <span class="font-medium text-foreground">{{ sheetData?.rol?.nombre }}</span>
+    </p>
+    <z-badge zType="secondary" class="tabular-nums">{{ totalSeleccionados() }} activos</z-badge>
+  </div>
+
+  <z-input-group>
+    <z-input-group-addon>
+      <ng-icon name="lucideSearch" />
+    </z-input-group-addon>
+    <input z-input type="text" placeholder="Filtrar por código o descripción..." [ngModel]="filtro()" (ngModelChange)="filtro.set($event)" />
+    @if (filtro()) {
+      <z-input-group-addon zAlign="inline-end">
+        <button z-input-group-button zSize="icon-xs" (click)="limpiarFiltro()" aria-label="Limpiar filtro">
+          <ng-icon name="lucideX" />
+        </button>
+      </z-input-group-addon>
+    }
+  </z-input-group>
+
+  @if (cargando()) {
+    <div class="space-y-2">
+      <div class="h-8 animate-pulse rounded-md bg-muted"></div>
+      <div class="h-8 animate-pulse rounded-md bg-muted"></div>
+      <div class="h-8 animate-pulse rounded-md bg-muted"></div>
+    </div>
+  } @else {
+    @for (grupo of grupos(); track grupo.nombre) {
+      <div class="rounded-md border">
+        <div class="flex items-center justify-between border-b bg-muted/40 px-3 py-2">
+          <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ grupo.nombre }}</span>
+          <button z-button zType="ghost" zSize="sm" (click)="toggleGrupo(grupo, !grupoTodoMarcado(grupo))">
+            {{ grupoTodoMarcado(grupo) ? 'Quitar todos' : 'Marcar todos' }}
+          </button>
+        </div>
+        <ul class="divide-y">
+          @for (permiso of grupo.permisos; track permiso.id) {
+            <li class="flex items-start gap-3 px-3 py-2">
+              <z-checkbox
+                class="mt-0.5"
+                [ngModel]="estaSeleccionado(permiso.id)"
+                (checkChange)="toggle(permiso.id, $event)"
+              ></z-checkbox>
+              <div class="min-w-0">
+                <code class="text-xs font-medium">{{ permiso.codigo }}</code>
+                <p class="text-xs text-muted-foreground">{{ permiso.descripcion }}</p>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    } @empty {
+      <p class="py-8 text-center text-sm text-muted-foreground">Sin permisos que coincidan con el filtro.</p>
+    }
+  }
+</div>

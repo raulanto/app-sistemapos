@@ -1,0 +1,158 @@
+<div class="relative mt-4 flex flex-col gap-4">
+  <div class="overflow-hidden rounded-xl border">
+    <div class="overflow-x-auto">
+      <table z-table>
+        <thead z-table-header class="sticky top-0 z-10 bg-muted/50 backdrop-blur">
+          <tr z-table-row>
+            <th z-table-head>
+              <button type="button" class="-ml-1 inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 font-medium select-none hover:bg-muted" (click)="sortChange.emit('nombre')">
+                Usuario
+                <ng-icon [name]="sortIconName('nombre')" class="size-3.5 text-muted-foreground" />
+              </button>
+            </th>
+            <th z-table-head>
+              <button type="button" class="-ml-1 inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 font-medium select-none hover:bg-muted" (click)="sortChange.emit('email')">
+                Correo
+                <ng-icon [name]="sortIconName('email')" class="size-3.5 text-muted-foreground" />
+              </button>
+            </th>
+            <th z-table-head>Rol</th>
+            <th z-table-head>Sucursal</th>
+            <th z-table-head>Estado</th>
+            <th z-table-head>
+              <button type="button" class="-ml-1 inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 font-medium select-none hover:bg-muted" (click)="sortChange.emit('last_login_at')">
+                Último acceso
+                <ng-icon [name]="sortIconName('last_login_at')" class="size-3.5 text-muted-foreground" />
+              </button>
+            </th>
+            <th z-table-head class="text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody z-table-body>
+          @if (loading()) {
+            @for (row of [1, 2, 3, 4, 5]; track row) {
+              <tr z-table-row>
+                <td z-table-cell><z-skeleton class="h-4 w-32" /></td>
+                <td z-table-cell><z-skeleton class="h-4 w-48" /></td>
+                <td z-table-cell><z-skeleton class="h-5 w-20 rounded-full" /></td>
+                <td z-table-cell><z-skeleton class="h-4 w-24" /></td>
+                <td z-table-cell><z-skeleton class="h-5 w-16 rounded-full" /></td>
+                <td z-table-cell><z-skeleton class="h-4 w-20" /></td>
+                <td z-table-cell><z-skeleton class="ml-auto h-4 w-16" /></td>
+              </tr>
+            }
+          } @else {
+            @for (usuario of usuarios(); track usuario.id) {
+              <tr z-table-row>
+                <td z-table-cell class="font-medium">{{ usuario.nombre }}</td>
+                <td z-table-cell class="text-muted-foreground">
+                  <span class="flex items-center gap-1.5">
+                    <ng-icon name="lucideMail" class="size-3.5" />
+                    {{ usuario.email }}
+                  </span>
+                </td>
+                <td z-table-cell>
+                  <z-badge zType="secondary" class="gap-1 text-[11px]">
+                    <ng-icon name="lucideShieldCheck" class="size-3" />
+                    {{ usuario.rol?.nombre || '—' }}
+                  </z-badge>
+                </td>
+                <td z-table-cell class="text-muted-foreground">{{ usuario.sucursal?.nombre || 'Todas' }}</td>
+                <td z-table-cell>
+                  <z-badge zType="outline" class="gap-1.5 px-1.5 text-muted-foreground">
+                    <span
+                      class="size-1.5 rounded-full"
+                      [class.bg-green-500]="usuario.activo"
+                      [class.bg-destructive]="!usuario.activo"
+                    ></span>
+                    {{ usuario.activo ? 'Activo' : 'Inactivo' }}
+                  </z-badge>
+                </td>
+                <td z-table-cell class="text-xs text-muted-foreground">
+                  {{ usuario.last_login_at ? (usuario.last_login_at | date:'dd/MM/yyyy HH:mm') : 'Nunca' }}
+                </td>
+                <td z-table-cell>
+                  <div class="flex items-center justify-end gap-1">
+                    @if (canEditar()) {
+                      <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Editar" (click)="editar.emit(usuario)">
+                        <ng-icon name="lucidePencil" class="size-4" />
+                      </button>
+                      <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Cambiar rol" (click)="cambiarRol.emit(usuario)">
+                        <ng-icon name="lucideShieldCheck" class="size-4" />
+                      </button>
+                    }
+                    @if (canDesactivar() && usuario.activo) {
+                      <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-destructive" title="Desactivar" (click)="desactivar.emit(usuario)">
+                        <ng-icon name="lucideBan" class="size-4" />
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr z-table-row>
+                <td z-table-cell colspan="7" class="p-0">
+                  <z-empty
+                    zIcon="lucideX"
+                    zTitle="Sin usuarios"
+                    zDescription="Todavía no hay usuarios registrados."
+                    class="py-12" />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalItems() > 0) {
+      <div class="flex flex-col items-center justify-between gap-4 border-t p-4 sm:flex-row">
+        <div class="text-sm text-muted-foreground">{{ totalItems() }} usuario(s) en total.</div>
+
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium">Filas por página</span>
+            <z-select [ngModel]="pageSize().toString()" (ngModelChange)="pageSizeChange.emit($event)">
+              <z-select-item [zValue]="'10'">10</z-select-item>
+              <z-select-item [zValue]="'20'">20</z-select-item>
+              <z-select-item [zValue]="'50'">50</z-select-item>
+            </z-select>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-medium tabular-nums">Página {{ page() }} de {{ totalPages() }}</span>
+
+            <z-pagination [zTotal]="totalPages()" [zPageIndex]="page()" [zContent]="content" />
+
+            <ng-template #content>
+              <ul z-pagination-content>
+                <li z-pagination-item>
+                  <z-pagination-previous (click)="goToPrevious()" [zDisabled]="page() === 1" />
+                </li>
+
+                @for (p of pages(); track p) {
+                  <li z-pagination-item>
+                    <button type="button" z-pagination-button [zActive]="p === page()" (click)="goToPage(p)">
+                      <span class="sr-only">Ir a página</span>
+                      {{ p }}
+                    </button>
+                  </li>
+                }
+
+                @if (pages().length > 0 && pages()[pages().length - 1] < totalPages()) {
+                  <li z-pagination-item>
+                    <z-pagination-ellipsis />
+                  </li>
+                }
+
+                <li z-pagination-item>
+                  <z-pagination-next (click)="goToNext()" [zDisabled]="page() === totalPages()" />
+                </li>
+              </ul>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

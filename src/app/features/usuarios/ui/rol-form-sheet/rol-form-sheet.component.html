@@ -1,0 +1,36 @@
+<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label for="codigo">Código *</label>
+      <input z-input id="codigo" type="text" formControlName="codigo" maxlength="50" placeholder="Ej. gerente_sucursal" />
+      @if (isEditing) {
+        <p z-field-description>El código no se puede modificar.</p>
+      } @else if (form.controls.codigo.invalid && form.controls.codigo.touched) {
+        <p class="text-[0.8rem] font-medium text-destructive">El código es obligatorio.</p>
+      }
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label for="nombre">Nombre *</label>
+      <input z-input id="nombre" type="text" formControlName="nombre" maxlength="50" placeholder="Ej. Gerente de sucursal" />
+      @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
+        <p class="text-[0.8rem] font-medium text-destructive">El nombre es obligatorio.</p>
+      }
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label for="descripcion">Descripción</label>
+      <input z-input id="descripcion" type="text" formControlName="descripcion" maxlength="255" placeholder="Para qué sirve este rol" />
+    </div>
+  </div>
+
+  @if (!isEditing) {
+    <p class="text-[0.8rem] text-muted-foreground">
+      Después de crearlo, asígnale permisos desde la acción "Permisos" en la tabla.
+    </p>
+  }
+</form>

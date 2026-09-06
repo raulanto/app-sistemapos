@@ -425,6 +425,41 @@
         }
       }
     },
+    "/api/v1/usuarios/{usuario_id}/reactivar": {
+      "patch": {
+        "tags": ["usuarios"],
+        "summary": "Reactivar Usuario",
+        "description": "Vuelve a activar un usuario dado de baja. Idempotente si ya está activo.\nMismo permiso que la baja (`usuarios.desactivar` cubre alta/baja).",
+        "operationId": "reactivar_usuario_api_v1_usuarios__usuario_id__reactivar_patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "usuario_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Usuario Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_UsuarioResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/usuarios/{usuario_id}/cambiar-password": {
       "post": {
         "tags": ["usuarios"],
