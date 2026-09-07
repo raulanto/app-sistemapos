@@ -56,6 +56,12 @@
           }
           <div class="flex justify-between"><dt class="text-muted-foreground">Total</dt><dd class="tabular-nums font-medium">{{ v.total | currency }}</dd></div>
           <div class="flex justify-between"><dt class="text-muted-foreground">Pagado</dt><dd class="tabular-nums">{{ v.monto_pagado | currency }}</dd></div>
+          @if (+v.efectivo_recibido > 0) {
+            <div class="flex justify-between"><dt class="text-muted-foreground">Recibido en efectivo</dt><dd class="tabular-nums">{{ v.efectivo_recibido | currency }}</dd></div>
+          }
+          @if (+v.cambio > 0) {
+            <div class="flex justify-between text-green-600"><dt>Cambio</dt><dd class="tabular-nums font-medium">{{ v.cambio | currency }}</dd></div>
+          }
           @if (+v.saldo_pendiente > 0) {
             <div class="flex justify-between"><dt class="text-muted-foreground">A crédito</dt><dd class="tabular-nums text-amber-600">{{ v.saldo_pendiente | currency }}</dd></div>
           }
@@ -72,9 +78,14 @@
           </ul>
         }
 
-        <button z-button zType="default" class="mt-5 w-full" (click)="nuevaVenta()">
-          <ng-icon name="lucidePlus" class="mr-2 size-4" /> Nueva venta
-        </button>
+        <div class="mt-5 flex gap-2">
+          <button z-button zType="outline" class="flex-1" (click)="imprimirTicket(v.id)">
+            <ng-icon name="lucidePrinter" class="mr-2 size-4" /> Ticket
+          </button>
+          <button z-button zType="default" class="flex-1" (click)="nuevaVenta()">
+            <ng-icon name="lucidePlus" class="mr-2 size-4" /> Nueva venta
+          </button>
+        </div>
       </div>
     </div>
   } @else {
@@ -254,6 +265,16 @@
                 <input z-input class="flex-1 text-right" type="number" min="0" step="0.01" [ngModel]="p.monto" (ngModelChange)="setMontoPago($index, $event)" />
                 <button z-button zType="ghost" zSize="icon-sm" (click)="quitarPago($index)"><ng-icon name="lucideX" class="size-4" /></button>
               </div>
+              @if (p.metodo_pago === 'efectivo') {
+                <div class="flex items-center gap-2 pl-1 text-xs text-muted-foreground">
+                  <span class="w-28 text-right">Recibí con</span>
+                  <input z-input class="flex-1 text-right" type="number" min="0" step="0.01" placeholder="—"
+                         [ngModel]="p.monto_recibido ?? null" (ngModelChange)="setRecibido($index, $event)" />
+                  <span class="w-16 text-right tabular-nums" [class.text-green-600]="cambioPago(p) > 0">
+                    {{ cambioPago(p) > 0 ? (cambioPago(p) | currency) : '' }}
+                  </span>
+                </div>
+              }
             }
             <div class="flex flex-wrap gap-1.5">
               @for (m of metodosPago; track m.value) {
@@ -264,11 +285,16 @@
           </div>
 
           <div class="flex items-center justify-between text-sm">
-            <span class="text-muted-foreground">{{ saldoPendiente() > 0 ? 'Falta / a crédito' : 'Cambio' }}</span>
+            <span class="text-muted-foreground">{{ saldoPendiente() > 0 ? 'Falta / a crédito' : 'Sobrepago' }}</span>
             <span class="tabular-nums font-medium" [class.text-amber-600]="saldoPendiente() > 0">
               {{ (saldoPendiente() > 0 ? saldoPendiente() : -saldoPendiente()) | currency }}
             </span>
           </div>
+          @if (cambioTotal() > 0) {
+            <div class="flex items-center justify-between text-sm font-medium text-green-600">
+              <span>Cambio a devolver</span><span class="tabular-nums">{{ cambioTotal() | currency }}</span>
+            </div>
+          }
 
           <!-- Cliente (solo si queda saldo a crédito) -->
           @if (requiereCliente()) {

@@ -76,6 +76,11 @@ export class VentaService {
       .pipe(map(r => r.data));
   }
 
+  /** Ticket de la venta en PDF (ancho ~80 mm). */
+  ticketPdf(ventaId: string): Observable<Blob> {
+    return this.http.get(`${this.API_URL}/${ventaId}/ticket`, { responseType: 'blob' });
+  }
+
   /** Corte completo del turno: desglose por método de pago + descuento por promos. */
   corteCaja(turnoId: string): Observable<CorteCajaResponse> {
     return this.http

@@ -20,6 +20,9 @@
         <p class="text-sm text-muted-foreground">{{ v.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
+        <button z-button zType="outline" zSize="sm" (click)="imprimirTicket()">
+          <ng-icon name="lucidePrinter" class="mr-2 size-4" /> Ticket
+        </button>
         @if (puedeDevolver()) {
           <button z-button zType="outline" zSize="sm" (click)="abrirDevolucion()">
             <ng-icon name="lucideUndo2" class="mr-2 size-4" /> Devolución
@@ -94,6 +97,12 @@
               <z-separator />
               <div class="flex justify-between text-base font-semibold"><dt>Total</dt><dd class="tabular-nums">{{ v.total | currency }}</dd></div>
               <div class="flex justify-between"><dt class="text-muted-foreground">Pagado</dt><dd class="tabular-nums">{{ v.monto_pagado | currency }}</dd></div>
+              @if (+v.efectivo_recibido > 0) {
+                <div class="flex justify-between"><dt class="text-muted-foreground">Recibido en efectivo</dt><dd class="tabular-nums">{{ v.efectivo_recibido | currency }}</dd></div>
+              }
+              @if (+v.cambio > 0) {
+                <div class="flex justify-between text-green-600"><dt>Cambio</dt><dd class="tabular-nums">{{ v.cambio | currency }}</dd></div>
+              }
               @if (+v.saldo_pendiente > 0) {
                 <div class="flex justify-between text-amber-600"><dt>Saldo a crédito</dt><dd class="tabular-nums">{{ v.saldo_pendiente | currency }}</dd></div>
               }
@@ -126,7 +135,12 @@
           <z-card-content class="space-y-2 text-sm">
             @for (p of v.pagos; track p.id) {
               <div class="flex items-center justify-between">
-                <span class="text-muted-foreground">{{ metodoLabel[p.metodo_pago] || p.metodo_pago }}</span>
+                <span class="text-muted-foreground">
+                  {{ metodoLabel[p.metodo_pago] || p.metodo_pago }}
+                  @if (+p.cambio > 0) {
+                    <span class="text-xs">· recibí {{ p.monto_recibido | currency }}, cambio {{ p.cambio | currency }}</span>
+                  }
+                </span>
                 <span class="tabular-nums font-medium">{{ p.monto | currency }}</span>
               </div>
             } @empty {

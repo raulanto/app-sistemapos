@@ -63,6 +63,8 @@ export interface LineaVentaRequest {
 export interface PagoRequest {
   monto: number | string;
   metodo_pago: MetodoPago;
+  /** Solo efectivo: con cuánto pagó el cliente (≥ `monto`). El backend guarda el cambio. */
+  monto_recibido?: number | string | null;
 }
 
 export interface CrearVentaRequest {
@@ -143,6 +145,9 @@ export interface PagoResponse {
   id: string;
   monto: string;
   metodo_pago: MetodoPago;
+  monto_recibido: string | null;
+  /** `monto_recibido − monto` (0 salvo en efectivo con vuelto). */
+  cambio: string;
 }
 
 export interface VentaResponse {
@@ -158,6 +163,10 @@ export interface VentaResponse {
   total_devuelto: string;
   total: string;
   monto_pagado: string;
+  /** Total de efectivo entregado por el cliente. */
+  efectivo_recibido: string;
+  /** Vuelto total entregado. */
+  cambio: string;
   saldo_pendiente: string;
   created_at: string;
   lineas: LineaVentaResponse[];

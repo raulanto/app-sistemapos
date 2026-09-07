@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideBan, lucideReceiptText, lucideUser, lucideStore, lucideUndo2 } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideBan, lucideReceiptText, lucideUser, lucideStore, lucideUndo2, lucidePrinter } from '@ng-icons/lucide';
 
 import { VentaService } from '../data-access/venta.service';
 import { CajaService } from '../data-access/caja.service';
@@ -44,7 +44,7 @@ import { DevolucionSheetComponent } from '../ui/devolucion-sheet/devolucion-shee
     ZardSkeletonComponent,
     ZardSeparatorComponent,
   ],
-  viewProviders: [provideIcons({ lucideArrowLeft, lucideBan, lucideReceiptText, lucideUser, lucideStore, lucideUndo2 })],
+  viewProviders: [provideIcons({ lucideArrowLeft, lucideBan, lucideReceiptText, lucideUser, lucideStore, lucideUndo2, lucidePrinter })],
   templateUrl: './venta-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -156,6 +156,17 @@ export class VentaDetailComponent {
         this.sonner.success('Venta anulada');
       },
       error: err => this.sonner.error(err?.error?.error?.message ?? 'No se pudo anular la venta'),
+    });
+  }
+
+  imprimirTicket() {
+    this.ventaService.ticketPdf(this.id).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      },
+      error: () => this.sonner.error('No se pudo generar el ticket'),
     });
   }
 

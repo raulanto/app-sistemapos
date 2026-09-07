@@ -22,6 +22,7 @@ import {
   lucideHistory,
   lucidePackage,
   lucideLayers,
+  lucidePrinter,
 } from '@ng-icons/lucide';
 
 import { ProductoService } from '../../inventario/data-access/producto.service';
@@ -93,6 +94,7 @@ interface LineaCarrito {
       lucideHistory,
       lucidePackage,
       lucideLayers,
+      lucidePrinter,
     }),
   ],
   templateUrl: './pos.component.html',
@@ -126,7 +128,7 @@ export class PosComponent {
 
   readonly carrito = signal<LineaCarrito[]>([]);
   readonly descuentoTotal = signal(0);
-  readonly pagos = signal<{ monto: number; metodo_pago: MetodoPago }[]>([]);
+  readonly pagos = signal<{ monto: number; metodo_pago: MetodoPago; monto_recibido?: number }[]>([]);
 
   readonly clienteBusqueda = signal('');
   readonly clientesEncontrados = signal<ClienteResponse[]>([]);
@@ -503,6 +505,20 @@ export class PosComponent {
     this.pagos.update(list => list.map((p, idx) => (idx === i ? { ...p, monto: Math.max(0, Number(monto) || 0) } : p)));
   }
 
+  /** Efectivo: con cuánto pagó el cliente (para calcular el cambio). */
+  setRecibido(i: number, v: number) {
+    const n = Number(v);
+    this.pagos.update(list =>
+      list.map((p, idx) => (idx === i ? { ...p, monto_recibido: Number.isFinite(n) && n > 0 ? n : undefined } : p)),
+    );
+  }
+
+  cambioPago(p: { monto: number; metodo_pago: MetodoPago; monto_recibido?: number }): number {
+    if (p.metodo_pago !== 'efectivo' || !p.monto_recibido) return 0;
+    return Math.max(0, this.round(p.monto_recibido - p.monto));
+  }
+  readonly cambioTotal = computed(() => this.pagos().reduce((s, p) => s + this.cambioPago(p), 0));
+
   quitarPago(i: number) {
     this.pagos.update(list => list.filter((_, idx) => idx !== i));
   }
@@ -562,7 +578,13 @@ export class PosComponent {
       })),
       pagos: this.pagos()
         .filter(p => p.monto > 0)
-        .map(p => ({ monto: this.round(p.monto), metodo_pago: p.metodo_pago })),
+        .map(p => ({
+          monto: this.round(p.monto),
+          metodo_pago: p.metodo_pago,
+          ...(p.metodo_pago === 'efectivo' && p.monto_recibido && p.monto_recibido >= p.monto
+            ? { monto_recibido: this.round(p.monto_recibido) }
+            : {}),
+        })),
     };
 
     this.cobrando.set(true);
@@ -606,5 +628,16 @@ export class PosComponent {
   /** Ahorro total por promociones de una venta ya registrada (para el ticket). */
   ahorroPromo(v: VentaResponse): number {
     return (v.lineas ?? []).reduce((s, l) => s + (Number(l.promo_descuento) || 0), 0);
+  }
+
+  imprimirTicket(ventaId: string) {
+    this.ventaService.ticketPdf(ventaId).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      },
+      error: () => this.sonner.error('No se pudo generar el ticket'),
+    });
   }
 }

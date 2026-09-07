@@ -5188,6 +5188,37 @@
         }
       }
     },
+    "/api/v1/ventas/{venta_id}/ticket": {
+      "get": {
+        "tags": ["ventas"],
+        "summary": "Ticket Pdf",
+        "description": "PDF del ticket de la venta (`application/pdf`, `inline` para pintarlo en la\napp). Ancho ~80 mm, listo para impresora térmica.",
+        "operationId": "ticket_pdf_api_v1_ventas__venta_id__ticket_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "venta_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Venta Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/caja-turnos/abrir": {
       "post": {
         "tags": ["caja"],
@@ -9216,7 +9247,15 @@
             ],
             "title": "Monto"
           },
-          "metodo_pago": { "$ref": "#/components/schemas/MetodoPago" }
+          "metodo_pago": { "$ref": "#/components/schemas/MetodoPago" },
+          "monto_recibido": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Monto Recibido"
+          }
         },
         "type": "object",
         "required": ["monto", "metodo_pago"],
@@ -9230,7 +9269,20 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Monto"
           },
-          "metodo_pago": { "$ref": "#/components/schemas/MetodoPago" }
+          "metodo_pago": { "$ref": "#/components/schemas/MetodoPago" },
+          "monto_recibido": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Monto Recibido"
+          },
+          "cambio": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cambio",
+            "default": "0"
+          }
         },
         "type": "object",
         "required": ["id", "monto", "metodo_pago"],
@@ -10139,6 +10191,16 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Monto Pagado"
           },
+          "efectivo_recibido": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Efectivo Recibido"
+          },
+          "cambio": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cambio"
+          },
           "saldo_pendiente": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -10178,6 +10240,8 @@
           "total_devuelto",
           "total",
           "monto_pagado",
+          "efectivo_recibido",
+          "cambio",
           "saldo_pendiente",
           "created_at",
           "lineas",
