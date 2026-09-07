@@ -1,6 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucidePlus, lucidePencil, lucideBan, lucideFolderTree, lucideCornerDownRight } from '@ng-icons/lucide';
+import {
+  lucidePlus,
+  lucidePencil,
+  lucideBan,
+  lucideFolderTree,
+  lucideCornerDownRight,
+} from '@ng-icons/lucide';
 
 import { CategoriaService } from '../data-access/categoria.service';
 import { CategoriaResponse } from '../data-access/inventario.models';
@@ -33,7 +39,9 @@ interface Rama {
     ZardEmptyComponent,
     ZardSkeletonComponent,
   ],
-  viewProviders: [provideIcons({ lucidePlus, lucidePencil, lucideBan, lucideFolderTree, lucideCornerDownRight })],
+  viewProviders: [
+    provideIcons({ lucidePlus, lucidePencil, lucideBan, lucideFolderTree, lucideCornerDownRight }),
+  ],
   templateUrl: 'categoria-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -45,7 +53,9 @@ export class CategoriaListComponent {
   private alertDialog = inject(ZardAlertDialogService);
 
   readonly canCrear = computed(() => this.authService.hasPermission(...PERMISOS.inventario.crear));
-  readonly canEditar = computed(() => this.authService.hasPermission(...PERMISOS.inventario.editar));
+  readonly canEditar = computed(() =>
+    this.authService.hasPermission(...PERMISOS.inventario.editar),
+  );
 
   readonly categorias = signal<CategoriaResponse[]>([]);
   readonly loading = signal(true);
@@ -53,7 +63,7 @@ export class CategoriaListComponent {
   /** Árbol de 2 niveles: raíces con sus hijas directas. */
   readonly arbol = computed<Rama[]>(() => {
     const cats = this.categorias();
-    const ids = new Set(cats.map(c => c.id));
+    const ids = new Set(cats.map((c) => c.id));
     const hijasDe = new Map<string, CategoriaResponse[]>();
     const raices: CategoriaResponse[] = [];
 
@@ -68,10 +78,11 @@ export class CategoriaListComponent {
       }
     }
 
-    const porNombre = (a: CategoriaResponse, b: CategoriaResponse) => a.nombre.localeCompare(b.nombre);
+    const porNombre = (a: CategoriaResponse, b: CategoriaResponse) =>
+      a.nombre.localeCompare(b.nombre);
     return raices
       .sort(porNombre)
-      .map(padre => ({ padre, hijas: (hijasDe.get(padre.id) ?? []).sort(porNombre) }));
+      .map((padre) => ({ padre, hijas: (hijasDe.get(padre.id) ?? []).sort(porNombre) }));
   });
 
   readonly totalCategorias = computed(() => this.categorias().length);
@@ -83,11 +94,11 @@ export class CategoriaListComponent {
   private cargar() {
     this.loading.set(true);
     this.categoriaService.listar().subscribe({
-      next: data => {
+      next: (data) => {
         this.categorias.set(data);
         this.loading.set(false);
       },
-      error: err => {
+      error: (err) => {
         console.error('Error al cargar categorías:', err);
         this.loading.set(false);
       },
@@ -102,7 +113,8 @@ export class CategoriaListComponent {
       zData: { padreSugeridoId },
       zOkText: 'Crear',
       zCancelText: 'Cancelar',
-      zOnOk: (instance: any) => this.persistir(instance, 'Categoría creada', 'Error al crear la categoría'),
+      zOnOk: (instance: any) =>
+        this.persistir(instance, 'Categoría creada', 'Error al crear la categoría'),
     });
   }
 
@@ -114,7 +126,8 @@ export class CategoriaListComponent {
       zData: { categoria },
       zOkText: 'Guardar',
       zCancelText: 'Cancelar',
-      zOnOk: (instance: any) => this.persistir(instance, 'Categoría actualizada', 'Error al actualizar la categoría'),
+      zOnOk: (instance: any) =>
+        this.persistir(instance, 'Categoría actualizada', 'Error al actualizar la categoría'),
     });
   }
 
@@ -149,7 +162,7 @@ export class CategoriaListComponent {
             this.sonner.success('Categoría desactivada');
             this.cargar();
           },
-          error: err => {
+          error: (err) => {
             console.error(err);
             this.sonner.error(err?.error?.error?.message ?? 'No se pudo desactivar la categoría');
           },

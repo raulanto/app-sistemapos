@@ -6,7 +6,7 @@ import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft, lucideBan, lucideReceiptText } from '@ng-icons/lucide';
 
 import { VentaService } from '../data-access/venta.service';
-import { VentaResponse, EstadoVenta } from '../data-access/ventas.models';
+import { VentaListItem, EstadoVenta } from '../data-access/ventas.models';
 import { AuthService } from '@/core/auth/api/auth.service';
 import { PERMISOS } from '@/core/auth/permissions';
 
@@ -47,7 +47,7 @@ export class VentasListComponent {
 
   readonly canAnular = computed(() => this.authService.hasPermission(...PERMISOS.ventas.anular));
 
-  readonly ventas = signal<VentaResponse[]>([]);
+  readonly ventas = signal<VentaListItem[]>([]);
   readonly loading = signal(true);
   readonly estado = signal<EstadoVenta | ''>('');
 
@@ -87,7 +87,7 @@ export class VentasListComponent {
     return 'secondary';
   }
 
-  anular(venta: VentaResponse) {
+  anular(venta: VentaListItem) {
     // Motivo opcional; cancelar el prompt aborta la anulación.
     const motivo = window.prompt(
       'Anular esta venta repone el stock y revierte el crédito (queda como "cancelada").\nMotivo (opcional):',

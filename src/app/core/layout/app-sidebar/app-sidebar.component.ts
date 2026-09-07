@@ -66,6 +66,7 @@ export class AppSidebarComponent {
       items: [
         { title: 'Punto de venta', url: '/ventas' },
         { title: 'Historial', url: '/ventas/historial' },
+        { title: 'Promociones', url: '/promociones' },
       ],
     },
     {

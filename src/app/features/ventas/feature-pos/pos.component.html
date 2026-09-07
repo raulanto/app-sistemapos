@@ -12,7 +12,7 @@
       <a z-button zType="ghost" zSize="sm" routerLink="/ventas/historial">
         <ng-icon name="lucideHistory" class="mr-1.5 size-4" /> Historial
       </a>
-      @if (turno()) {
+      @if (turno() && canOperarCaja()) {
         <button z-button zType="outline" zSize="sm" (click)="cerrarCaja()">
           <ng-icon name="lucideLockKeyhole" class="mr-1.5 size-4" /> Cerrar caja
         </button>
@@ -33,7 +33,7 @@
         </div>
         <h2 class="mt-4 text-xl font-semibold">No hay caja abierta</h2>
         <p class="mt-1 text-sm text-muted-foreground">Abre un turno declarando el efectivo inicial para empezar a vender.</p>
-        @if (canVender()) {
+        @if (canOperarCaja()) {
           <button z-button zType="default" class="mt-4" (click)="abrirCaja()">
             <ng-icon name="lucideBanknote" class="mr-2 size-4" /> Abrir caja
           </button>
@@ -51,6 +51,9 @@
         <p class="mt-1 font-mono text-xs text-muted-foreground">{{ v.id }}</p>
 
         <dl class="mt-4 space-y-1.5 text-sm">
+          @if (ahorroPromo(v) > 0) {
+            <div class="flex justify-between text-primary"><dt>Ahorro en promociones</dt><dd class="tabular-nums font-medium">{{ ahorroPromo(v) | currency }}</dd></div>
+          }
           <div class="flex justify-between"><dt class="text-muted-foreground">Total</dt><dd class="tabular-nums font-medium">{{ v.total | currency }}</dd></div>
           <div class="flex justify-between"><dt class="text-muted-foreground">Pagado</dt><dd class="tabular-nums">{{ v.monto_pagado | currency }}</dd></div>
           @if (+v.saldo_pendiente > 0) {
@@ -58,6 +61,16 @@
           }
           <div class="flex justify-between"><dt class="text-muted-foreground">Estado</dt><dd><z-badge [zType]="v.estado === 'pagada' ? 'default' : 'secondary'">{{ v.estado }}</z-badge></dd></div>
         </dl>
+
+        @if (ahorroPromo(v) > 0) {
+          <ul class="mt-2 space-y-0.5 text-left text-xs text-muted-foreground">
+            @for (l of v.lineas; track l.id) {
+              @if (l.promo_etiqueta) {
+                <li class="flex justify-between"><span>{{ l.promo_etiqueta }}</span><span class="tabular-nums">− {{ l.promo_descuento | currency }}</span></li>
+              }
+            }
+          </ul>
+        }
 
         <button z-button zType="default" class="mt-5 w-full" (click)="nuevaVenta()">
           <ng-icon name="lucidePlus" class="mr-2 size-4" /> Nueva venta
@@ -80,36 +93,72 @@
           </div>
         </div>
 
+        <!-- Bloques: filtro por categoría -->
+        @if (categoriasConProductos().length) {
+          <div class="flex gap-1.5 overflow-x-auto border-b px-3 py-2">
+            <button z-button [zType]="categoriaSel() === null ? 'default' : 'outline'" zSize="sm" (click)="seleccionarCategoria(null)">Todas</button>
+            @for (c of categoriasConProductos(); track c.id) {
+              <button z-button [zType]="categoriaSel() === c.id ? 'default' : 'outline'" zSize="sm" class="shrink-0" (click)="seleccionarCategoria(c.id)">
+                {{ c.nombre }}
+              </button>
+            }
+          </div>
+        }
+
         <div class="flex-1 overflow-y-auto p-3">
           @if (cargandoCatalogo()) {
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-              @for (i of [1,2,3,4,5,6]; track i) { <z-skeleton class="h-24" /> }
+              @for (i of [1,2,3,4,5,6]; track i) { <z-skeleton class="h-32" /> }
             </div>
           } @else if (productosFiltrados().length === 0) {
-            <z-empty zIcon="lucideSearch" zTitle="Sin resultados" zDescription="Ningún producto coincide con la búsqueda." class="py-12" />
+            <z-empty zIcon="lucideSearch" zTitle="Sin resultados" zDescription="Ningún producto coincide con la búsqueda o el filtro." class="py-12" />
           } @else {
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-              @for (p of productosFiltrados(); track p.id) {
-                <div class="flex flex-col rounded-lg border bg-card p-3 text-left">
-                  <span class="line-clamp-2 text-sm font-medium">{{ p.nombre }}</span>
-                  <span class="mt-0.5 text-xs text-muted-foreground">{{ p.sku }}</span>
-                  <span class="mt-1 font-semibold tabular-nums text-green-600">{{ p.precio_venta | currency }}</span>
-
-                  <div class="mt-2 flex flex-wrap gap-1">
-                    <button z-button zType="outline" zSize="sm" (click)="agregar(p)">
-                      <ng-icon name="lucidePlus" class="mr-1 size-3.5" /> {{ p.unidad_medida | titlecase }}
-                    </button>
-                    @for (u of p.unidades ?? []; track u.id) {
-                      @if (u.activo) {
-                        <button z-button zType="ghost" zSize="sm" class="border" (click)="agregar(p, u)">
-                          {{ u.nombre }} · {{ u.precio_venta | currency }}
-                        </button>
-                      }
-                    }
-                  </div>
+            @for (bloque of bloques(); track bloque.id ?? 'sin') {
+              <section class="mb-5">
+                <div class="sticky top-0 z-10 -mx-3 mb-2 flex items-center gap-2 bg-background/95 px-3 py-1.5 backdrop-blur">
+                  <ng-icon name="lucideLayers" class="size-4 text-muted-foreground" />
+                  <h4 class="text-sm font-semibold">{{ bloque.nombre }}</h4>
+                  <z-badge zType="secondary" class="tabular-nums text-[10px]">{{ bloque.productos.length }}</z-badge>
                 </div>
-              }
-            </div>
+
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                  @for (p of bloque.productos; track p.id) {
+                    <div class="flex flex-col overflow-hidden rounded-lg border bg-card text-left">
+                      <div class="aspect-video w-full bg-muted">
+                        @if (imgSrc(p); as src) {
+                          <img [src]="src" [alt]="p.nombre" class="size-full object-cover" (error)="marcarImgRota(p.id)" />
+                        } @else {
+                          <div class="grid size-full place-items-center text-muted-foreground">
+                            <ng-icon [name]="p.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-6" />
+                          </div>
+                        }
+                      </div>
+                      <div class="flex flex-1 flex-col p-2.5">
+                        <span class="line-clamp-2 text-sm font-medium">{{ p.nombre }}</span>
+                        <span class="mt-0.5 text-xs text-muted-foreground">{{ p.sku }}</span>
+                        <span class="mt-1 font-semibold tabular-nums text-green-600">{{ p.precio_venta | currency }}</span>
+                        @if (p.precio_mayoreo && p.cantidad_minima_mayoreo) {
+                          <span class="text-[0.7rem] text-primary">mayoreo {{ p.precio_mayoreo | currency }} · ≥ {{ p.cantidad_minima_mayoreo }}</span>
+                        }
+
+                        <div class="mt-2 flex flex-wrap gap-1">
+                          <button z-button zType="outline" zSize="sm" (click)="agregar(p)">
+                            <ng-icon name="lucidePlus" class="mr-1 size-3.5" /> {{ p.unidad_medida | titlecase }}
+                          </button>
+                          @for (u of p.unidades ?? []; track u.id) {
+                            @if (u.activo) {
+                              <button z-button zType="ghost" zSize="sm" class="border" (click)="agregar(p, u)">
+                                {{ u.nombre }} · {{ u.precio_venta | currency }}
+                              </button>
+                            }
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </section>
+            }
           }
         </div>
       </div>
@@ -128,7 +177,7 @@
                       <p class="truncate text-sm font-medium">{{ l.producto.nombre }}</p>
                       <p class="text-xs text-muted-foreground">
                         {{ l.unidad ? l.unidad.nombre : (l.producto.unidad_medida | titlecase) }}
-                        @if (aplicaMayoreo(l)) { · <span class="text-primary">mayoreo</span> }
+                        @if (aplicaMayoreo(l)) { · <span class="text-primary">mayoreo {{ precioEfectivo(l) | currency }}</span> }
                       </p>
                     </div>
                     <button z-button zType="ghost" zSize="icon-sm" class="text-destructive" (click)="quitar(l.key)">
@@ -138,20 +187,33 @@
 
                   <div class="mt-2 grid grid-cols-[auto_1fr_1fr] items-end gap-2">
                     <div class="flex items-center gap-1">
-                      <button z-button zType="outline" zSize="icon-sm" (click)="setCantidad(l.key, l.cantidad - 1)"><ng-icon name="lucideMinus" class="size-3.5" /></button>
+                      <button z-button zType="outline" zSize="icon-sm" (click)="pasoCantidad(l.key, -1)"><ng-icon name="lucideMinus" class="size-3.5" /></button>
                       <input z-input class="w-16 text-center" type="number" [step]="l.producto.permite_venta_fraccionada ? 'any' : '1'" min="0"
                              [ngModel]="l.cantidad" (ngModelChange)="setCantidad(l.key, $event)" />
-                      <button z-button zType="outline" zSize="icon-sm" (click)="setCantidad(l.key, l.cantidad + 1)"><ng-icon name="lucidePlus" class="size-3.5" /></button>
+                      <button z-button zType="outline" zSize="icon-sm" (click)="pasoCantidad(l.key, 1)"><ng-icon name="lucidePlus" class="size-3.5" /></button>
                     </div>
                     <label class="text-[0.7rem] text-muted-foreground">Precio
-                      <input z-input class="mt-0.5" type="number" min="0" step="0.01" [ngModel]="l.precio_unitario" (ngModelChange)="setPrecio(l.key, $event)" />
+                      <input z-input class="mt-0.5" type="number" min="0" step="0.01" [disabled]="aplicaMayoreo(l)"
+                             [ngModel]="aplicaMayoreo(l) ? precioEfectivo(l) : l.precio_unitario" (ngModelChange)="setPrecio(l.key, $event)" />
                     </label>
                     <label class="text-[0.7rem] text-muted-foreground">Desc.
                       <input z-input class="mt-0.5" type="number" min="0" step="0.01" [ngModel]="l.descuento_linea" (ngModelChange)="setDescuentoLinea(l.key, $event)" />
                     </label>
                   </div>
-                  <p class="mt-1.5 text-right text-sm font-semibold tabular-nums">
-                    {{ (l.cantidad * l.precio_unitario - l.descuento_linea) | currency }}
+                  @if (l.cantidad <= 0) {
+                    <p class="mt-1 text-[0.7rem] font-medium text-destructive">La cantidad debe ser mayor a 0.</p>
+                  }
+                  @if (sinStock(l)) {
+                    <p class="mt-1 text-[0.7rem] font-medium text-destructive">Sin stock suficiente.</p>
+                  }
+                  @if (promoDeLinea(l); as promo) {
+                    <p class="mt-1 flex items-center justify-between text-[0.7rem] text-primary">
+                      <span>{{ promo.etiqueta }}</span>
+                      <span class="tabular-nums">− {{ promo.descuento | currency }}</span>
+                    </p>
+                  }
+                  <p class="mt-1 text-right text-sm font-semibold tabular-nums">
+                    {{ (lineaSubtotal(l) - (promoDeLinea(l)?.descuento ?? 0)) | currency }}
                   </p>
                 </li>
               }
@@ -161,12 +223,27 @@
 
         <!-- Totales + pagos -->
         <div class="space-y-3 border-t bg-card p-3">
+          <div class="flex items-center justify-between text-sm text-muted-foreground">
+            <span>Subtotal</span><span class="tabular-nums">{{ subtotalLineas() | currency }}</span>
+          </div>
           <div class="flex items-center justify-between text-sm">
             <span class="text-muted-foreground">Descuento total</span>
-            <input z-input class="w-28 text-right" type="number" min="0" step="0.01" [ngModel]="descuentoTotal()" (ngModelChange)="descuentoTotal.set(+$event || 0)" />
+            <input z-input class="w-28 text-right" type="number" min="0" step="0.01" [ngModel]="descuentoTotal()" (ngModelChange)="setDescuentoTotal($event)" />
           </div>
+          @if (descuentoTotal() > descTotalAplicado() + 0.001) {
+            <p class="-mt-1 text-right text-[0.7rem] text-amber-600">Ajustado a {{ descTotalAplicado() | currency }} (no puede pasar del subtotal).</p>
+          }
+          @if (totalPromociones() > 0) {
+            <div class="flex items-center justify-between text-sm text-primary">
+              <span>Promociones</span><span class="tabular-nums">− {{ totalPromociones() | currency }}</span>
+            </div>
+          }
           <div class="flex items-center justify-between text-lg font-bold">
-            <span>Total</span><span class="tabular-nums">{{ total() | currency }}</span>
+            <span class="flex items-center gap-1.5">
+              Total
+              @if (cotizando()) { <span class="text-[0.7rem] font-normal text-muted-foreground">calculando…</span> }
+            </span>
+            <span class="tabular-nums">{{ total() | currency }}</span>
           </div>
 
           <!-- Pagos -->
@@ -221,6 +298,12 @@
             </div>
           }
 
+          @if (hayLineaInvalida()) {
+            <p class="text-[0.8rem] font-medium text-destructive">Hay líneas con cantidad 0. Ajústalas para poder cobrar.</p>
+          }
+          @if (hayLineaSinStock()) {
+            <p class="text-[0.8rem] font-medium text-destructive">Hay líneas sin stock suficiente. Ajusta las cantidades.</p>
+          }
           <button z-button zType="default" class="w-full" [zLoading]="cobrando()" [zDisabled]="!puedeCobrar() || cobrando()" (click)="cobrar()">
             <ng-icon name="lucideReceiptText" class="mr-2 size-4" />
             Cobrar {{ total() | currency }}

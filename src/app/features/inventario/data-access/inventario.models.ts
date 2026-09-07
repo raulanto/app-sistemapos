@@ -155,7 +155,6 @@ export interface ActualizarUnidadRequest {
   precio_venta?: number | string;
   codigo_barras?: string | null;
   cambiar_codigo_barras?: boolean;
-  activo?: boolean;
 }
 
 export type TipoMagnitud = 'conteo' | 'masa' | 'volumen' | 'longitud' | 'tiempo';

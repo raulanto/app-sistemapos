@@ -200,8 +200,16 @@ export class ProductoService {
     );
   }
 
+  /** `DELETE` = baja lógica de la presentación (queda `activo: false`; las ventas históricas la conservan). */
   eliminarUnidad(producto_id: string, unidad_id: string): Observable<void> {
     return this.http.delete<void>(`${this.API_URL}/${producto_id}/unidades/${unidad_id}`);
+  }
+
+  /** Vuelve a poner `activo: true` una presentación dada de baja. */
+  reactivarUnidad(producto_id: string, unidad_id: string): Observable<UnidadResponse> {
+    return this.http
+      .patch<ApiResponse<UnidadResponse>>(`${this.API_URL}/${producto_id}/unidades/${unidad_id}/reactivar`, {})
+      .pipe(map(res => res.data));
   }
 
   // --- IMÁGENES (galería del producto) ---

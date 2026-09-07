@@ -1,0 +1,98 @@
+<div class="p-6 w-full space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Promociones</h1>
+      <p class="text-muted-foreground">2x1, % de descuento y precio fijo sobre productos o presentaciones.</p>
+    </div>
+    @if (canCrear()) {
+      <button z-button zType="default" (click)="openCreateSheet()">
+        <ng-icon name="lucidePlus" class="mr-2" /> Nueva promoción
+      </button>
+    }
+  </div>
+
+  <div class="flex flex-wrap items-center gap-3">
+    <z-select class="w-44" [ngModel]="filtroTipo()" (ngModelChange)="filtroTipo.set($event); cargar()">
+      <z-select-item zValue="">Todos los tipos</z-select-item>
+      @for (t of tipos; track t.value) { <z-select-item [zValue]="t.value">{{ t.label }}</z-select-item> }
+    </z-select>
+    <z-select class="w-40" [ngModel]="filtroActivo()" (ngModelChange)="filtroActivo.set($event); cargar()">
+      <z-select-item zValue="">Todas</z-select-item>
+      <z-select-item zValue="true">Activas</z-select-item>
+      <z-select-item zValue="false">Inactivas</z-select-item>
+    </z-select>
+  </div>
+
+  <div class="overflow-hidden rounded-xl border">
+    <div class="overflow-x-auto">
+      <table z-table>
+        <thead z-table-header class="bg-muted/50">
+          <tr z-table-row>
+            <th z-table-head>Promoción</th>
+            <th z-table-head>Tipo</th>
+            <th z-table-head>Regla</th>
+            <th z-table-head class="text-center">Objetivos</th>
+            <th z-table-head class="text-center">Prioridad</th>
+            <th z-table-head>Vigencia</th>
+            <th z-table-head>Estado</th>
+            <th z-table-head class="text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody z-table-body>
+          @if (loading()) {
+            @for (i of [1,2,3,4,5]; track i) {
+              <tr z-table-row><td z-table-cell colspan="8"><z-skeleton class="h-5 w-full" /></td></tr>
+            }
+          } @else {
+            @for (p of promociones(); track p.id) {
+              <tr z-table-row [class.opacity-60]="!p.activo">
+                <td z-table-cell class="font-medium">
+                  <span class="flex items-center gap-2">
+                    <ng-icon name="lucideTag" class="size-4 text-muted-foreground" />
+                    {{ p.nombre }}
+                  </span>
+                </td>
+                <td z-table-cell class="text-muted-foreground">{{ etiquetaTipo(p.tipo) }}</td>
+                <td z-table-cell class="tabular-nums font-medium">{{ regla(p) }}</td>
+                <td z-table-cell class="text-center tabular-nums">{{ p.objetivos.length }}</td>
+                <td z-table-cell class="text-center tabular-nums text-muted-foreground">{{ p.prioridad }}</td>
+                <td z-table-cell class="text-xs text-muted-foreground">
+                  @if (p.vigente_desde || p.vigente_hasta) {
+                    {{ (p.vigente_desde | date:'dd/MM/yy') || '…' }} – {{ (p.vigente_hasta | date:'dd/MM/yy') || '…' }}
+                  } @else { Sin límite }
+                </td>
+                <td z-table-cell>
+                  <z-badge [zType]="p.activo ? 'default' : 'secondary'">{{ p.activo ? 'Activa' : 'Inactiva' }}</z-badge>
+                </td>
+                <td z-table-cell>
+                  <div class="flex items-center justify-end gap-1">
+                    @if (canEditar()) {
+                      <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Editar" (click)="openEditSheet(p)">
+                        <ng-icon name="lucidePencil" class="size-4" />
+                      </button>
+                      @if (p.activo) {
+                        <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-destructive" title="Desactivar" (click)="toggleActivo(p)">
+                          <ng-icon name="lucideBan" class="size-4" />
+                        </button>
+                      } @else {
+                        <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-green-600" title="Reactivar" (click)="toggleActivo(p)">
+                          <ng-icon name="lucideCircleCheck" class="size-4" />
+                        </button>
+                      }
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr z-table-row>
+                <td z-table-cell colspan="8" class="p-0">
+                  <z-empty zIcon="lucideTag" zTitle="Sin promociones" zDescription="Crea una promoción para aplicar descuentos automáticos en la venta." class="py-12" />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

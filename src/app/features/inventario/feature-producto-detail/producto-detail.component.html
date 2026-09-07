@@ -391,12 +391,18 @@
                             <td z-table-cell class="text-muted-foreground">{{ unidad.codigo_barras || '—' }}</td>
                             <td z-table-cell class="text-center">
                               @if (canEditar()) {
-                                <button z-button zType="ghost" zSize="icon-sm" (click)="openEditUnidadSheet(unidad)" aria-label="Editar presentación">
-                                  <ng-icon name="lucideEdit" class="size-4" />
-                                </button>
-                                <button z-button zType="ghost" zSize="icon-sm" class="text-destructive hover:bg-destructive/10" (click)="eliminarUnidad(unidad)" aria-label="Eliminar presentación">
-                                  <ng-icon name="lucideTrash" class="size-4" />
-                                </button>
+                                @if (unidad.activo) {
+                                  <button z-button zType="ghost" zSize="icon-sm" (click)="openEditUnidadSheet(unidad)" aria-label="Editar presentación" title="Editar">
+                                    <ng-icon name="lucideEdit" class="size-4" />
+                                  </button>
+                                  <button z-button zType="ghost" zSize="icon-sm" class="text-destructive hover:bg-destructive/10" (click)="desactivarUnidad(unidad)" aria-label="Desactivar presentación" title="Desactivar">
+                                    <ng-icon name="lucideBan" class="size-4" />
+                                  </button>
+                                } @else {
+                                  <button z-button zType="ghost" zSize="icon-sm" class="text-green-600 hover:bg-green-500/10" (click)="reactivarUnidad(unidad)" aria-label="Reactivar presentación" title="Reactivar">
+                                    <ng-icon name="lucideCircleCheck" class="size-4" />
+                                  </button>
+                                }
                               }
                             </td>
                           </tr>

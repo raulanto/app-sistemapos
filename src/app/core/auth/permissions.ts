@@ -30,6 +30,16 @@ export const PERMISOS = {
     crear: ['ventas.crear', 'VENTA_CREAR'],
     leer: ['ventas.leer'],
     anular: ['ventas.anular', 'VENTA_CANCELAR'],
+    devolver: ['ventas.devolver'],
+  },
+  caja: {
+    /** Abrir/cerrar turno y arqueo. `ventas.crear` también lo habilita. */
+    operar: ['caja.operar', 'ventas.crear', 'VENTA_CREAR'],
+  },
+  promociones: {
+    crear: ['promociones.crear'],
+    editar: ['promociones.editar'],
+    leer: ['promociones.leer', 'ventas.leer'],
   },
   reportes: {
     leer: ['reportes.leer', 'REP_VER'],

@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CurrencyPipe, DatePipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { debounceTime, switchMap, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideScanBarcode,
@@ -17,15 +20,19 @@ import {
   lucideCircleCheck,
   lucideBanknote,
   lucideHistory,
+  lucidePackage,
+  lucideLayers,
 } from '@ng-icons/lucide';
 
 import { ProductoService } from '../../inventario/data-access/producto.service';
-import { ProductoResponse, UnidadResponse } from '../../inventario/data-access/inventario.models';
+import { CategoriaService } from '../../inventario/data-access/categoria.service';
+import { ProductoResponse, UnidadResponse, CategoriaResponse } from '../../inventario/data-access/inventario.models';
 import { CajaService } from '../data-access/caja.service';
 import { VentaService } from '../data-access/venta.service';
 import {
   CajaTurnoResponse,
   ClienteResponse,
+  CotizacionVentaResponse,
   CrearVentaRequest,
   MetodoPago,
   METODOS_PAGO,
@@ -84,6 +91,8 @@ interface LineaCarrito {
       lucideCircleCheck,
       lucideBanknote,
       lucideHistory,
+      lucidePackage,
+      lucideLayers,
     }),
   ],
   templateUrl: './pos.component.html',
@@ -91,6 +100,7 @@ interface LineaCarrito {
 })
 export class PosComponent {
   private productoService = inject(ProductoService);
+  private categoriaService = inject(CategoriaService);
   private cajaService = inject(CajaService);
   private ventaService = inject(VentaService);
   private sheetService = inject(ZardSheetService);
@@ -98,6 +108,7 @@ export class PosComponent {
   private authService = inject(AuthService);
 
   readonly canVender = computed(() => this.authService.hasPermission(...PERMISOS.ventas.crear));
+  readonly canOperarCaja = computed(() => this.authService.hasPermission(...PERMISOS.caja.operar));
 
   readonly metodosPago = METODOS_PAGO;
 
@@ -105,9 +116,13 @@ export class PosComponent {
   readonly cargandoTurno = signal(true);
 
   readonly productos = signal<ProductoResponse[]>([]);
+  readonly categorias = signal<CategoriaResponse[]>([]);
+  readonly categoriaSel = signal<string | null>(null);
   readonly cargandoCatalogo = signal(false);
   readonly q = signal('');
   readonly codigo = signal('');
+  /** ids de productos cuya imagen falló al cargar. */
+  readonly imgRoto = signal<Set<string>>(new Set());
 
   readonly carrito = signal<LineaCarrito[]>([]);
   readonly descuentoTotal = signal(0);
@@ -122,31 +137,119 @@ export class PosComponent {
   /** Un UUID por intento de cobro; se reusa en reintentos y se renueva tras vender. */
   private idemKey = this.nuevoIdem();
 
+  /** Previsualización de promos + mayoreo (POST /ventas/cotizar). null = sin datos → cálculo local. */
+  readonly cotizacion = signal<CotizacionVentaResponse | null>(null);
+  readonly cotizando = signal(false);
+
+  /** Huella del carrito: dispara una nueva cotización cuando cambia algo relevante. */
+  private readonly fingerprint = computed(() =>
+    JSON.stringify({
+      d: this.round(this.descuentoTotal()),
+      l: this.carrito().map(l => [l.producto.id, l.unidad?.id ?? null, l.cantidad, l.precio_unitario, l.descuento_linea]),
+    }),
+  );
+
   private nuevoIdem() {
     return typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
   }
 
   readonly productosFiltrados = computed(() => {
     const t = this.q().trim().toLowerCase();
-    const list = this.productos();
-    if (!t) return list;
-    return list.filter(
-      p =>
+    const cat = this.categoriaSel();
+    return this.productos().filter(p => {
+      if (cat && p.categoria_id !== cat) return false;
+      if (!t) return true;
+      return (
         p.nombre.toLowerCase().includes(t) ||
         p.sku.toLowerCase().includes(t) ||
-        (p.codigo_barras ?? '').toLowerCase().includes(t),
-    );
+        (p.codigo_barras ?? '').toLowerCase().includes(t)
+      );
+    });
   });
 
-  readonly subtotal = computed(() =>
-    this.carrito().reduce((s, l) => s + (l.cantidad * l.precio_unitario - l.descuento_linea), 0),
-  );
-  readonly total = computed(() => Math.max(0, this.subtotal() - this.descuentoTotal()));
+  /** Catálogo agrupado por categoría (bloques). "Sin categoría" al final. */
+  readonly bloques = computed(() => {
+    const nombrePorId = new Map(this.categorias().map(c => [c.id, c.nombre]));
+    const grupos = new Map<string, ProductoResponse[]>();
+    for (const p of this.productosFiltrados()) {
+      const k = p.categoria_id ?? '';
+      (grupos.get(k) ?? grupos.set(k, []).get(k)!).push(p);
+    }
+    return [...grupos.entries()]
+      .map(([id, productos]) => ({ id: id || null, nombre: nombrePorId.get(id) ?? 'Sin categoría', productos }))
+      .sort((a, b) => (a.nombre === 'Sin categoría' ? 1 : b.nombre === 'Sin categoría' ? -1 : a.nombre.localeCompare(b.nombre)));
+  });
+
+  /** Chips: categorías que tienen al menos un producto en el catálogo. */
+  readonly categoriasConProductos = computed(() => {
+    const conProd = new Set(this.productos().map(p => p.categoria_id));
+    return this.categorias().filter(c => conProd.has(c.id)).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  });
+
+  // --- Precios y descuentos ---
+
+  /** Precio real que cobrará el backend: mayoreo si la línea es por unidad base y llega al mínimo. */
+  precioEfectivo(l: LineaCarrito): number {
+    if (this.aplicaMayoreo(l)) return Number(l.producto.precio_mayoreo) || l.precio_unitario;
+    return l.precio_unitario;
+  }
+  /** cantidad × precio efectivo (antes de descuento de línea). */
+  lineaBruto(l: LineaCarrito): number {
+    return Math.max(0, l.cantidad) * this.precioEfectivo(l);
+  }
+  /** cantidad × precio − descuento de línea (nunca negativo). */
+  lineaSubtotal(l: LineaCarrito): number {
+    return Math.max(0, this.lineaBruto(l) - Math.min(l.descuento_linea, this.lineaBruto(l)));
+  }
+
+  readonly subtotalLineas = computed(() => this.carrito().reduce((s, l) => s + this.lineaSubtotal(l), 0));
+  /** Descuento total efectivamente aplicado (no puede pasar del subtotal de líneas). */
+  readonly descTotalAplicado = computed(() => Math.min(Math.max(0, this.descuentoTotal()), this.subtotalLineas()));
+  /** Descuento por promociones (viene de la cotización del backend; 0 si no hay). */
+  readonly totalPromociones = computed(() => {
+    const c = this.cotizacion();
+    return c ? Number(c.total_promociones) || 0 : 0;
+  });
+  /** Total real: el de la cotización si está fresca, si no el cálculo local. */
+  readonly total = computed(() => {
+    const c = this.cotizacion();
+    if (c) return this.round(Number(c.total));
+    return this.round(this.subtotalLineas() - this.descTotalAplicado());
+  });
+
+  private cotizLinea(l: LineaCarrito) {
+    return this.cotizacion()?.lineas.find(
+      x => x.producto_id === l.producto.id && (x.producto_unidad_id ?? null) === (l.unidad?.id ?? null),
+    );
+  }
+
+  /** Promo aplicada a una línea del carrito (según la última cotización). */
+  promoDeLinea(l: LineaCarrito): { etiqueta: string; descuento: number } | null {
+    const m = this.cotizLinea(l);
+    const desc = m ? Number(m.promo_descuento) || 0 : 0;
+    return desc > 0 && m?.promo_etiqueta ? { etiqueta: m.promo_etiqueta, descuento: desc } : null;
+  }
+
+  /** true si la cotización marcó esta línea sin stock suficiente. */
+  sinStock(l: LineaCarrito): boolean {
+    const m = this.cotizLinea(l);
+    return !!m && m.hay_stock === false;
+  }
+  readonly hayLineaSinStock = computed(() => {
+    const c = this.cotizacion();
+    return !!c && this.carrito().some(l => this.sinStock(l));
+  });
   readonly pagado = computed(() => this.pagos().reduce((s, p) => s + (Number(p.monto) || 0), 0));
   readonly saldoPendiente = computed(() => this.round(this.total() - this.pagado()));
   readonly requiereCliente = computed(() => this.saldoPendiente() > 0.009);
+  readonly hayLineaInvalida = computed(() => this.carrito().some(l => !(l.cantidad > 0)));
   readonly puedeCobrar = computed(
-    () => this.carrito().length > 0 && this.total() > 0 && (!this.requiereCliente() || !!this.cliente()),
+    () =>
+      this.carrito().length > 0 &&
+      !this.hayLineaInvalida() &&
+      !this.hayLineaSinStock() &&
+      this.total() > 0 &&
+      (!this.requiereCliente() || !!this.cliente()),
   );
 
   private round(n: number) {
@@ -155,6 +258,37 @@ export class PosComponent {
 
   constructor() {
     this.cargarTurno();
+
+    // Cotización en vivo: cada cambio del carrito re-pide el total con promos + mayoreo.
+    toObservable(this.fingerprint)
+      .pipe(
+        debounceTime(350),
+        switchMap(() => {
+          const lineas = this.carrito().filter(l => l.cantidad > 0);
+          if (lineas.length === 0) {
+            this.cotizacion.set(null);
+            return of(null);
+          }
+          this.cotizando.set(true);
+          return this.ventaService
+            .cotizar({
+              descuento_total: this.round(this.descuentoTotal()),
+              lineas: lineas.map(l => ({
+                producto_id: l.producto.id,
+                cantidad: l.cantidad,
+                precio_unitario: this.round(l.precio_unitario),
+                descuento_linea: this.round(l.descuento_linea),
+                producto_unidad_id: l.unidad?.id ?? null,
+              })),
+            })
+            .pipe(catchError(() => of(null))); // error de red / permiso → cálculo local
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe(res => {
+        this.cotizando.set(false);
+        this.cotizacion.set(res);
+      });
   }
 
   private cargarTurno() {
@@ -177,6 +311,7 @@ export class PosComponent {
     this.productoService.listar({ activo: true, page_size: 100, sort: 'nombre:asc', include: ['unidades'] }).subscribe({
       next: res => {
         this.productos.set(res.data);
+        this.imgRoto.set(new Set());
         this.cargandoCatalogo.set(false);
       },
       error: err => {
@@ -184,6 +319,24 @@ export class PosComponent {
         this.cargandoCatalogo.set(false);
       },
     });
+    if (this.categorias().length === 0) {
+      this.categoriaService.listar().subscribe({
+        next: cs => this.categorias.set(cs.filter(c => c.activo)),
+        error: err => console.error('Error al cargar categorías', err),
+      });
+    }
+  }
+
+  seleccionarCategoria(id: string | null) {
+    this.categoriaSel.set(this.categoriaSel() === id ? null : id);
+  }
+
+  imgSrc(p: ProductoResponse): string | null {
+    if (this.imgRoto().has(p.id)) return null;
+    return p.imagen_principal?.url ?? p.imagen_principal?.thumbnail_url ?? null;
+  }
+  marcarImgRota(id: string) {
+    this.imgRoto.update(s => new Set(s).add(id));
   }
 
   // --- Caja ---
@@ -287,12 +440,21 @@ export class PosComponent {
     });
   }
 
+  /** Valor libre mientras se escribe; el mínimo se valida al cobrar (evita bloquear "0.5" al teclear). */
   setCantidad(key: string, cantidad: number) {
+    const n = Number(cantidad);
+    this.carrito.update(list =>
+      list.map(l => (l.key === key ? { ...l, cantidad: Number.isFinite(n) ? n : 0 } : l)),
+    );
+  }
+
+  /** Botones +/−: nunca dejan la cantidad por debajo del paso mínimo del producto. */
+  pasoCantidad(key: string, delta: 1 | -1) {
     this.carrito.update(list =>
       list.map(l => {
         if (l.key !== key) return l;
         const min = l.producto.permite_venta_fraccionada ? 0.001 : 1;
-        return { ...l, cantidad: Math.max(min, Number(cantidad) || min) };
+        return { ...l, cantidad: Math.max(min, this.round(l.cantidad + delta)) };
       }),
     );
   }
@@ -301,8 +463,20 @@ export class PosComponent {
     this.carrito.update(list => list.map(l => (l.key === key ? { ...l, precio_unitario: Math.max(0, Number(precio) || 0) } : l)));
   }
 
+  /** El descuento de línea nunca puede superar cantidad × precio efectivo. */
   setDescuentoLinea(key: string, d: number) {
-    this.carrito.update(list => list.map(l => (l.key === key ? { ...l, descuento_linea: Math.max(0, Number(d) || 0) } : l)));
+    this.carrito.update(list =>
+      list.map(l => {
+        if (l.key !== key) return l;
+        const tope = this.lineaBruto(l);
+        return { ...l, descuento_linea: Math.min(Math.max(0, Number(d) || 0), tope) };
+      }),
+    );
+  }
+
+  /** El descuento total nunca puede superar el subtotal de las líneas. */
+  setDescuentoTotal(v: number) {
+    this.descuentoTotal.set(Math.min(Math.max(0, Number(v) || 0), this.subtotalLineas()));
   }
 
   quitar(key: string) {
@@ -365,17 +539,24 @@ export class PosComponent {
 
   cobrar() {
     const t = this.turno();
-    if (!t || !this.puedeCobrar() || this.cobrando()) return;
+    if (!t || this.cobrando()) return;
+    if (this.hayLineaInvalida()) {
+      this.sonner.error('Hay líneas con cantidad 0. Ajusta las cantidades antes de cobrar.');
+      return;
+    }
+    if (!this.puedeCobrar()) return;
 
     const req: CrearVentaRequest = {
       caja_turno_id: t.id,
-      cliente_id: this.requiereCliente() ? this.cliente()!.id : this.cliente()?.id ?? null,
-      descuento_total: this.round(this.descuentoTotal()),
+      cliente_id: this.cliente()?.id ?? null,
+      // Se manda el descuento total ya acotado al subtotal (el backend recalcula igual).
+      descuento_total: this.round(this.descTotalAplicado()),
       lineas: this.carrito().map(l => ({
         producto_id: l.producto.id,
         cantidad: l.cantidad,
-        precio_unitario: this.round(l.precio_unitario),
-        descuento_linea: this.round(l.descuento_linea),
+        // Precio efectivo: si aplica mayoreo mandamos ese (el backend lo revalida y fuerza).
+        precio_unitario: this.round(this.precioEfectivo(l)),
+        descuento_linea: this.round(Math.min(l.descuento_linea, this.lineaBruto(l))),
         impuesto_tasa: Number(l.producto.impuesto_tasa) || 0,
         producto_unidad_id: l.unidad?.id ?? null,
       })),
@@ -411,6 +592,7 @@ export class PosComponent {
     this.carrito.set([]);
     this.pagos.set([]);
     this.descuentoTotal.set(0);
+    this.cotizacion.set(null);
     this.cliente.set(null);
     this.clienteBusqueda.set('');
     this.clientesEncontrados.set([]);
@@ -419,5 +601,10 @@ export class PosComponent {
   nuevaVenta() {
     this.ventaOk.set(null);
     this.idemKey = this.nuevoIdem();
+  }
+
+  /** Ahorro total por promociones de una venta ya registrada (para el ticket). */
+  ahorroPromo(v: VentaResponse): number {
+    return (v.lineas ?? []).reduce((s, l) => s + (Number(l.promo_descuento) || 0), 0);
   }
 }

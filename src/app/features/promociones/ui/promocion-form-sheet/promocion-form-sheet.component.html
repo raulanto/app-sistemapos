@@ -1,0 +1,140 @@
+<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
+  <div z-field>
+    <label z-field-label for="nombre">Nombre *</label>
+    <input z-input id="nombre" type="text" formControlName="nombre" maxlength="100" placeholder="Ej. 2x1 Refresco Cola" />
+    @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
+      <p class="text-[0.8rem] font-medium text-destructive">El nombre es obligatorio y único.</p>
+    }
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label>Tipo *</label>
+      <z-select formControlName="tipo" placeholder="Tipo de promoción">
+        @for (t of tipos; track t.value) {
+          <z-select-item [zValue]="t.value">{{ t.label }}</z-select-item>
+        }
+      </z-select>
+      <p class="text-[0.8rem] text-muted-foreground">
+        @for (t of tipos; track t.value) { @if (t.value === tipoSel()) { {{ t.hint }} } }
+      </p>
+    </div>
+    <div z-field>
+      <label z-field-label for="prioridad">Prioridad</label>
+      <input z-input id="prioridad" type="number" min="0" step="1" formControlName="prioridad" />
+      <p class="text-[0.8rem] text-muted-foreground">Menor número gana si varias aplican a una línea.</p>
+    </div>
+  </div>
+
+  <!-- Campos por tipo -->
+  @if (tipoSel() === 'nxm') {
+    <div class="grid grid-cols-2 gap-4 rounded-md border p-3">
+      <div z-field>
+        <label z-field-label for="nxm_lleva">Lleva *</label>
+        <input z-input id="nxm_lleva" type="number" min="1" step="1" formControlName="nxm_lleva" placeholder="2" />
+      </div>
+      <div z-field>
+        <label z-field-label for="nxm_paga">Paga *</label>
+        <input z-input id="nxm_paga" type="number" min="1" step="1" formControlName="nxm_paga" placeholder="1" />
+      </div>
+      <p class="col-span-2 text-[0.8rem] text-muted-foreground">2x1 ⇒ lleva 2, paga 1. Regla: lleva &gt; paga &gt; 0.</p>
+    </div>
+  } @else if (tipoSel() === 'porcentaje') {
+    <div class="grid grid-cols-2 gap-4 rounded-md border p-3">
+      <div z-field>
+        <label z-field-label for="descuento_pct">Descuento % *</label>
+        <input z-input id="descuento_pct" type="number" min="0" max="100" step="0.01" formControlName="descuento_pct" placeholder="10" />
+      </div>
+      <div z-field>
+        <label z-field-label for="cantidad_minima_pct">Cantidad mínima</label>
+        <input z-input id="cantidad_minima_pct" type="number" min="0" step="any" formControlName="cantidad_minima" placeholder="Opcional" />
+      </div>
+    </div>
+  } @else {
+    <div class="grid grid-cols-2 gap-4 rounded-md border p-3">
+      <div z-field>
+        <label z-field-label for="precio_fijo">Precio fijo *</label>
+        <input z-input id="precio_fijo" type="number" min="0" step="0.01" formControlName="precio_fijo" placeholder="340" />
+      </div>
+      <div z-field>
+        <label z-field-label for="cantidad_minima_pf">Cantidad mínima</label>
+        <input z-input id="cantidad_minima_pf" type="number" min="0" step="any" formControlName="cantidad_minima" placeholder="Opcional (mayoreo)" />
+      </div>
+      <p class="col-span-2 text-[0.8rem] text-muted-foreground">Solo aplica si es menor que el precio de la línea.</p>
+    </div>
+  }
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Sucursal (opcional)</label>
+      <z-select formControlName="sucursal_id" placeholder="Todas las sucursales">
+        <z-select-item zValue="">Todas las sucursales</z-select-item>
+        @for (s of sucursalService.sucursales(); track s.id) {
+          <z-select-item [zValue]="s.id">{{ s.nombre }}</z-select-item>
+        }
+      </z-select>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label for="vigente_desde">Vigente desde</label>
+      <input z-input id="vigente_desde" type="datetime-local" formControlName="vigente_desde" />
+    </div>
+    <div z-field>
+      <label z-field-label for="vigente_hasta">Vigente hasta</label>
+      <input z-input id="vigente_hasta" type="datetime-local" formControlName="vigente_hasta" />
+    </div>
+    <p class="col-span-2 -mt-2 text-[0.8rem] text-muted-foreground">Sin fechas, la promo aplica mientras esté activa.</p>
+  </div>
+
+  <!-- Objetivos -->
+  <div z-field>
+    <label z-field-label>Productos / presentaciones objetivo *</label>
+
+    @if (objetivos().length) {
+      <div class="mb-2 flex flex-wrap gap-1.5">
+        @for (o of objetivos(); track $index) {
+          <z-badge zType="secondary" class="gap-1">
+            {{ o.label }}
+            <button type="button" class="ml-0.5" (click)="quitarObjetivo($index)"><ng-icon name="lucideX" class="size-3" /></button>
+          </z-badge>
+        }
+      </div>
+    } @else {
+      <p class="mb-2 text-[0.8rem] font-medium text-destructive">Agrega al menos un producto o presentación.</p>
+    }
+
+    <div class="relative">
+      <ng-icon name="lucideSearch" class="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <input z-input class="pl-8" placeholder="Buscar producto…" [value]="filtro()" (input)="filtro.set($any($event.target).value)" />
+    </div>
+
+    @if (filtro()) {
+      <ul class="mt-1 max-h-56 overflow-y-auto rounded-md border">
+        @for (p of productosFiltrados(); track p.id) {
+          <li class="border-b last:border-0">
+            <button type="button" class="flex w-full items-center justify-between px-2.5 py-1.5 text-left text-sm hover:bg-accent" (click)="toggleExpandido(p.id)">
+              <span>{{ p.nombre }} <span class="text-xs text-muted-foreground">· {{ p.sku }}</span></span>
+              <ng-icon name="lucidePlus" class="size-4" />
+            </button>
+            @if (expandido() === p.id) {
+              <div class="flex flex-wrap gap-1.5 bg-muted/40 px-2.5 py-2">
+                <button z-button zType="outline" zSize="sm" [disabled]="yaEsObjetivo(p.id, null)" (click)="agregarObjetivo(p.id, null)">
+                  Unidad base
+                </button>
+                @for (u of p.unidades ?? []; track u.id) {
+                  <button z-button zType="ghost" zSize="sm" class="border" [disabled]="yaEsObjetivo(null, u.id)" (click)="agregarObjetivo(null, u.id)">
+                    {{ u.nombre }}
+                  </button>
+                }
+              </div>
+            }
+          </li>
+        } @empty {
+          <li class="px-2.5 py-2 text-sm text-muted-foreground">Sin coincidencias.</li>
+        }
+      </ul>
+    }
+  </div>
+</form>

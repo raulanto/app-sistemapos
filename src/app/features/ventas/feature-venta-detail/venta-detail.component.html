@@ -1,0 +1,160 @@
+<div class="p-6 w-full max-w-5xl mx-auto space-y-6">
+  <a routerLink="/ventas/historial" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+    <ng-icon name="lucideArrowLeft" class="size-4" /> Historial de ventas
+  </a>
+
+  @if (loading()) {
+    <z-skeleton class="h-10 w-72" />
+    <z-skeleton class="h-56 w-full" />
+  } @else if (error() || !venta()) {
+    <z-empty zIcon="lucideReceiptText" zTitle="Venta no encontrada" zDescription="El folio no existe o no tienes acceso." class="py-16" />
+  } @else if (venta(); as v) {
+    <!-- Encabezado -->
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div class="space-y-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <h1 class="text-2xl font-bold tracking-tight">Venta</h1>
+          <z-badge [zType]="badge(v.estado)" class="capitalize">{{ v.estado.replace('_', ' ') }}</z-badge>
+        </div>
+        <p class="font-mono text-xs text-muted-foreground">{{ v.id }}</p>
+        <p class="text-sm text-muted-foreground">{{ v.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        @if (puedeDevolver()) {
+          <button z-button zType="outline" zSize="sm" (click)="abrirDevolucion()">
+            <ng-icon name="lucideUndo2" class="mr-2 size-4" /> Devolución
+          </button>
+        }
+        @if (canAnular() && v.estado !== 'cancelada' && !tieneDevoluciones()) {
+          <button z-button zType="outline" zSize="sm" class="text-destructive hover:bg-destructive/10" (click)="anular()">
+            <ng-icon name="lucideBan" class="mr-2 size-4" /> Anular venta
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+      <!-- Líneas -->
+      <div z-card class="lg:col-span-2">
+        <z-card-header><z-card-title zTitle="Productos" class="text-base" /></z-card-header>
+        <z-card-content class="p-0">
+          <div class="overflow-x-auto">
+            <table z-table>
+              <thead z-table-header class="bg-muted/50">
+                <tr z-table-row>
+                  <th z-table-head>Producto</th>
+                  <th z-table-head class="text-right">Cant.</th>
+                  <th z-table-head class="text-right">Devuelto</th>
+                  <th z-table-head class="text-right">Precio</th>
+                  <th z-table-head class="text-right">Desc.</th>
+                  <th z-table-head class="text-right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody z-table-body>
+                @for (l of v.lineas; track l.id) {
+                  <tr z-table-row>
+                    <td z-table-cell>
+                      <div class="font-medium">{{ nombreProducto(l.producto_id) }}</div>
+                      @if (l.producto_unidad_id) {
+                        <div class="text-xs text-muted-foreground">Presentación</div>
+                      }
+                      @if (l.promo_etiqueta) {
+                        <div class="text-xs text-primary">{{ l.promo_etiqueta }} · − {{ l.promo_descuento | currency }}</div>
+                      }
+                    </td>
+                    <td z-table-cell class="text-right tabular-nums">{{ l.cantidad }}</td>
+                    <td z-table-cell class="text-right tabular-nums" [class.text-amber-600]="+(l.cantidad_devuelta || 0) > 0" [class.text-muted-foreground]="+(l.cantidad_devuelta || 0) === 0">
+                      {{ +(l.cantidad_devuelta || 0) || '—' }}
+                    </td>
+                    <td z-table-cell class="text-right tabular-nums">{{ l.precio_unitario | currency }}</td>
+                    <td z-table-cell class="text-right tabular-nums text-muted-foreground">
+                      {{ (+l.descuento_linea + (+(l.promo_descuento || 0))) | currency }}
+                    </td>
+                    <td z-table-cell class="text-right tabular-nums font-medium">{{ l.subtotal | currency }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </z-card-content>
+      </div>
+
+      <!-- Resumen + pagos + partes -->
+      <div class="space-y-6">
+        <div z-card>
+          <z-card-header><z-card-title zTitle="Resumen" class="text-base" /></z-card-header>
+          <z-card-content>
+            <dl class="space-y-2 text-sm">
+              @if (ahorroPromo() > 0) {
+                <div class="flex justify-between text-primary"><dt>Ahorro por promos</dt><dd class="tabular-nums">{{ ahorroPromo() | currency }}</dd></div>
+              }
+              @if (+v.descuento_total > 0) {
+                <div class="flex justify-between"><dt class="text-muted-foreground">Descuento total</dt><dd class="tabular-nums">− {{ v.descuento_total | currency }}</dd></div>
+              }
+              <z-separator />
+              <div class="flex justify-between text-base font-semibold"><dt>Total</dt><dd class="tabular-nums">{{ v.total | currency }}</dd></div>
+              <div class="flex justify-between"><dt class="text-muted-foreground">Pagado</dt><dd class="tabular-nums">{{ v.monto_pagado | currency }}</dd></div>
+              @if (+v.saldo_pendiente > 0) {
+                <div class="flex justify-between text-amber-600"><dt>Saldo a crédito</dt><dd class="tabular-nums">{{ v.saldo_pendiente | currency }}</dd></div>
+              }
+              @if (+v.total_devuelto > 0) {
+                <div class="flex justify-between text-amber-600"><dt>Devuelto</dt><dd class="tabular-nums">− {{ v.total_devuelto | currency }}</dd></div>
+              }
+            </dl>
+          </z-card-content>
+        </div>
+
+        @if (devoluciones().length) {
+          <div z-card>
+            <z-card-header><z-card-title zTitle="Devoluciones" class="text-base" /></z-card-header>
+            <z-card-content class="space-y-2 text-sm">
+              @for (d of devoluciones(); track d.id) {
+                <div class="rounded-md border p-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-muted-foreground">{{ d.created_at | date:'dd/MM/yy HH:mm' }} · {{ metodoDevLabel[d.metodo_devolucion] }}</span>
+                    <span class="tabular-nums font-medium">{{ d.monto_devuelto | currency }}</span>
+                  </div>
+                  @if (d.motivo) { <p class="text-xs text-muted-foreground">{{ d.motivo }}</p> }
+                </div>
+              }
+            </z-card-content>
+          </div>
+        }
+
+        <div z-card>
+          <z-card-header><z-card-title zTitle="Pagos" class="text-base" /></z-card-header>
+          <z-card-content class="space-y-2 text-sm">
+            @for (p of v.pagos; track p.id) {
+              <div class="flex items-center justify-between">
+                <span class="text-muted-foreground">{{ metodoLabel[p.metodo_pago] || p.metodo_pago }}</span>
+                <span class="tabular-nums font-medium">{{ p.monto | currency }}</span>
+              </div>
+            } @empty {
+              <p class="text-muted-foreground">Sin pagos registrados (venta a crédito).</p>
+            }
+          </z-card-content>
+        </div>
+
+        <div z-card>
+          <z-card-header><z-card-title zTitle="Datos" class="text-base" /></z-card-header>
+          <z-card-content>
+            <dl class="space-y-2 text-sm">
+              <div class="flex items-center justify-between gap-3">
+                <dt class="flex items-center gap-1.5 text-muted-foreground"><ng-icon name="lucideUser" class="size-3.5" /> Cliente</dt>
+                <dd class="truncate font-medium">{{ v.cliente?.nombre || 'Mostrador' }}</dd>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <dt class="flex items-center gap-1.5 text-muted-foreground"><ng-icon name="lucideUser" class="size-3.5" /> Cajero</dt>
+                <dd class="truncate font-medium">{{ v.usuario?.nombre || '—' }}</dd>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <dt class="flex items-center gap-1.5 text-muted-foreground"><ng-icon name="lucideStore" class="size-3.5" /> Turno</dt>
+                <dd class="truncate font-mono text-xs">{{ v.caja_turno_id.slice(0, 8) }}</dd>
+              </div>
+            </dl>
+          </z-card-content>
+        </div>
+      </div>
+    </div>
+  }
+</div>

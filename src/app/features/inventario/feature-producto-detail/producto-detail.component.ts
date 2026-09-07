@@ -720,23 +720,42 @@ export class ProductoDetailComponent implements OnInit {
     });
   }
 
-  eliminarUnidad(unidad: UnidadResponse) {
+  desactivarUnidad(unidad: UnidadResponse) {
     const prod = this.producto();
     if (!prod || prod.tipo === 'kit') return;
 
     this.alertDialog.confirm({
-      zTitle: '¿Eliminar presentación?',
-      zDescription: `Se eliminará la presentación "${unidad.nombre}" de ${prod.nombre}.`,
-      zOkText: 'Eliminar',
+      zTitle: '¿Desactivar presentación?',
+      zDescription: `"${unidad.nombre}" dejará de venderse. Las ventas históricas la conservan y puedes reactivarla después.`,
+      zOkText: 'Desactivar',
       zOkDestructive: true,
       zOnOk: () => {
-        this.inventarioAction.handleAction(
-          this.productoService.eliminarUnidad(prod.id, unidad.id),
-          'Presentación eliminada',
-          'Error al eliminar presentación',
-          () => this.cargarUnidades(prod.id)
-        );
+        this.productoService.eliminarUnidad(prod.id, unidad.id).subscribe({
+          next: () => {
+            this.sonner.success('Presentación desactivada');
+            this.cargarUnidades(prod.id);
+          },
+          error: (err) => {
+            console.error('Error al desactivar presentación', err);
+            this.sonner.error(err?.error?.error?.message ?? err?.error?.detail ?? 'No se pudo desactivar la presentación');
+          },
+        });
       }
+    });
+  }
+
+  reactivarUnidad(unidad: UnidadResponse) {
+    const prod = this.producto();
+    if (!prod || prod.tipo === 'kit') return;
+    this.productoService.reactivarUnidad(prod.id, unidad.id).subscribe({
+      next: () => {
+        this.sonner.success('Presentación reactivada');
+        this.cargarUnidades(prod.id);
+      },
+      error: (err) => {
+        console.error('Error al reactivar presentación', err);
+        this.sonner.error(err?.error?.error?.message ?? err?.error?.detail ?? 'No se pudo reactivar la presentación');
+      },
     });
   }
 }

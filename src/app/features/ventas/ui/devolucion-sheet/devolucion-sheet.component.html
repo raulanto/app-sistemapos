@@ -1,0 +1,48 @@
+<div class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
+  <p class="text-sm text-muted-foreground">
+    Elige cuánto devuelve el cliente de cada renglón. Se repone el stock y se ajusta el cajón / crédito según el método.
+  </p>
+
+  @if (filas().length === 0) {
+    <p class="rounded-md border border-dashed py-8 text-center text-sm text-muted-foreground">
+      No queda nada por devolver en esta venta.
+    </p>
+  } @else {
+    <ul class="space-y-2">
+      @for (f of filas(); track f.detalle_venta_id) {
+        <li class="flex items-center gap-3 rounded-md border p-2.5">
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-medium">{{ f.nombre }}</p>
+            <p class="text-xs text-muted-foreground">
+              Devolvible: {{ f.restante }} · {{ f.precioNeto | currency }} c/u
+            </p>
+          </div>
+          <input z-input class="w-20 text-center" type="number" min="0" [max]="f.restante" step="1"
+                 [ngModel]="f.cantidad" (ngModelChange)="setCantidad(f.detalle_venta_id, $event)" />
+        </li>
+      }
+    </ul>
+
+    <div z-field>
+      <label z-field-label>Método de devolución *</label>
+      <z-select [ngModel]="metodo()" (ngModelChange)="metodo.set($event)">
+        @for (m of metodos; track m.value) {
+          <z-select-item [zValue]="m.value">{{ m.label }}</z-select-item>
+        }
+      </z-select>
+    </div>
+
+    <div z-field>
+      <label z-field-label for="motivo">Motivo</label>
+      <input z-input id="motivo" type="text" maxlength="255" [ngModel]="motivo()" (ngModelChange)="motivo.set($event)" placeholder="Ej. producto fallado" />
+    </div>
+
+    <div class="flex items-center justify-between rounded-md bg-muted px-3 py-2.5 text-sm">
+      <span class="font-medium">A devolver</span>
+      <span class="text-lg font-semibold tabular-nums">{{ montoEstimado() | currency }}</span>
+    </div>
+    @if (!hayAlgo()) {
+      <p class="-mt-2 text-[0.8rem] text-muted-foreground">Indica al menos una cantidad para continuar.</p>
+    }
+  }
+</div>

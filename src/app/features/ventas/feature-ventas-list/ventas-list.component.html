@@ -10,6 +10,8 @@
       <z-select-item zValue="">Todos los estados</z-select-item>
       <z-select-item zValue="pagada">Pagadas</z-select-item>
       <z-select-item zValue="pendiente_pago">Pendiente de pago</z-select-item>
+      <z-select-item zValue="devuelta_parcial">Devuelta parcial</z-select-item>
+      <z-select-item zValue="devuelta_total">Devuelta total</z-select-item>
       <z-select-item zValue="cancelada">Canceladas</z-select-item>
     </z-select>
   </div>
@@ -23,7 +25,7 @@
             <th z-table-head>Folio</th>
             <th z-table-head>Cliente</th>
             <th z-table-head class="text-right">Total</th>
-            <th z-table-head class="text-right">Pagado</th>
+            <th z-table-head class="text-right">Saldo</th>
             <th z-table-head>Estado</th>
             <th z-table-head class="text-right">Acciones</th>
           </tr>
@@ -39,19 +41,28 @@
             @for (v of ventas(); track v.id) {
               <tr z-table-row>
                 <td z-table-cell class="whitespace-nowrap text-xs text-muted-foreground">{{ v.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
-                <td z-table-cell class="font-mono text-xs">{{ v.id.slice(0, 8) }}</td>
+                <td z-table-cell class="font-mono text-xs">
+                  <a [routerLink]="['/ventas/historial', v.id]" class="text-primary hover:underline">{{ v.id.slice(0, 8) }}</a>
+                </td>
                 <td z-table-cell class="text-sm">{{ v.cliente?.nombre || '—' }}</td>
                 <td z-table-cell class="text-right tabular-nums font-medium">{{ v.total | currency }}</td>
-                <td z-table-cell class="text-right tabular-nums text-muted-foreground">{{ v.monto_pagado | currency }}</td>
+                <td z-table-cell class="text-right tabular-nums" [class.text-amber-600]="+v.saldo_pendiente > 0" [class.text-muted-foreground]="+v.saldo_pendiente <= 0">
+                  {{ v.saldo_pendiente | currency }}
+                </td>
                 <td z-table-cell>
                   <z-badge [zType]="badge(v.estado)" class="capitalize">{{ v.estado.replace('_', ' ') }}</z-badge>
                 </td>
                 <td z-table-cell class="text-right">
-                  @if (canAnular() && v.estado !== 'cancelada') {
-                    <button z-button zType="ghost" zSize="icon-sm" class="text-destructive hover:bg-destructive/10" title="Anular" (click)="anular(v)">
-                      <ng-icon name="lucideBan" class="size-4" />
-                    </button>
-                  }
+                  <div class="flex items-center justify-end gap-1">
+                    <a z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Ver detalle" [routerLink]="['/ventas/historial', v.id]">
+                      <ng-icon name="lucideReceiptText" class="size-4" />
+                    </a>
+                    @if (canAnular() && v.estado !== 'cancelada') {
+                      <button z-button zType="ghost" zSize="icon-sm" class="text-destructive hover:bg-destructive/10" title="Anular" (click)="anular(v)">
+                        <ng-icon name="lucideBan" class="size-4" />
+                      </button>
+                    }
+                  </div>
                 </td>
               </tr>
             } @empty {

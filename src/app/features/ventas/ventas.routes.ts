@@ -14,4 +14,9 @@ export const VENTAS_ROUTES: Routes = [
     canActivate: [permissionGuard(...PERMISOS.ventas.leer)],
     loadComponent: () => import('./feature-ventas-list/ventas-list.component').then(m => m.VentasListComponent),
   },
+  {
+    path: 'historial/:id',
+    canActivate: [permissionGuard(...PERMISOS.ventas.leer)],
+    loadComponent: () => import('./feature-venta-detail/venta-detail.component').then(m => m.VentaDetailComponent),
+  },
 ];

@@ -4,8 +4,9 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 
 import { CajaService } from '../../data-access/caja.service';
+import { VentaService } from '../../data-access/venta.service';
 import { injectSheetData } from '../../../../shared/components/sheet/sheet.service';
-import { CajaTurnoResponse, ResumenTurnoResponse } from '../../data-access/ventas.models';
+import { CajaTurnoResponse, ResumenTurnoResponse, CorteCajaResponse } from '../../data-access/ventas.models';
 import { ZardFieldImports } from '../../../../shared/components/field/field.imports';
 import { ZardInputComponent } from '../../../../shared/components/input/input.component';
 
@@ -29,6 +30,12 @@ export interface CerrarCajaSheetData {
             <dt class="text-muted-foreground">+ Ventas en efectivo ({{ r.cantidad_ventas }})</dt>
             <dd class="tabular-nums">{{ r.total_efectivo | currency }}</dd>
           </div>
+          @if (+r.total_devoluciones_efectivo > 0) {
+            <div class="flex justify-between border-b px-3 py-2 text-amber-600">
+              <dt>− Devoluciones en efectivo</dt>
+              <dd class="tabular-nums">{{ r.total_devoluciones_efectivo | currency }}</dd>
+            </div>
+          }
           <div class="flex justify-between px-3 py-2 font-medium">
             <dt>Efectivo esperado</dt>
             <dd class="tabular-nums">{{ r.saldo_esperado | currency }}</dd>
@@ -60,6 +67,22 @@ export interface CerrarCajaSheetData {
       <p class="text-[0.8rem] text-muted-foreground">
         El arqueo solo cuenta efectivo. Tarjeta y transferencia se concilian aparte.
       </p>
+
+      @if (corte(); as c) {
+        <dl class="rounded-md border text-sm">
+          <p class="border-b px-3 py-1.5 text-xs font-semibold uppercase text-muted-foreground">Corte por método</p>
+          <div class="flex justify-between px-3 py-1.5"><dt class="text-muted-foreground">Efectivo</dt><dd class="tabular-nums">{{ c.total_efectivo | currency }}</dd></div>
+          <div class="flex justify-between px-3 py-1.5"><dt class="text-muted-foreground">Tarjeta</dt><dd class="tabular-nums">{{ c.total_tarjeta | currency }}</dd></div>
+          <div class="flex justify-between px-3 py-1.5"><dt class="text-muted-foreground">Transferencia</dt><dd class="tabular-nums">{{ c.total_transferencia | currency }}</dd></div>
+          <div class="flex justify-between px-3 py-1.5"><dt class="text-muted-foreground">Crédito</dt><dd class="tabular-nums">{{ c.total_credito | currency }}</dd></div>
+          @if (+c.total_descuento_promo > 0) {
+            <div class="flex justify-between px-3 py-1.5 text-primary"><dt>Descuento por promos</dt><dd class="tabular-nums">{{ c.total_descuento_promo | currency }}</dd></div>
+          }
+          @if (+c.total_devoluciones_efectivo > 0) {
+            <div class="flex justify-between px-3 py-1.5 text-amber-600"><dt>Devoluciones en efectivo</dt><dd class="tabular-nums">− {{ c.total_devoluciones_efectivo | currency }}</dd></div>
+          }
+        </dl>
+      }
     </form>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -69,9 +92,11 @@ export interface CerrarCajaSheetData {
 export class CerrarCajaSheetComponent implements OnInit {
   private fb = inject(FormBuilder);
   private cajaService = inject(CajaService);
+  private ventaService = inject(VentaService);
   public sheetData = injectSheetData<CerrarCajaSheetData>();
 
   readonly resumen = signal<ResumenTurnoResponse | null>(null);
+  readonly corte = signal<CorteCajaResponse | null>(null);
 
   form = this.fb.group({
     saldo_final_declarado: [0, [Validators.required, Validators.min(0)]],
@@ -87,6 +112,11 @@ export class CerrarCajaSheetComponent implements OnInit {
     this.cajaService.resumen(this.sheetData.turnoId).subscribe({
       next: r => this.resumen.set(r),
       error: err => console.error('Error al cargar el arqueo', err),
+    });
+    // Corte por método de pago (requiere permiso reportes.leer; si no, se omite).
+    this.ventaService.corteCaja(this.sheetData.turnoId).subscribe({
+      next: c => this.corte.set(c),
+      error: () => this.corte.set(null),
     });
   }
 
