@@ -98,6 +98,43 @@ interface LineaCarrito {
     }),
   ],
   templateUrl: './pos.component.html',
+  styles: [
+    `
+    @keyframes pos-feed {
+      from { clip-path: inset(100% 0 0 0); }
+      to { clip-path: inset(0 0 0 0); }
+    }
+    @keyframes pos-drop {
+      0% { transform: translateY(-8px); }
+      55% { transform: translateY(4px); }
+      100% { transform: translateY(0); }
+    }
+    @keyframes pos-slot {
+      0%, 100% { opacity: .35; transform: scaleX(.9); }
+      50% { opacity: .9; transform: scaleX(1); }
+    }
+    @keyframes pos-actions-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .pos-slot { animation: pos-slot 1s ease-in-out 3; }
+    .pos-ticket {
+      transform-origin: top center;
+      animation: pos-feed 1s cubic-bezier(.2, .9, .25, 1) both, pos-drop .5s ease-out .95s both;
+      --tooth: 12px;
+      -webkit-mask:
+        conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / var(--tooth) var(--tooth) repeat-x,
+        linear-gradient(#000 0 0) top / 100% calc(100% - var(--tooth)) no-repeat;
+      mask:
+        conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / var(--tooth) var(--tooth) repeat-x,
+        linear-gradient(#000 0 0) top / 100% calc(100% - var(--tooth)) no-repeat;
+    }
+    .pos-ticket-actions { animation: pos-actions-in .3s ease-out 1.35s both; }
+    @media (prefers-reduced-motion: reduce) {
+      .pos-ticket, .pos-ticket-actions, .pos-slot { animation: none; }
+    }
+  `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PosComponent {
@@ -169,16 +206,32 @@ export class PosComponent {
     });
   });
 
-  /** Catálogo agrupado por categoría (bloques). "Sin categoría" al final. */
+  /**
+   * Catálogo agrupado por categoría (bloques). Cada presentación (unidad base +
+   * cada unidad activa) es su propia tarjeta; "Sin categoría" al final.
+   */
   readonly bloques = computed(() => {
     const nombrePorId = new Map(this.categorias().map(c => [c.id, c.nombre]));
-    const grupos = new Map<string, ProductoResponse[]>();
+    const grupos = new Map<string, { key: string; producto: ProductoResponse; unidad: UnidadResponse | null }[]>();
     for (const p of this.productosFiltrados()) {
       const k = p.categoria_id ?? '';
-      (grupos.get(k) ?? grupos.set(k, []).get(k)!).push(p);
+      let lista = grupos.get(k);
+      if (!lista) {
+        lista = [];
+        grupos.set(k, lista);
+      }
+      lista.push({ key: `${p.id}:base`, producto: p, unidad: null });
+      for (const u of p.unidades ?? []) {
+        if (u.activo) lista.push({ key: `${p.id}:${u.id}`, producto: p, unidad: u });
+      }
     }
     return [...grupos.entries()]
-      .map(([id, productos]) => ({ id: id || null, nombre: nombrePorId.get(id) ?? 'Sin categoría', productos }))
+      .map(([id, items]) => ({
+        id: id || null,
+        nombre: nombrePorId.get(id) ?? 'Sin categoría',
+        items,
+        count: new Set(items.map(i => i.producto.id)).size,
+      }))
       .sort((a, b) => (a.nombre === 'Sin categoría' ? 1 : b.nombre === 'Sin categoría' ? -1 : a.nombre.localeCompare(b.nombre)));
   });
 
@@ -333,12 +386,14 @@ export class PosComponent {
     this.categoriaSel.set(this.categoriaSel() === id ? null : id);
   }
 
-  imgSrc(p: ProductoResponse): string | null {
-    if (this.imgRoto().has(p.id)) return null;
-    return p.imagen_principal?.url ?? p.imagen_principal?.thumbnail_url ?? null;
+  /** Foto de la tarjeta: portada de la presentación si tiene; si no, cae a la del producto. */
+  imgSrc(it: { key: string; producto: ProductoResponse; unidad: UnidadResponse | null }): string | null {
+    if (this.imgRoto().has(it.key)) return null;
+    const img = it.unidad?.imagen_principal ?? it.producto.imagen_principal;
+    return img?.url ?? img?.thumbnail_url ?? null;
   }
-  marcarImgRota(id: string) {
-    this.imgRoto.update(s => new Set(s).add(id));
+  marcarImgRota(key: string) {
+    this.imgRoto.update(s => new Set(s).add(key));
   }
 
   // --- Caja ---

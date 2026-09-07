@@ -41,48 +41,60 @@
       </div>
     </div>
   } @else if (ventaOk(); as v) {
-    <!-- Ticket -->
-    <div class="grid flex-1 place-items-center p-8">
-      <div class="w-full max-w-md rounded-xl border bg-card p-6 text-center">
-        <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-green-500/10 text-green-600">
-          <ng-icon name="lucideCircleCheck" class="size-7" />
+    <!-- Ticket saliendo de la impresora -->
+    <div class="grid flex-1 place-items-start justify-center overflow-y-auto px-4 py-10">
+      <div class="w-full max-w-lg">
+        <!-- Impresora -->
+        <div class="mx-auto grid h-6 w-[96%] place-items-center rounded-t-xl rounded-b-sm bg-foreground/80 shadow-inner">
+          <div class="pos-slot h-1.5 w-[80%] rounded-full bg-background/70"></div>
         </div>
-        <h2 class="mt-3 text-xl font-semibold">Venta registrada</h2>
-        <p class="mt-1 font-mono text-xs text-muted-foreground">{{ v.id }}</p>
 
-        <dl class="mt-4 space-y-1.5 text-sm">
-          @if (ahorroPromo(v) > 0) {
-            <div class="flex justify-between text-primary"><dt>Ahorro en promociones</dt><dd class="tabular-nums font-medium">{{ ahorroPromo(v) | currency }}</dd></div>
-          }
-          <div class="flex justify-between"><dt class="text-muted-foreground">Total</dt><dd class="tabular-nums font-medium">{{ v.total | currency }}</dd></div>
-          <div class="flex justify-between"><dt class="text-muted-foreground">Pagado</dt><dd class="tabular-nums">{{ v.monto_pagado | currency }}</dd></div>
-          @if (+v.efectivo_recibido > 0) {
-            <div class="flex justify-between"><dt class="text-muted-foreground">Recibido en efectivo</dt><dd class="tabular-nums">{{ v.efectivo_recibido | currency }}</dd></div>
-          }
-          @if (+v.cambio > 0) {
-            <div class="flex justify-between text-green-600"><dt>Cambio</dt><dd class="tabular-nums font-medium">{{ v.cambio | currency }}</dd></div>
-          }
-          @if (+v.saldo_pendiente > 0) {
-            <div class="flex justify-between"><dt class="text-muted-foreground">A crédito</dt><dd class="tabular-nums text-amber-600">{{ v.saldo_pendiente | currency }}</dd></div>
-          }
-          <div class="flex justify-between"><dt class="text-muted-foreground">Estado</dt><dd><z-badge [zType]="v.estado === 'pagada' ? 'default' : 'secondary'">{{ v.estado }}</z-badge></dd></div>
-        </dl>
+        <!-- Recibo -->
+        <div class="pos-ticket border-x border-b border-dashed bg-card px-8 pb-14 pt-9 text-center shadow-xl">
+          <div class="mx-auto grid size-16 place-items-center rounded-2xl bg-green-500/10 text-green-600">
+            <ng-icon name="lucideCircleCheck" class="size-8" />
+          </div>
+          <h2 class="mt-3 text-2xl font-semibold">Venta registrada</h2>
+          <p class="mt-1 font-mono text-xs text-muted-foreground">{{ v.id }}</p>
 
-        @if (ahorroPromo(v) > 0) {
-          <ul class="mt-2 space-y-0.5 text-left text-xs text-muted-foreground">
-            @for (l of v.lineas; track l.id) {
-              @if (l.promo_etiqueta) {
-                <li class="flex justify-between"><span>{{ l.promo_etiqueta }}</span><span class="tabular-nums">− {{ l.promo_descuento | currency }}</span></li>
-              }
+          <div class="my-4 border-t border-dashed"></div>
+
+          <dl class="space-y-2 text-base">
+            @if (ahorroPromo(v) > 0) {
+              <div class="flex justify-between text-primary"><dt>Ahorro en promociones</dt><dd class="tabular-nums font-medium">{{ ahorroPromo(v) | currency }}</dd></div>
             }
-          </ul>
-        }
+            <div class="flex justify-between"><dt class="text-muted-foreground">Total</dt><dd class="tabular-nums font-semibold">{{ v.total | currency }}</dd></div>
+            <div class="flex justify-between"><dt class="text-muted-foreground">Pagado</dt><dd class="tabular-nums">{{ v.monto_pagado | currency }}</dd></div>
+            @if (+v.efectivo_recibido > 0) {
+              <div class="flex justify-between"><dt class="text-muted-foreground">Recibido en efectivo</dt><dd class="tabular-nums">{{ v.efectivo_recibido | currency }}</dd></div>
+            }
+            @if (+v.cambio > 0) {
+              <div class="flex justify-between text-green-600"><dt>Cambio</dt><dd class="tabular-nums font-medium">{{ v.cambio | currency }}</dd></div>
+            }
+            @if (+v.saldo_pendiente > 0) {
+              <div class="flex justify-between"><dt class="text-muted-foreground">A crédito</dt><dd class="tabular-nums text-amber-600">{{ v.saldo_pendiente | currency }}</dd></div>
+            }
+            <div class="flex justify-between"><dt class="text-muted-foreground">Estado</dt><dd><z-badge [zType]="v.estado === 'pagada' ? 'default' : 'secondary'">{{ v.estado }}</z-badge></dd></div>
+          </dl>
 
-        <div class="mt-5 flex gap-2">
-          <button z-button zType="outline" class="flex-1" (click)="imprimirTicket(v.id)">
+          @if (ahorroPromo(v) > 0) {
+            <ul class="mt-3 space-y-0.5 text-left text-sm text-muted-foreground">
+              @for (l of v.lineas; track l.id) {
+                @if (l.promo_etiqueta) {
+                  <li class="flex justify-between"><span>{{ l.promo_etiqueta }}</span><span class="tabular-nums">− {{ l.promo_descuento | currency }}</span></li>
+                }
+              }
+            </ul>
+          }
+
+          <p class="mt-4 text-xs text-muted-foreground">¡Gracias por su compra!</p>
+        </div>
+
+        <div class="pos-ticket-actions mx-auto mt-6 flex max-w-lg gap-3">
+          <button z-button zType="outline" zSize="lg" class="flex-1" (click)="imprimirTicket(v.id)">
             <ng-icon name="lucidePrinter" class="mr-2 size-4" /> Ticket
           </button>
-          <button z-button zType="default" class="flex-1" (click)="nuevaVenta()">
+          <button z-button zType="default" zSize="lg" class="flex-1" (click)="nuevaVenta()">
             <ng-icon name="lucidePlus" class="mr-2 size-4" /> Nueva venta
           </button>
         </div>
@@ -129,43 +141,40 @@
                 <div class="sticky top-0 z-10 -mx-3 mb-2 flex items-center gap-2 bg-background/95 px-3 py-1.5 backdrop-blur">
                   <ng-icon name="lucideLayers" class="size-4 text-muted-foreground" />
                   <h4 class="text-sm font-semibold">{{ bloque.nombre }}</h4>
-                  <z-badge zType="secondary" class="tabular-nums text-[10px]">{{ bloque.productos.length }}</z-badge>
+                  <z-badge zType="secondary" class="tabular-nums text-[10px]">{{ bloque.count }}</z-badge>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-                  @for (p of bloque.productos; track p.id) {
-                    <div class="flex flex-col overflow-hidden rounded-lg border bg-card text-left">
-                      <div class="aspect-video w-full bg-muted">
-                        @if (imgSrc(p); as src) {
-                          <img [src]="src" [alt]="p.nombre" class="size-full object-cover" (error)="marcarImgRota(p.id)" />
+                  @for (it of bloque.items; track it.key) {
+                    <button type="button"
+                            class="group flex flex-col overflow-hidden rounded-lg border bg-card text-left transition hover:border-primary hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            (click)="agregar(it.producto, it.unidad)">
+                      <div class="relative aspect-video w-full bg-muted">
+                        @if (imgSrc(it); as src) {
+                          <img [src]="src" [alt]="it.producto.nombre" class="size-full object-cover" (error)="marcarImgRota(it.key)" />
                         } @else {
                           <div class="grid size-full place-items-center text-muted-foreground">
-                            <ng-icon [name]="p.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-6" />
+                            <ng-icon [name]="it.producto.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-6" />
                           </div>
                         }
+                        <span class="absolute left-1.5 top-1.5 rounded bg-background/90 px-1.5 py-0.5 text-[0.7rem] font-medium shadow-sm">
+                          {{ it.unidad ? it.unidad.nombre : (it.producto.unidad_medida | titlecase) }}
+                        </span>
                       </div>
                       <div class="flex flex-1 flex-col p-2.5">
-                        <span class="line-clamp-2 text-sm font-medium">{{ p.nombre }}</span>
-                        <span class="mt-0.5 text-xs text-muted-foreground">{{ p.sku }}</span>
-                        <span class="mt-1 font-semibold tabular-nums text-green-600">{{ p.precio_venta | currency }}</span>
-                        @if (p.precio_mayoreo && p.cantidad_minima_mayoreo) {
-                          <span class="text-[0.7rem] text-primary">mayoreo {{ p.precio_mayoreo | currency }} · ≥ {{ p.cantidad_minima_mayoreo }}</span>
+                        <span class="line-clamp-2 text-sm font-medium">{{ it.producto.nombre }}</span>
+                        <span class="mt-0.5 text-xs text-muted-foreground">{{ it.producto.sku }}</span>
+                        <span class="mt-1 font-semibold tabular-nums text-green-600">
+                          {{ (it.unidad ? it.unidad.precio_venta : it.producto.precio_venta) | currency }}
+                        </span>
+                        @if (!it.unidad && it.producto.precio_mayoreo && it.producto.cantidad_minima_mayoreo) {
+                          <span class="text-[0.7rem] text-primary">mayoreo {{ it.producto.precio_mayoreo | currency }} · ≥ {{ it.producto.cantidad_minima_mayoreo }}</span>
                         }
-
-                        <div class="mt-2 flex flex-wrap gap-1">
-                          <button z-button zType="outline" zSize="sm" (click)="agregar(p)">
-                            <ng-icon name="lucidePlus" class="mr-1 size-3.5" /> {{ p.unidad_medida | titlecase }}
-                          </button>
-                          @for (u of p.unidades ?? []; track u.id) {
-                            @if (u.activo) {
-                              <button z-button zType="ghost" zSize="sm" class="border" (click)="agregar(p, u)">
-                                {{ u.nombre }} · {{ u.precio_venta | currency }}
-                              </button>
-                            }
-                          }
-                        </div>
+                        <span class="mt-2 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground group-hover:text-primary">
+                          <ng-icon name="lucidePlus" class="size-3.5" /> Agregar
+                        </span>
                       </div>
-                    </div>
+                    </button>
                   }
                 </div>
               </section>

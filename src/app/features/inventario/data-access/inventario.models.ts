@@ -130,6 +130,8 @@ export interface UnidadResponse {
   codigo_barras?: string | null;
   activo: boolean;
   producto?: ProductoResponse;
+  /** Portada de la presentación (llega con `?include=unidades`, mismo formato que la del producto). */
+  imagen_principal?: ImagenResponse | null;
 }
 
 /**
