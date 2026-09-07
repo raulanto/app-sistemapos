@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -33,7 +35,7 @@ import { ProductoService } from '../data-access/producto.service';
 import { MovimientoService } from '../data-access/movimiento.service';
 import { UnidadMedidaService } from '../data-access/unidad-medida.service';
 import { SucursalService } from '../../../core/sucursal/sucursal.service';
-import { ProductoResponse, MovimientoResponse, ExistenciaResponse, UnidadResponse, UnidadMedidaResponse } from '../data-access/inventario.models';
+import { ProductoResponse, MovimientoResponse, ExistenciaResponse, UnidadResponse, UnidadMedidaResponse, DesgloseExistenciasResponse } from '../data-access/inventario.models';
 
 import { ZardCardImports } from '../../../shared/components/card/card.imports';
 import { ZardBadgeComponent } from '../../../shared/components/badge/badge.component';
@@ -135,13 +137,15 @@ export class ProductoDetailComponent implements OnInit {
   /** Se activa si la portada no carga (link roto, CORS, etc.); cae al icono por defecto. */
   imagenError = signal(false);
 
-  /** Portada: `imagen_principal` (viene siempre), o la primera de la galería embebida. */
+  /** Portada: `imagen_principal` (viene siempre), o la primera de la galería embebida.
+   * Se prefiere la imagen original (`url`) sobre `thumbnail_url`: la miniatura la genera
+   * una Lambda que puede no existir en entornos locales y devolver 404. */
   imagenPrincipal = computed(() => {
     const prod = this.producto();
     if (!prod) return null;
     const principal =
       prod.imagen_principal ?? (prod.imagenes ?? []).find(i => i.es_principal) ?? (prod.imagenes ?? [])[0];
-    return principal?.thumbnail_url ?? principal?.url ?? null;
+    return principal?.url ?? principal?.thumbnail_url ?? null;
   });
 
   totalStock = computed(() => {
@@ -227,6 +231,40 @@ export class ProductoDetailComponent implements OnInit {
     ]
   };
 
+  /** Evolución del costo unitario: los movimientos con `costo_unitario` (entradas/ajustes con costo). */
+  costoTrend = computed(() =>
+    [...this.movimientos()]
+      .reverse()
+      .filter(m => m.costo_unitario != null)
+      .map(m => ({
+        fecha: new Date(m.created_at).toLocaleDateString(),
+        costo: Number(m.costo_unitario),
+      })),
+  );
+  costoConfig = { costo: { label: 'Costo unitario', color: '#6366f1' } };
+  costoSeries = [{ dataKey: 'costo', showSymbol: true }];
+
+  /** Stock actual por sucursal. */
+  stockPorSucursal = computed(() =>
+    (this.producto()?.existencias ?? []).map(e => ({
+      sucursal: this.getNombreSucursal(e.sucursal_id),
+      stock: Number(e.cantidad),
+    })),
+  );
+  stockConfig = { stock: { label: 'Stock', color: '#0ea5e9' } };
+  stockSeries = [{ dataKey: 'stock' }];
+
+  /** Reparto de movimientos por tipo. */
+  movimientosPorTipo = computed(() => {
+    const conteo = new Map<string, number>();
+    for (const mov of this.movimientos()) {
+      const t = String(mov.tipo);
+      conteo.set(t, (conteo.get(t) ?? 0) + 1);
+    }
+    return [...conteo].map(([tipo, total]) => ({ tipo, total }));
+  });
+  tipoSeries = [{ dataKey: 'total' }];
+
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
@@ -255,6 +293,7 @@ export class ProductoDetailComponent implements OnInit {
         this.cargarMovimientos(id);
         if (prod.tipo !== 'kit') {
           this.cargarUnidades(id);
+          this.cargarDesglose(id);
         }
       },
       error: (err) => {
@@ -275,9 +314,28 @@ export class ProductoDetailComponent implements OnInit {
     this.productoService.obtenerPorId(id, ProductoDetailComponent.INCLUDES).subscribe({
       next: (prod) => {
         this.producto.set(prod);
+        // La portada pudo cambiar: da otra oportunidad al <img> (el latch se quedaba en true).
+        this.imagenError.set(false);
         this.cdr.markForCheck();
+        if (prod.tipo !== 'kit') this.cargarDesglose(id);
       },
       error: (err) => console.error('Error al refrescar producto:', err),
+    });
+  }
+
+  /** Saldo traducido a cada presentación (unidades completas + fracción). */
+  readonly desglose = signal<DesgloseExistenciasResponse | null>(null);
+
+  cargarDesglose(productoId: string) {
+    this.productoService.desglosarExistencias(productoId).subscribe({
+      next: (d) => {
+        this.desglose.set(d);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error al desglosar existencias:', err);
+        this.desglose.set(null);
+      },
     });
   }
 
@@ -296,11 +354,34 @@ export class ProductoDetailComponent implements OnInit {
     });
   }
 
+  /** Portada de cada presentación (`unidad.id` → url) — `UnidadResponse` no la trae, se pide aparte. */
+  readonly portadasUnidad = signal<Record<string, string | null>>({});
+
   cargarUnidades(productoId: string) {
     this.productoService.listarUnidades(productoId, true).subscribe({
       next: (unids) => {
         this.unidades.set(unids);
         this.cdr.markForCheck();
+        if (unids.length === 0) {
+          this.portadasUnidad.set({});
+          return;
+        }
+        forkJoin(
+          unids.map(u =>
+            this.productoService
+              .listarImagenesUnidad(productoId, u.id)
+              .pipe(catchError(() => of([]))),
+          ),
+        ).subscribe(listas => {
+          const mapa: Record<string, string | null> = {};
+          unids.forEach((u, i) => {
+            const imgs = listas[i];
+            const p = imgs.find(x => x.es_principal) ?? imgs[0];
+            mapa[u.id] = p?.url ?? p?.thumbnail_url ?? null;
+          });
+          this.portadasUnidad.set(mapa);
+          this.cdr.markForCheck();
+        });
       },
       error: (err) => {
         console.error('Error al cargar unidades:', err);

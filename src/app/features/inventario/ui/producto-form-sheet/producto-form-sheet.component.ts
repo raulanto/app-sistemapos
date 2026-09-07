@@ -83,6 +83,14 @@ export class ProductoFormSheetComponent implements OnInit {
     permite_stock_negativo: [false],
     permite_venta_fraccionada: [false],
     incremento_minimo_venta: [null as number | null],
+    // Configuración avanzada
+    requiere_lote: [false],
+    rastrea_instancia_abierta: [false],
+    instancia_capacidad_default: [null as number | null],
+    precio_incluye_impuesto: [false],
+    es_sobre_pedido: [false],
+    precio_mayoreo: [null as number | null],
+    cantidad_minima_mayoreo: [null as number | null],
     tipo: ['simple' as TipoProducto, Validators.required],
     activo: [true],
     existencias: this.fb.array([])
@@ -240,11 +248,12 @@ export class ProductoFormSheetComponent implements OnInit {
     if (data.codigo_barras === '') data.codigo_barras = null;
     if (data.descripcion === '') data.descripcion = null;
     if (data.unidad_medida_id === '') data.unidad_medida_id = null;
-    if (data.incremento_minimo_venta === '' || data.incremento_minimo_venta == null) {
-      data.incremento_minimo_venta = null;
-    } else {
-      data.incremento_minimo_venta = Number(data.incremento_minimo_venta);
-    }
+
+    const numOrNull = (v: any) => (v === '' || v == null ? null : Number(v));
+    data.incremento_minimo_venta = numOrNull(data.incremento_minimo_venta);
+    data.instancia_capacidad_default = numOrNull(data.instancia_capacidad_default);
+    data.precio_mayoreo = numOrNull(data.precio_mayoreo);
+    data.cantidad_minima_mayoreo = numOrNull(data.cantidad_minima_mayoreo);
 
     let request$: Observable<any>;
 
@@ -256,6 +265,9 @@ export class ProductoFormSheetComponent implements OnInit {
       updateData.cambiar_descripcion = this.form.get('descripcion')?.dirty ?? false;
       updateData.cambiar_unidad_medida_id = this.form.get('unidad_medida_id')?.dirty ?? false;
       updateData.cambiar_incremento_minimo_venta = this.form.get('incremento_minimo_venta')?.dirty ?? false;
+      updateData.cambiar_instancia_capacidad_default = this.form.get('instancia_capacidad_default')?.dirty ?? false;
+      updateData.cambiar_mayoreo =
+        (this.form.get('precio_mayoreo')?.dirty || this.form.get('cantidad_minima_mayoreo')?.dirty) ?? false;
 
       // Ensure numeric fields are numbers
       updateData.precio_venta = Number(updateData.precio_venta);

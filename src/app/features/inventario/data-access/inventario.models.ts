@@ -20,6 +20,18 @@ export interface ProductoResponse {
   permite_venta_fraccionada: boolean;
   /** Si está definido, toda venta/salida debe ser múltiplo exacto de este valor. */
   incremento_minimo_venta?: string | null;
+  /** Control por lote: ENTRADA exige lote, SALIDA descuenta por FEFO. No se puede activar con stock. */
+  requiere_lote?: boolean;
+  /** Rastreo de envases abiertos (venta a granel). Requiere `instancia_capacidad_default`. */
+  rastrea_instancia_abierta?: boolean;
+  instancia_capacidad_default?: string | null;
+  /** `precio_venta` ya incluye el IVA (precio final al público). Informativo para front/reportes. */
+  precio_incluye_impuesto?: boolean;
+  /** Precio alternativo a partir de `cantidad_minima_mayoreo` (ambos o ninguno). */
+  precio_mayoreo?: string | null;
+  cantidad_minima_mayoreo?: string | null;
+  /** No se mantiene en stock; se vende sin existencia. */
+  es_sobre_pedido?: boolean;
   activo: boolean;
   tipo?: TipoProducto;
   categoria?: any;
@@ -198,6 +210,15 @@ export interface CrearProductoRequest {
   permite_venta_fraccionada?: boolean;
   /** Si se define, toda venta/salida debe ser múltiplo exacto de este valor. */
   incremento_minimo_venta?: number | string | null;
+  /** Control por lote (no se puede activar después con stock cargado). */
+  requiere_lote?: boolean;
+  rastrea_instancia_abierta?: boolean;
+  instancia_capacidad_default?: number | string | null;
+  precio_incluye_impuesto?: boolean;
+  /** `precio_mayoreo` y `cantidad_minima_mayoreo` van juntos (ambos o ninguno). */
+  precio_mayoreo?: number | string | null;
+  cantidad_minima_mayoreo?: number | string | null;
+  es_sobre_pedido?: boolean;
   tipo?: TipoProducto;
   activo?: boolean;
 }
@@ -220,6 +241,17 @@ export interface ActualizarProductoRequest {
   incremento_minimo_venta?: number | string | null;
   /** Mismo patrón que `cambiar_descripcion`/`cambiar_codigo_barras`. */
   cambiar_incremento_minimo_venta?: boolean;
+  requiere_lote?: boolean | null;
+  rastrea_instancia_abierta?: boolean | null;
+  instancia_capacidad_default?: number | string | null;
+  /** Con el flag en true, `instancia_capacidad_default: null` sí lo borra. */
+  cambiar_instancia_capacidad_default?: boolean;
+  precio_incluye_impuesto?: boolean | null;
+  es_sobre_pedido?: boolean | null;
+  precio_mayoreo?: number | string | null;
+  cantidad_minima_mayoreo?: number | string | null;
+  /** Con el flag en true, mandar `precio_mayoreo`/`cantidad_minima_mayoreo` null los borra (van juntos). */
+  cambiar_mayoreo?: boolean;
   codigo_barras?: string | null;
   cambiar_codigo_barras?: boolean;
   cambiar_descripcion?: boolean;
@@ -236,13 +268,13 @@ export interface CategoriaResponse {
 export interface CrearCategoriaRequest {
   nombre: string;
   categoria_padre_id?: string | null;
-  activo?: boolean;
 }
 
 export interface ActualizarCategoriaRequest {
   nombre?: string;
   categoria_padre_id?: string | null;
-  activo?: boolean;
+  /** Sin el flag, `categoria_padre_id` null = "no tocar"; con el flag, null la vuelve raíz. */
+  cambiar_padre?: boolean;
 }
 
 export interface TipoMovimiento {
@@ -312,6 +344,43 @@ export interface ExistenciaResponse {
   stock_minimo?: string | null;
   stock_maximo?: string | null;
   updated_at?: string;
+}
+
+/**
+ * Saldo de stock traducido a cada presentación activa.
+ * `GET /inventario/productos/{id}/existencias?sucursal_id=` (multi).
+ * Ej. base "reja", presentación "botella" con factor 0.125 (8 botellas = 1 reja):
+ * 8.875 rejas → 71 botellas (`cantidad_entera`), la reja aparece con `cantidad_entera: 8` + fracción.
+ */
+export interface PresentacionDesglose {
+  /** null = unidad base del producto. */
+  producto_unidad_id: string | null;
+  nombre: string;
+  unidad_medida?: string | null;
+  /** Unidades base por 1 de esta presentación (base ⇒ 1). */
+  factor: string;
+  /** Saldo exacto en esta presentación (`cantidad_base / factor`). */
+  cantidad: string;
+  /** Unidades completas disponibles. */
+  cantidad_entera: number;
+}
+
+export interface SucursalDesglose {
+  sucursal_id: string;
+  cantidad_base: string;
+  stock_minimo?: string | null;
+  stock_maximo?: string | null;
+  presentaciones: PresentacionDesglose[];
+}
+
+export interface DesgloseExistenciasResponse {
+  producto_id: string;
+  unidad_base?: string | null;
+  /** Saldo total (todas las sucursales) en unidad base. */
+  cantidad_base_global: string;
+  /** Desglose sumado de todas las sucursales. */
+  presentaciones_global: PresentacionDesglose[];
+  por_sucursal: SucursalDesglose[];
 }
 
 export interface AplicarMovimientoRequest {

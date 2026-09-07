@@ -22,7 +22,8 @@ import {
   AgregarImagenRequest,
   ActualizarImagenRequest,
   SubirImagenRequest,
-  ReemplazarRecetaRequest
+  ReemplazarRecetaRequest,
+  DesgloseExistenciasResponse
 } from './inventario.models';
 
 @Injectable({
@@ -164,6 +165,15 @@ export class ProductoService {
 
   actualizarUmbrales(producto_id: string, sucursal_id: string, umbrales: { stock_minimo: number; stock_maximo?: number }): Observable<any> {
     return this.http.patch<any>(`${environment.apiUrl}/inventario/existencias/${producto_id}/${sucursal_id}/umbrales`, umbrales);
+  }
+
+  /** Saldo del producto traducido a cada presentación activa (unidades completas + fracción). */
+  desglosarExistencias(producto_id: string, sucursal_ids?: string[]): Observable<DesgloseExistenciasResponse> {
+    let params = new HttpParams();
+    (sucursal_ids ?? []).forEach(id => (params = params.append('sucursal_id', id)));
+    return this.http
+      .get<ApiResponse<DesgloseExistenciasResponse>>(`${this.API_URL}/${producto_id}/existencias`, { params })
+      .pipe(map(res => res.data));
   }
 
   // --- PRESENTACIONES (UNIDADES) ---

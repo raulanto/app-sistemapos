@@ -69,7 +69,7 @@
                 <span class="text-[0.7rem]">No carga</span>
               </div>
             } @else {
-              <img [src]="miniatura(img)" [alt]="img.alt_texto || ''" class="h-full w-full object-cover" (error)="marcarRota(img.id)" />
+              <img [src]="miniatura(img)" [alt]="img.alt_texto || ''" class="h-full w-full object-cover" (error)="onImgError(img)" />
             }
           </div>
 

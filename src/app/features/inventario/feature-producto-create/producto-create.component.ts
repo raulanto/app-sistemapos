@@ -91,6 +91,13 @@ export class ProductoCreateComponent implements OnInit {
     permite_stock_negativo: [false],
     permite_venta_fraccionada: [false],
     incremento_minimo_venta: [null as number | null],
+    requiere_lote: [false],
+    rastrea_instancia_abierta: [false],
+    instancia_capacidad_default: [null as number | null],
+    precio_incluye_impuesto: [false],
+    es_sobre_pedido: [false],
+    precio_mayoreo: [null as number | null],
+    cantidad_minima_mayoreo: [null as number | null],
     activo: [true],
     tipo: ['simple' as TipoProducto, Validators.required],
     existencias: this.fb.array([]),
@@ -373,11 +380,12 @@ export class ProductoCreateComponent implements OnInit {
     if (data.codigo_barras === '') data.codigo_barras = null;
     if (data.descripcion === '') data.descripcion = null;
     if (data.unidad_medida_id === '') data.unidad_medida_id = null;
-    if (data.incremento_minimo_venta === '' || data.incremento_minimo_venta == null) {
-      data.incremento_minimo_venta = null;
-    } else {
-      data.incremento_minimo_venta = Number(data.incremento_minimo_venta);
-    }
+
+    const numOrNull = (v: any) => (v === '' || v == null ? null : Number(v));
+    data.incremento_minimo_venta = numOrNull(data.incremento_minimo_venta);
+    data.instancia_capacidad_default = numOrNull(data.instancia_capacidad_default);
+    data.precio_mayoreo = numOrNull(data.precio_mayoreo);
+    data.cantidad_minima_mayoreo = numOrNull(data.cantidad_minima_mayoreo);
 
     // Fotos: se suben tras crear el producto; portada = la marcada, o la primera.
     const fotos = this.imagenesNuevas();

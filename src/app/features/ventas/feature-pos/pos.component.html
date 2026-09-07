@@ -1,0 +1,232 @@
+<div class="flex h-[calc(100vh-4rem)] flex-col">
+  <!-- Barra superior -->
+  <div class="flex flex-wrap items-center justify-between gap-3 border-b bg-card px-4 py-3">
+    <div class="flex items-center gap-2">
+      <ng-icon name="lucideShoppingCart" class="size-5 text-primary" />
+      <h1 class="text-lg font-bold tracking-tight">Punto de venta</h1>
+      @if (turno(); as t) {
+        <z-badge zType="secondary" class="ml-1">Caja abierta · {{ t.abierto_en | date:'HH:mm' }}</z-badge>
+      }
+    </div>
+    <div class="flex items-center gap-2">
+      <a z-button zType="ghost" zSize="sm" routerLink="/ventas/historial">
+        <ng-icon name="lucideHistory" class="mr-1.5 size-4" /> Historial
+      </a>
+      @if (turno()) {
+        <button z-button zType="outline" zSize="sm" (click)="cerrarCaja()">
+          <ng-icon name="lucideLockKeyhole" class="mr-1.5 size-4" /> Cerrar caja
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (cargandoTurno()) {
+    <div class="grid flex-1 place-items-center p-8">
+      <z-skeleton class="h-40 w-96" />
+    </div>
+  } @else if (!turno()) {
+    <!-- Sin turno -->
+    <div class="grid flex-1 place-items-center p-8">
+      <div class="max-w-sm text-center">
+        <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-primary/10 text-primary">
+          <ng-icon name="lucideLockKeyhole" class="size-6" />
+        </div>
+        <h2 class="mt-4 text-xl font-semibold">No hay caja abierta</h2>
+        <p class="mt-1 text-sm text-muted-foreground">Abre un turno declarando el efectivo inicial para empezar a vender.</p>
+        @if (canVender()) {
+          <button z-button zType="default" class="mt-4" (click)="abrirCaja()">
+            <ng-icon name="lucideBanknote" class="mr-2 size-4" /> Abrir caja
+          </button>
+        }
+      </div>
+    </div>
+  } @else if (ventaOk(); as v) {
+    <!-- Ticket -->
+    <div class="grid flex-1 place-items-center p-8">
+      <div class="w-full max-w-md rounded-xl border bg-card p-6 text-center">
+        <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-green-500/10 text-green-600">
+          <ng-icon name="lucideCircleCheck" class="size-7" />
+        </div>
+        <h2 class="mt-3 text-xl font-semibold">Venta registrada</h2>
+        <p class="mt-1 font-mono text-xs text-muted-foreground">{{ v.id }}</p>
+
+        <dl class="mt-4 space-y-1.5 text-sm">
+          <div class="flex justify-between"><dt class="text-muted-foreground">Total</dt><dd class="tabular-nums font-medium">{{ v.total | currency }}</dd></div>
+          <div class="flex justify-between"><dt class="text-muted-foreground">Pagado</dt><dd class="tabular-nums">{{ v.monto_pagado | currency }}</dd></div>
+          @if (+v.saldo_pendiente > 0) {
+            <div class="flex justify-between"><dt class="text-muted-foreground">A crédito</dt><dd class="tabular-nums text-amber-600">{{ v.saldo_pendiente | currency }}</dd></div>
+          }
+          <div class="flex justify-between"><dt class="text-muted-foreground">Estado</dt><dd><z-badge [zType]="v.estado === 'pagada' ? 'default' : 'secondary'">{{ v.estado }}</z-badge></dd></div>
+        </dl>
+
+        <button z-button zType="default" class="mt-5 w-full" (click)="nuevaVenta()">
+          <ng-icon name="lucidePlus" class="mr-2 size-4" /> Nueva venta
+        </button>
+      </div>
+    </div>
+  } @else {
+    <!-- POS -->
+    <div class="grid flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[1fr_400px]">
+      <!-- Catálogo -->
+      <div class="flex flex-col overflow-hidden border-r">
+        <div class="flex flex-col gap-2 border-b p-3 sm:flex-row">
+          <div class="relative flex-1">
+            <ng-icon name="lucideSearch" class="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <input z-input class="pl-8" placeholder="Buscar producto…" [ngModel]="q()" (ngModelChange)="q.set($event)" />
+          </div>
+          <div class="relative sm:w-56">
+            <ng-icon name="lucideScanBarcode" class="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <input z-input class="pl-8" placeholder="Código de barras" [ngModel]="codigo()" (ngModelChange)="codigo.set($event)" (keyup.enter)="escanear()" />
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-3">
+          @if (cargandoCatalogo()) {
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+              @for (i of [1,2,3,4,5,6]; track i) { <z-skeleton class="h-24" /> }
+            </div>
+          } @else if (productosFiltrados().length === 0) {
+            <z-empty zIcon="lucideSearch" zTitle="Sin resultados" zDescription="Ningún producto coincide con la búsqueda." class="py-12" />
+          } @else {
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+              @for (p of productosFiltrados(); track p.id) {
+                <div class="flex flex-col rounded-lg border bg-card p-3 text-left">
+                  <span class="line-clamp-2 text-sm font-medium">{{ p.nombre }}</span>
+                  <span class="mt-0.5 text-xs text-muted-foreground">{{ p.sku }}</span>
+                  <span class="mt-1 font-semibold tabular-nums text-green-600">{{ p.precio_venta | currency }}</span>
+
+                  <div class="mt-2 flex flex-wrap gap-1">
+                    <button z-button zType="outline" zSize="sm" (click)="agregar(p)">
+                      <ng-icon name="lucidePlus" class="mr-1 size-3.5" /> {{ p.unidad_medida | titlecase }}
+                    </button>
+                    @for (u of p.unidades ?? []; track u.id) {
+                      @if (u.activo) {
+                        <button z-button zType="ghost" zSize="sm" class="border" (click)="agregar(p, u)">
+                          {{ u.nombre }} · {{ u.precio_venta | currency }}
+                        </button>
+                      }
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Carrito + cobro -->
+      <div class="flex flex-col overflow-hidden bg-muted/20">
+        <div class="flex-1 overflow-y-auto p-3">
+          @if (carrito().length === 0) {
+            <z-empty zIcon="lucideShoppingCart" zTitle="Carrito vacío" zDescription="Agrega productos desde el catálogo." class="py-12" />
+          } @else {
+            <ul class="space-y-2">
+              @for (l of carrito(); track l.key) {
+                <li class="rounded-lg border bg-card p-2.5">
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                      <p class="truncate text-sm font-medium">{{ l.producto.nombre }}</p>
+                      <p class="text-xs text-muted-foreground">
+                        {{ l.unidad ? l.unidad.nombre : (l.producto.unidad_medida | titlecase) }}
+                        @if (aplicaMayoreo(l)) { · <span class="text-primary">mayoreo</span> }
+                      </p>
+                    </div>
+                    <button z-button zType="ghost" zSize="icon-sm" class="text-destructive" (click)="quitar(l.key)">
+                      <ng-icon name="lucideTrash" class="size-4" />
+                    </button>
+                  </div>
+
+                  <div class="mt-2 grid grid-cols-[auto_1fr_1fr] items-end gap-2">
+                    <div class="flex items-center gap-1">
+                      <button z-button zType="outline" zSize="icon-sm" (click)="setCantidad(l.key, l.cantidad - 1)"><ng-icon name="lucideMinus" class="size-3.5" /></button>
+                      <input z-input class="w-16 text-center" type="number" [step]="l.producto.permite_venta_fraccionada ? 'any' : '1'" min="0"
+                             [ngModel]="l.cantidad" (ngModelChange)="setCantidad(l.key, $event)" />
+                      <button z-button zType="outline" zSize="icon-sm" (click)="setCantidad(l.key, l.cantidad + 1)"><ng-icon name="lucidePlus" class="size-3.5" /></button>
+                    </div>
+                    <label class="text-[0.7rem] text-muted-foreground">Precio
+                      <input z-input class="mt-0.5" type="number" min="0" step="0.01" [ngModel]="l.precio_unitario" (ngModelChange)="setPrecio(l.key, $event)" />
+                    </label>
+                    <label class="text-[0.7rem] text-muted-foreground">Desc.
+                      <input z-input class="mt-0.5" type="number" min="0" step="0.01" [ngModel]="l.descuento_linea" (ngModelChange)="setDescuentoLinea(l.key, $event)" />
+                    </label>
+                  </div>
+                  <p class="mt-1.5 text-right text-sm font-semibold tabular-nums">
+                    {{ (l.cantidad * l.precio_unitario - l.descuento_linea) | currency }}
+                  </p>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        <!-- Totales + pagos -->
+        <div class="space-y-3 border-t bg-card p-3">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-muted-foreground">Descuento total</span>
+            <input z-input class="w-28 text-right" type="number" min="0" step="0.01" [ngModel]="descuentoTotal()" (ngModelChange)="descuentoTotal.set(+$event || 0)" />
+          </div>
+          <div class="flex items-center justify-between text-lg font-bold">
+            <span>Total</span><span class="tabular-nums">{{ total() | currency }}</span>
+          </div>
+
+          <!-- Pagos -->
+          <div class="space-y-1.5">
+            @for (p of pagos(); track $index) {
+              <div class="flex items-center gap-2">
+                <z-badge zType="outline" class="w-28 justify-center capitalize">{{ p.metodo_pago.replace('_', ' ') }}</z-badge>
+                <input z-input class="flex-1 text-right" type="number" min="0" step="0.01" [ngModel]="p.monto" (ngModelChange)="setMontoPago($index, $event)" />
+                <button z-button zType="ghost" zSize="icon-sm" (click)="quitarPago($index)"><ng-icon name="lucideX" class="size-4" /></button>
+              </div>
+            }
+            <div class="flex flex-wrap gap-1.5">
+              @for (m of metodosPago; track m.value) {
+                <button z-button zType="outline" zSize="sm" (click)="agregarPago(m.value)">+ {{ m.label }}</button>
+              }
+              <button z-button zType="secondary" zSize="sm" (click)="pagoExacto()">Efectivo exacto</button>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-muted-foreground">{{ saldoPendiente() > 0 ? 'Falta / a crédito' : 'Cambio' }}</span>
+            <span class="tabular-nums font-medium" [class.text-amber-600]="saldoPendiente() > 0">
+              {{ (saldoPendiente() > 0 ? saldoPendiente() : -saldoPendiente()) | currency }}
+            </span>
+          </div>
+
+          <!-- Cliente (solo si queda saldo a crédito) -->
+          @if (requiereCliente()) {
+            <div class="rounded-md border border-amber-500/40 bg-amber-500/5 p-2">
+              @if (cliente(); as c) {
+                <div class="flex items-center justify-between text-sm">
+                  <span><span class="font-medium">{{ c.nombre }}</span> · disp. {{ (+c.limite_credito - +c.saldo_credito) | currency }}</span>
+                  <button z-button zType="ghost" zSize="icon-sm" (click)="quitarCliente()"><ng-icon name="lucideX" class="size-4" /></button>
+                </div>
+              } @else {
+                <div class="relative">
+                  <input z-input placeholder="Buscar cliente para el crédito…" [ngModel]="clienteBusqueda()" (ngModelChange)="clienteBusqueda.set($event); buscarClientes()" />
+                  @if (clientesEncontrados().length) {
+                    <ul class="absolute bottom-full z-10 mb-1 max-h-40 w-full overflow-y-auto rounded-md border bg-popover shadow">
+                      @for (c of clientesEncontrados(); track c.id) {
+                        <li>
+                          <button type="button" class="flex w-full items-center justify-between px-2.5 py-1.5 text-left text-sm hover:bg-accent" (click)="elegirCliente(c)">
+                            <span>{{ c.nombre }}</span>
+                            <span class="text-xs text-muted-foreground">disp. {{ (+c.limite_credito - +c.saldo_credito) | currency }}</span>
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <button z-button zType="default" class="w-full" [zLoading]="cobrando()" [zDisabled]="!puedeCobrar() || cobrando()" (click)="cobrar()">
+            <ng-icon name="lucideReceiptText" class="mr-2 size-4" />
+            Cobrar {{ total() | currency }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

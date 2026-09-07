@@ -67,8 +67,10 @@ export class ImagenGaleriaComponent {
   readonly imagenes = signal<ImagenResponse[]>([]);
   readonly cargando = signal(false);
   readonly guardando = signal(false);
-  /** Ids de imágenes cuyo <img> falló al cargar. */
+  /** Ids de imágenes cuyo <img> falló al cargar (thumbnail y original). */
   readonly rotas = signal<Set<string>>(new Set());
+  /** Ids cuyo thumbnail falló: se cae a la imagen original (Lambda de miniaturas puede no existir en dev). */
+  readonly thumbRoto = signal<Set<string>>(new Set());
 
   /** Archivo seleccionado, aún sin subir. */
   readonly archivo = signal<File | null>(null);
@@ -102,6 +104,7 @@ export class ImagenGaleriaComponent {
       next: imgs => {
         this.imagenes.set(imgs);
         this.rotas.set(new Set());
+        this.thumbRoto.set(new Set());
         this.cargando.set(false);
       },
       error: err => {
@@ -111,9 +114,19 @@ export class ImagenGaleriaComponent {
     });
   }
 
-  /** Miniatura preferida para la grilla: thumbnail si está, si no la imagen completa. */
+  /** Fuente a mostrar: thumbnail si existe y no ha fallado; si falló, la imagen original. */
   miniatura(img: ImagenResponse): string | null {
-    return img.thumbnail_url ?? img.url ?? null;
+    if (!this.thumbRoto().has(img.id) && img.thumbnail_url) return img.thumbnail_url;
+    return img.url ?? null;
+  }
+
+  /** Al fallar un <img>: primero reintenta con el original; si ese también falla, se marca roto. */
+  onImgError(img: ImagenResponse) {
+    if (!this.thumbRoto().has(img.id) && img.thumbnail_url && img.url && img.url !== img.thumbnail_url) {
+      this.thumbRoto.update(s => new Set(s).add(img.id));
+      return;
+    }
+    this.marcarRota(img.id);
   }
 
   private urlPrincipal(): string | null {

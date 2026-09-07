@@ -63,6 +63,10 @@ export class AppSidebarComponent {
       title: 'Ventas',
       url: '/ventas',
       icon: 'lucideShoppingCart',
+      items: [
+        { title: 'Punto de venta', url: '/ventas' },
+        { title: 'Historial', url: '/ventas/historial' },
+      ],
     },
     {
       title: 'Inventario',

@@ -198,6 +198,50 @@
           </div>
         </fieldset>
 
+        <z-separator></z-separator>
+
+        <fieldset z-field-set>
+          <legend z-field-legend>Configuración avanzada</legend>
+          <p z-field-description>Opcional: mayoreo, IVA incluido, control por lote y envases abiertos.</p>
+
+          <div z-field-group class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+            <div z-field zOrientation="horizontal" class="md:col-span-2">
+              <z-switch formControlName="es_sobre_pedido" zId="es_sobre_pedido"></z-switch>
+              <label z-field-label for="es_sobre_pedido">Sobre pedido (se vende sin existencia)</label>
+            </div>
+            <div z-field zOrientation="horizontal" class="md:col-span-2">
+              <z-switch formControlName="precio_incluye_impuesto" zId="precio_incluye_impuesto"></z-switch>
+              <label z-field-label for="precio_incluye_impuesto">El precio de venta ya incluye IVA</label>
+            </div>
+            <div z-field zOrientation="horizontal" class="md:col-span-2">
+              <z-switch formControlName="requiere_lote" zId="requiere_lote"></z-switch>
+              <label z-field-label for="requiere_lote">Control por lote (entrada exige lote, salida por FEFO)</label>
+            </div>
+            <div z-field zOrientation="horizontal" class="md:col-span-2">
+              <z-switch formControlName="rastrea_instancia_abierta" zId="rastrea_instancia_abierta"></z-switch>
+              <label z-field-label for="rastrea_instancia_abierta">Rastrear envases abiertos (venta a granel)</label>
+            </div>
+
+            @if (form.controls.rastrea_instancia_abierta.value) {
+              <div z-field class="md:col-span-2">
+                <label z-field-label for="instancia_capacidad_default">Capacidad por envase *</label>
+                <input z-input id="instancia_capacidad_default" type="number" step="any" min="0" formControlName="instancia_capacidad_default" placeholder="Ej. 5">
+                <p z-field-description>En unidad base; con este valor se auto-abre un envase al vender a granel.</p>
+              </div>
+            }
+
+            <div z-field>
+              <label z-field-label for="precio_mayoreo">Precio mayoreo</label>
+              <input z-input id="precio_mayoreo" type="number" min="0" step="0.01" formControlName="precio_mayoreo" placeholder="Opcional">
+            </div>
+            <div z-field>
+              <label z-field-label for="cantidad_minima_mayoreo">Cantidad mínima mayoreo</label>
+              <input z-input id="cantidad_minima_mayoreo" type="number" min="0" step="any" formControlName="cantidad_minima_mayoreo" placeholder="Opcional">
+            </div>
+            <p z-field-description class="md:col-span-2">Ambos van juntos: a partir de esa cantidad (unidad base) la venta usa el precio de mayoreo.</p>
+          </div>
+        </fieldset>
+
         @if (!esServicio()) {
         <z-separator></z-separator>
 

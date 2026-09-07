@@ -177,6 +177,31 @@
         <z-tab-group class="w-full">
           <z-tab label="Existencias">
             <div class="space-y-3 pt-4">
+              @if (desglose(); as dg) {
+                @if (dg.presentaciones_global.length > 1) {
+                  <div z-card>
+                    <z-card-header>
+                      <z-card-title zTitle="Disponible por presentación" class="text-base" />
+                      <z-card-description [zDescription]="'Total en todas las sucursales · ' + dg.cantidad_base_global + ' ' + (dg.unidad_base || prod.unidad_medida) + ' base'" />
+                    </z-card-header>
+                    <z-card-content>
+                      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        @for (p of dg.presentaciones_global; track p.producto_unidad_id ?? 'base') {
+                          <div class="rounded-lg border p-3">
+                            <p class="text-2xl font-semibold tabular-nums">{{ p.cantidad_entera | number }}</p>
+                            <p class="text-sm font-medium">{{ p.nombre }}</p>
+                            <p class="text-xs text-muted-foreground tabular-nums">
+                              {{ p.cantidad }} exactas
+                              @if (p.producto_unidad_id) { · 1 = {{ p.factor }} {{ dg.unidad_base || prod.unidad_medida }} }
+                            </p>
+                          </div>
+                        }
+                      </div>
+                    </z-card-content>
+                  </div>
+                }
+              }
+
               <div class="flex items-center gap-2">
                 <ng-icon name="lucideBoxes" class="size-4 text-muted-foreground" />
                 <h3 class="font-semibold">Stock por sucursal</h3>
@@ -329,6 +354,7 @@
                     <table z-table>
                       <thead z-table-header class="bg-muted/50">
                         <tr z-table-row>
+                          <th z-table-head class="w-14"></th>
                           <th z-table-head>Nombre</th>
                           <th z-table-head>Unidad</th>
                           <th z-table-head>Equivalencia</th>
@@ -340,6 +366,15 @@
                       <tbody z-table-body>
                         @for (unidad of unidades(); track unidad.id) {
                           <tr z-table-row>
+                            <td z-table-cell>
+                              <div class="flex size-10 items-center justify-center overflow-hidden rounded-md border bg-muted">
+                                @if (portadasUnidad()[unidad.id]; as src) {
+                                  <img [src]="src" [alt]="unidad.nombre" class="size-full object-cover" />
+                                } @else {
+                                  <ng-icon name="lucidePackageOpen" class="size-4 text-muted-foreground" />
+                                }
+                              </div>
+                            </td>
                             <td z-table-cell class="font-medium">
                               <span class="flex items-center gap-2">
                                 {{ unidad.nombre }}
@@ -367,7 +402,7 @@
                           </tr>
                         } @empty {
                           <tr z-table-row>
-                            <td z-table-cell colspan="6" class="p-0">
+                            <td z-table-cell colspan="7" class="p-0">
                               <z-empty
                                 zIcon="lucidePackageOpen"
                                 zTitle="Sin presentaciones"
@@ -473,7 +508,7 @@
                   } @else if (prod.imagenes?.length) {
                     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                       @for (img of prod.imagenes; track img.id) {
-                        <img [src]="img.thumbnail_url || img.url" [alt]="img.alt_texto || ''" class="aspect-square w-full rounded-md border border-border object-cover" />
+                        <img [src]="img.url || img.thumbnail_url" [alt]="img.alt_texto || ''" class="aspect-square w-full rounded-md border border-border object-cover" />
                       }
                     </div>
                   } @else {
@@ -557,6 +592,40 @@
                   </z-badge>
                 </dd>
               </div>
+              @if (prod.es_sobre_pedido) {
+                <div class="flex items-center justify-between py-2.5">
+                  <dt class="text-muted-foreground">Sobre pedido</dt>
+                  <dd><z-badge zType="secondary">Sí</z-badge></dd>
+                </div>
+              }
+              @if (prod.precio_incluye_impuesto) {
+                <div class="flex items-center justify-between py-2.5">
+                  <dt class="text-muted-foreground">Precio con IVA incluido</dt>
+                  <dd><z-badge zType="secondary">Sí</z-badge></dd>
+                </div>
+              }
+              @if (prod.requiere_lote) {
+                <div class="flex items-center justify-between py-2.5">
+                  <dt class="text-muted-foreground">Control por lote</dt>
+                  <dd><z-badge zType="default">FEFO</z-badge></dd>
+                </div>
+              }
+              @if (prod.rastrea_instancia_abierta) {
+                <div class="flex items-center justify-between py-2.5">
+                  <dt class="text-muted-foreground">Envases abiertos</dt>
+                  <dd class="font-medium tabular-nums">
+                    {{ prod.instancia_capacidad_default || '—' }} {{ prod.unidad_medida | lowercase }} / envase
+                  </dd>
+                </div>
+              }
+              @if (prod.precio_mayoreo) {
+                <div class="flex items-center justify-between py-2.5">
+                  <dt class="text-muted-foreground">Mayoreo</dt>
+                  <dd class="font-medium tabular-nums">
+                    {{ prod.precio_mayoreo | currency }} desde {{ prod.cantidad_minima_mayoreo }} {{ prod.unidad_medida | lowercase }}
+                  </dd>
+                </div>
+              }
             </dl>
           </z-card-content>
         </div>
@@ -591,32 +660,65 @@
       <z-card-header>
         <div class="flex items-center gap-2">
           <ng-icon name="lucideActivity" class="size-4 text-muted-foreground" />
-          <z-card-title zTitle="Balance de movimientos por fecha" class="text-base" />
+          <z-card-title zTitle="Análisis" class="text-base" />
         </div>
-        <z-card-description zDescription="Entradas y salidas registradas en el tiempo" />
+        <z-card-description zDescription="Indicadores del producto en el tiempo" />
       </z-card-header>
       <z-card-content>
-        @if (chartData().length > 0) {
-          <z-chart
-            class="block w-full"
-            zType="bar"
-            [zData]="chartData()"
-            [zConfig]="chartConfig"
-            [zSeries]="chartSeries"
-            [zOption]="chartOptions"
-            zXAxisKey="fecha"
-            [zStacked]="false"
-          >
-            <z-chart-tooltip />
-            <z-chart-legend />
-          </z-chart>
-        } @else {
-          <z-empty
-            zIcon="lucideActivity"
-            zTitle="Sin datos suficientes"
-            zDescription="Registra movimientos para ver la evolución del inventario."
-            class="py-12" />
-        }
+        <z-tab-group class="w-full">
+          <z-tab label="Balance">
+            <div class="pt-4">
+              @if (chartData().length > 0) {
+                <z-chart class="block w-full" zType="bar" [zData]="chartData()" [zConfig]="chartConfig"
+                  [zSeries]="chartSeries" [zOption]="chartOptions" zXAxisKey="fecha" [zStacked]="false">
+                  <z-chart-tooltip />
+                  <z-chart-legend />
+                </z-chart>
+              } @else {
+                <z-empty zIcon="lucideActivity" zTitle="Sin datos" zDescription="Registra movimientos para ver entradas y salidas por fecha." class="py-10" />
+              }
+            </div>
+          </z-tab>
+
+          <z-tab label="Costo">
+            <div class="pt-4">
+              @if (costoTrend().length > 1) {
+                <z-chart class="block w-full" zType="line" [zData]="costoTrend()" [zConfig]="costoConfig"
+                  [zSeries]="costoSeries" zXAxisKey="fecha">
+                  <z-chart-tooltip />
+                </z-chart>
+              } @else {
+                <z-empty zIcon="lucideTrendingUp" zTitle="Sin historial de costo" zDescription="Se necesitan al menos dos entradas con costo unitario." class="py-10" />
+              }
+            </div>
+          </z-tab>
+
+          <z-tab label="Stock">
+            <div class="pt-4">
+              @if (stockPorSucursal().length > 0) {
+                <z-chart class="block w-full" zType="bar" [zData]="stockPorSucursal()" [zConfig]="stockConfig"
+                  [zSeries]="stockSeries" zXAxisKey="sucursal">
+                  <z-chart-tooltip />
+                </z-chart>
+              } @else {
+                <z-empty zIcon="lucideBoxes" zTitle="Sin existencias" zDescription="Este producto no tiene stock registrado." class="py-10" />
+              }
+            </div>
+          </z-tab>
+
+          <z-tab label="Tipos">
+            <div class="pt-4">
+              @if (movimientosPorTipo().length > 0) {
+                <z-chart class="block w-full" zType="pie" [zData]="movimientosPorTipo()" [zSeries]="tipoSeries" zXAxisKey="tipo">
+                  <z-chart-tooltip />
+                  <z-chart-legend />
+                </z-chart>
+              } @else {
+                <z-empty zIcon="lucideHistory" zTitle="Sin movimientos" zDescription="Aún no hay movimientos registrados." class="py-10" />
+              }
+            </div>
+          </z-tab>
+        </z-tab-group>
       </z-card-content>
     </div>
   }

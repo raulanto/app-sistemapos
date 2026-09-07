@@ -5727,6 +5727,31 @@
             "title": "Cambiar Instancia Capacidad Default",
             "default": false
           },
+          "precio_incluye_impuesto": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Precio Incluye Impuesto"
+          },
+          "es_sobre_pedido": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Es Sobre Pedido"
+          },
+          "precio_mayoreo": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Precio Mayoreo"
+          },
+          "cantidad_minima_mayoreo": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Cantidad Minima Mayoreo"
+          },
+          "cambiar_mayoreo": { "type": "boolean", "title": "Cambiar Mayoreo", "default": false },
           "codigo_barras": {
             "anyOf": [{ "type": "string", "maxLength": 50 }, { "type": "null" }],
             "title": "Codigo Barras"
@@ -7312,6 +7337,28 @@
             ],
             "title": "Instancia Capacidad Default"
           },
+          "precio_incluye_impuesto": {
+            "type": "boolean",
+            "title": "Precio Incluye Impuesto",
+            "default": false
+          },
+          "precio_mayoreo": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Precio Mayoreo"
+          },
+          "cantidad_minima_mayoreo": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Cantidad Minima Mayoreo"
+          },
+          "es_sobre_pedido": { "type": "boolean", "title": "Es Sobre Pedido", "default": false },
           "codigo_barras": {
             "anyOf": [{ "type": "string", "maxLength": 50 }, { "type": "null" }],
             "title": "Codigo Barras"
@@ -8351,6 +8398,26 @@
             ],
             "title": "Instancia Capacidad Default"
           },
+          "precio_incluye_impuesto": {
+            "type": "boolean",
+            "title": "Precio Incluye Impuesto",
+            "default": false
+          },
+          "precio_mayoreo": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Precio Mayoreo"
+          },
+          "cantidad_minima_mayoreo": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Cantidad Minima Mayoreo"
+          },
+          "es_sobre_pedido": { "type": "boolean", "title": "Es Sobre Pedido", "default": false },
           "activo": { "type": "boolean", "title": "Activo" },
           "imagen_principal": {
             "anyOf": [{ "$ref": "#/components/schemas/ImagenEmbed" }, { "type": "null" }]
