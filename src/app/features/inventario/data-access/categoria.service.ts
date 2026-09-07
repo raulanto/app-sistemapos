@@ -18,7 +18,8 @@ export class CategoriaService {
   private readonly API_URL = `${environment.apiUrl}/inventario/categorias`;
 
   listar(): Observable<CategoriaResponse[]> {
-    return this.http.get<ApiResponse<CategoriaResponse[]>>(this.API_URL).pipe(
+    // Todas de una: el backend topa en 100 y el árbol se arma en cliente.
+    return this.http.get<ApiResponse<CategoriaResponse[]>>(this.API_URL, { params: { page_size: 100 } }).pipe(
       map(res => res.data)
     );
   }

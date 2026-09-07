@@ -1,0 +1,89 @@
+<div class="p-6 w-full max-w-4xl mx-auto space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Categorías</h1>
+      <p class="text-muted-foreground">Organiza el catálogo en categorías padre y subcategorías.</p>
+    </div>
+    @if (canCrear()) {
+      <button z-button zType="default" (click)="openCreateSheet()">
+        <ng-icon name="lucidePlus" class="mr-2" /> Nueva categoría
+      </button>
+    }
+  </div>
+
+  <div z-card>
+    <z-card-content class="p-0">
+      @if (loading()) {
+        <div class="space-y-2 p-4">
+          <z-skeleton class="h-10 w-full" />
+          <z-skeleton class="h-10 w-full" />
+          <z-skeleton class="h-10 w-full" />
+        </div>
+      } @else if (arbol().length === 0) {
+        <z-empty
+          zIcon="lucideFolderTree"
+          zTitle="Sin categorías"
+          zDescription="Crea la primera categoría para empezar a organizar tus productos."
+          class="py-14" />
+      } @else {
+        <ul class="divide-y">
+          @for (rama of arbol(); track rama.padre.id) {
+            <li>
+              <!-- Categoría padre -->
+              <div class="flex items-center gap-3 px-4 py-3" [class.opacity-60]="!rama.padre.activo">
+                <ng-icon name="lucideFolderTree" class="size-4 shrink-0 text-muted-foreground" />
+                <span class="font-medium">{{ rama.padre.nombre }}</span>
+                @if (rama.hijas.length) {
+                  <z-badge zType="secondary" class="tabular-nums text-[11px]">{{ rama.hijas.length }}</z-badge>
+                }
+                @if (!rama.padre.activo) {
+                  <z-badge zType="secondary" class="text-[11px]">Inactiva</z-badge>
+                }
+                <div class="ml-auto flex items-center gap-1">
+                  @if (canCrear()) {
+                    <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Agregar subcategoría" (click)="openCreateSheet(rama.padre.id)">
+                      <ng-icon name="lucidePlus" class="size-4" />
+                    </button>
+                  }
+                  @if (canEditar()) {
+                    <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Editar" (click)="openEditSheet(rama.padre)">
+                      <ng-icon name="lucidePencil" class="size-4" />
+                    </button>
+                    @if (rama.padre.activo) {
+                      <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-destructive" title="Desactivar" (click)="desactivar(rama.padre)">
+                        <ng-icon name="lucideBan" class="size-4" />
+                      </button>
+                    }
+                  }
+                </div>
+              </div>
+
+              <!-- Subcategorías -->
+              @for (hija of rama.hijas; track hija.id) {
+                <div class="flex items-center gap-3 py-2.5 pl-11 pr-4 text-sm" [class.opacity-60]="!hija.activo">
+                  <ng-icon name="lucideCornerDownRight" class="size-3.5 shrink-0 text-muted-foreground" />
+                  <span>{{ hija.nombre }}</span>
+                  @if (!hija.activo) {
+                    <z-badge zType="secondary" class="text-[11px]">Inactiva</z-badge>
+                  }
+                  <div class="ml-auto flex items-center gap-1">
+                    @if (canEditar()) {
+                      <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Editar" (click)="openEditSheet(hija)">
+                        <ng-icon name="lucidePencil" class="size-4" />
+                      </button>
+                      @if (hija.activo) {
+                        <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-destructive" title="Desactivar" (click)="desactivar(hija)">
+                          <ng-icon name="lucideBan" class="size-4" />
+                        </button>
+                      }
+                    }
+                  </div>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </z-card-content>
+  </div>
+</div>
