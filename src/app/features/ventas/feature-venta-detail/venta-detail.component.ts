@@ -27,6 +27,7 @@ import { ZardSeparatorComponent } from '../../../shared/components/separator/sep
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
 import { ZardSheetService } from '../../../shared/components/sheet/sheet.service';
 import { DevolucionSheetComponent } from '../ui/devolucion-sheet/devolucion-sheet.component';
+import { AnularVentaSheetComponent } from '../ui/anular-venta-sheet/anular-venta-sheet.component';
 
 @Component({
   selector: 'app-venta-detail',
@@ -144,20 +145,33 @@ export class VentaDetailComponent {
   anular() {
     const v = this.venta();
     if (!v) return;
-    if (this.tieneDevoluciones()) {
-      this.sonner.error('Esta venta tiene devoluciones registradas: devuelve el resto en lugar de anular.');
-      return;
-    }
-    const motivo = window.prompt(
-      'Anular esta venta repone el stock y revierte el crédito (queda como "cancelada").\nMotivo (opcional):',
-    );
-    if (motivo === null) return;
-    this.ventaService.anular(v.id, { motivo: motivo || null }).subscribe({
-      next: actualizada => {
-        this.venta.set(actualizada);
-        this.sonner.success('Venta anulada');
+    this.sheetService.create({
+      zTitle: 'Anular venta',
+      zDescription: `Folio ${v.id.slice(0, 8)}`,
+      zContent: AnularVentaSheetComponent,
+      zData: { ventaId: v.id, folio: v.id.slice(0, 8), tieneDevoluciones: this.tieneDevoluciones() },
+      zOkText: 'Anular venta',
+      zCancelText: 'Volver',
+      zOnOk: (instance: any) => {
+        const obs = instance.save();
+        if (!obs) {
+          this.sonner.error('Esta venta tiene devoluciones registradas: devuelve el resto en lugar de anular.');
+          return false;
+        }
+        return new Promise<void>((resolve, reject) => {
+          obs.subscribe({
+            next: (actualizada: VentaResponse) => {
+              this.venta.set(actualizada);
+              this.sonner.success('Venta anulada');
+              resolve();
+            },
+            error: (err: any) => {
+              this.sonner.error(err?.error?.error?.message ?? 'No se pudo anular la venta');
+              reject(err);
+            },
+          });
+        });
       },
-      error: err => this.sonner.error(err?.error?.error?.message ?? 'No se pudo anular la venta'),
     });
   }
 
