@@ -167,6 +167,11 @@
                         <span class="mt-1 font-semibold tabular-nums text-green-600">
                           {{ (it.unidad ? it.unidad.precio_venta : it.producto.precio_venta) | currency }}
                         </span>
+                        @if (stockDe(it); as s) {
+                          <span class="text-[0.7rem] text-muted-foreground">{{ s }} disp.</span>
+                        } @else if (stockDe(it) === 0) {
+                          <span class="text-[0.7rem] font-medium text-destructive">Sin stock</span>
+                        }
                         @if (!it.unidad && it.producto.precio_mayoreo && it.producto.cantidad_minima_mayoreo) {
                           <span class="text-[0.7rem] text-primary">mayoreo {{ it.producto.precio_mayoreo | currency }} · ≥ {{ it.producto.cantidad_minima_mayoreo }}</span>
                         }

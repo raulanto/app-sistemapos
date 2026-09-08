@@ -362,8 +362,19 @@ export class PosComponent {
   }
 
   private cargarCatalogo() {
+    // Catálogo acotado a la sucursal del turno: sólo productos con existencia ahí,
+    // con su stock embebido (preset POS de la guía de ventas §2.0).
+    const suc = this.turno()?.sucursal_id;
     this.cargandoCatalogo.set(true);
-    this.productoService.listar({ activo: true, page_size: 100, sort: 'nombre:asc', include: ['unidades'] }).subscribe({
+    this.productoService
+      .listar({
+        activo: true,
+        page_size: 100,
+        sort: 'nombre:asc',
+        ...(suc ? { sucursal_id: [suc] } : {}),
+        include: ['unidades', 'existencias'],
+      })
+      .subscribe({
       next: res => {
         this.productos.set(res.data);
         this.imgRoto.set(new Set());
@@ -394,6 +405,19 @@ export class PosComponent {
   }
   marcarImgRota(key: string) {
     this.imgRoto.update(s => new Set(s).add(key));
+  }
+
+  /**
+   * Stock de la tarjeta en su propia unidad: unidad base para el producto,
+   * `base / factor` (piezas enteras) para una presentación. `null` = no lleva
+   * inventario (servicio, sobre pedido, kit).
+   */
+  stockDe(it: { producto: ProductoResponse; unidad: UnidadResponse | null }): number | null {
+    const base = Number(it.producto.existencias?.[0]?.cantidad);
+    if (!Number.isFinite(base)) return null;
+    if (!it.unidad) return base;
+    const f = Number(it.unidad.factor) || 1;
+    return f > 0 ? Math.floor(base / f) : base;
   }
 
   // --- Caja ---
