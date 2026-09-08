@@ -42,9 +42,23 @@ export interface CrearVentaRequest {
    * `cliente` ni toca el crédito. Obligatorio si algún pago usa `metodo_pago: 'monedero'`.
    */
   telefono?: string | null;
+  /** Habilita una promoción que exige cupón. */
+  codigo_cupon?: string | null;
+  /**
+   * Obligatorio si se manda `descuento_linea` o `descuento_total` > 0. Se congela
+   * en la venta y queda auditado. Requiere el permiso `ventas.descuento_manual`.
+   */
+  motivo_descuento?: string | null;
   descuento_total?: number | string;
   lineas: LineaVentaRequest[];
   pagos: PagoRequest[];
+}
+
+/** Una promo aplicada a una línea (desglose; una fila por promo). */
+export interface PromoAplicada {
+  promo_id: string;
+  promo_etiqueta: string;
+  monto: string;
 }
 
 export interface LineaVentaResponse {
@@ -56,9 +70,12 @@ export interface LineaVentaResponse {
   precio_unitario: string;
   descuento_linea: string;
   impuesto_tasa: string;
-  /** Descuento calculado por el motor de promociones (congelado en la venta). */
+  /** Descuento calculado por el motor de promociones (Σ de todas las promos de la línea). */
   promo_descuento?: string;
+  /** Etiqueta de la promo de mayor monto. */
   promo_etiqueta?: string | null;
+  /** Desglose: una fila por promo aplicada. */
+  promos_aplicadas?: PromoAplicada[];
   /** Unidades ya devueltas de esta línea. */
   cantidad_devuelta?: string;
   subtotal: string;

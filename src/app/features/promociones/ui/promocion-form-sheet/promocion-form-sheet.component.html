@@ -26,6 +26,14 @@
     </div>
   </div>
 
+  <div class="flex items-center justify-between rounded-md border p-3">
+    <div>
+      <p class="text-sm font-medium">Combinable</p>
+      <p class="text-[0.8rem] text-muted-foreground">Se apila sobre el precio ya descontado junto a otras combinables. Por defecto la promo es exclusiva.</p>
+    </div>
+    <z-switch formControlName="combinable" zId="combinable"></z-switch>
+  </div>
+
   <!-- Campos por tipo -->
   @if (tipoSel() === 'nxm') {
     <div class="grid grid-cols-2 gap-4 rounded-md border p-3">
@@ -64,18 +72,60 @@
     </div>
   }
 
-  <div class="grid grid-cols-1 gap-4">
+  <!-- Topes -->
+  <div class="grid grid-cols-2 gap-4">
     <div z-field>
-      <label z-field-label>Sucursal (opcional)</label>
-      <z-select formControlName="sucursal_id" placeholder="Todas las sucursales">
-        <z-select-item zValue="">Todas las sucursales</z-select-item>
-        @for (s of sucursalService.sucursales(); track s.id) {
-          <z-select-item [zValue]="s.id">{{ s.nombre }}</z-select-item>
-        }
-      </z-select>
+      <label z-field-label for="tope_descuento">Tope de descuento ($)</label>
+      <input z-input id="tope_descuento" type="number" min="0" step="0.01" formControlName="tope_descuento" placeholder="Opcional" />
+      <p class="text-[0.8rem] text-muted-foreground">Máximo que esta promo descuenta por línea.</p>
+    </div>
+    <div z-field>
+      <label z-field-label for="monto_minimo_compra">Compra mínima ($)</label>
+      <input z-input id="monto_minimo_compra" type="number" min="0" step="0.01" formControlName="monto_minimo_compra" placeholder="Opcional" />
+      <p class="text-[0.8rem] text-muted-foreground">La promo sólo aplica si el total bruto llega a este monto.</p>
     </div>
   </div>
 
+  <!-- Condiciones -->
+  <div class="grid gap-4 rounded-md border p-3">
+    <div class="grid grid-cols-2 gap-4">
+      <div z-field>
+        <label z-field-label>Método de pago requerido</label>
+        <z-select formControlName="metodo_pago_requerido" placeholder="Cualquiera">
+          <z-select-item zValue="">Cualquiera</z-select-item>
+          @for (m of metodosPago; track m.value) {
+            <z-select-item [zValue]="m.value">{{ m.label }}</z-select-item>
+          }
+        </z-select>
+      </div>
+      <div z-field>
+        <label z-field-label for="cliente_segmento">Segmento de cliente</label>
+        <input z-input id="cliente_segmento" type="text" formControlName="cliente_segmento" placeholder="Ej. vip, socio" />
+      </div>
+    </div>
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm font-medium">Requiere cupón</p>
+        <p class="text-[0.8rem] text-muted-foreground">La promo no aplica salvo que la venta traiga un cupón válido. Los cupones se administran desde la lista.</p>
+      </div>
+      <z-switch formControlName="requiere_cupon" zId="requiere_cupon"></z-switch>
+    </div>
+  </div>
+
+  <!-- Sucursales -->
+  <div z-field>
+    <label z-field-label>Sucursales</label>
+    <div class="flex flex-wrap gap-1.5">
+      @for (s of sucursalService.sucursales(); track s.id) {
+        <button type="button" z-button [zType]="sucursalActiva(s.id) ? 'default' : 'outline'" zSize="sm" (click)="toggleSucursal(s.id)">
+          {{ s.nombre }}
+        </button>
+      }
+    </div>
+    <p class="text-[0.8rem] text-muted-foreground">Sin ninguna seleccionada, la promo aplica en todas las sucursales.</p>
+  </div>
+
+  <!-- Vigencia -->
   <div class="grid grid-cols-2 gap-4">
     <div z-field>
       <label z-field-label for="vigente_desde">Vigente desde</label>
@@ -88,9 +138,38 @@
     <p class="col-span-2 -mt-2 text-[0.8rem] text-muted-foreground">Sin fechas, la promo aplica mientras esté activa.</p>
   </div>
 
+  <!-- Horario y días -->
+  <div class="grid gap-3 rounded-md border p-3">
+    <div class="grid grid-cols-2 gap-4">
+      <div z-field>
+        <label z-field-label for="hora_desde">Hora desde</label>
+        <input z-input id="hora_desde" type="time" step="1" formControlName="hora_desde" />
+      </div>
+      <div z-field>
+        <label z-field-label for="hora_hasta">Hora hasta</label>
+        <input z-input id="hora_hasta" type="time" step="1" formControlName="hora_hasta" />
+      </div>
+    </div>
+    @if (horarioIncompleto()) {
+      <p class="-mt-1 text-[0.8rem] font-medium text-destructive">Cargá las dos horas o ninguna.</p>
+    } @else {
+      <p class="-mt-1 text-[0.8rem] text-muted-foreground">Hora local del negocio. Si "desde" es mayor que "hasta", la ventana cruza medianoche.</p>
+    }
+    <div>
+      <p class="mb-1.5 text-[0.8rem] text-muted-foreground">Días (ninguno = todos)</p>
+      <div class="flex flex-wrap gap-1.5">
+        @for (d of dias; track d.bit) {
+          <button type="button" z-button [zType]="diaActivo(d.bit) ? 'default' : 'outline'" zSize="sm" (click)="toggleDia(d.bit)">
+            {{ d.corto }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
   <!-- Objetivos -->
   <div z-field>
-    <label z-field-label>Productos / presentaciones objetivo *</label>
+    <label z-field-label>Productos, presentaciones o categorías objetivo *</label>
 
     @if (objetivos().length) {
       <div class="mb-2 flex flex-wrap gap-1.5">
@@ -102,8 +181,20 @@
         }
       </div>
     } @else {
-      <p class="mb-2 text-[0.8rem] font-medium text-destructive">Agrega al menos un producto o presentación.</p>
+      <p class="mb-2 text-[0.8rem] font-medium text-destructive">Agrega al menos un producto, presentación o categoría.</p>
     }
+
+    @if (nxmMezclaObjetivos()) {
+      <p class="mb-2 text-[0.8rem] font-medium text-destructive">Una promo NxM no puede mezclar unidad base y presentación. Deja sólo una forma de venta.</p>
+    }
+
+    <div class="mb-2">
+      <z-select placeholder="Agregar categoría entera…" (zSelectionChange)="agregarCategoria($any($event))">
+        @for (c of categorias(); track c.id) {
+          <z-select-item [zValue]="c.id">{{ c.nombre }}</z-select-item>
+        }
+      </z-select>
+    </div>
 
     <div class="relative">
       <ng-icon name="lucideSearch" class="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -120,11 +211,11 @@
             </button>
             @if (expandido() === p.id) {
               <div class="flex flex-wrap gap-1.5 bg-muted/40 px-2.5 py-2">
-                <button z-button zType="outline" zSize="sm" [disabled]="yaEsObjetivo(p.id, null)" (click)="agregarObjetivo(p.id, null)">
+                <button z-button zType="outline" zSize="sm" [disabled]="yaEsObjetivo(p.id, null, null)" (click)="agregarObjetivo(p.id, null)">
                   Unidad base
                 </button>
                 @for (u of p.unidades ?? []; track u.id) {
-                  <button z-button zType="ghost" zSize="sm" class="border" [disabled]="yaEsObjetivo(null, u.id)" (click)="agregarObjetivo(null, u.id)">
+                  <button z-button zType="ghost" zSize="sm" class="border" [disabled]="yaEsObjetivo(null, u.id, null)" (click)="agregarObjetivo(null, u.id)">
                     {{ u.nombre }}
                   </button>
                 }

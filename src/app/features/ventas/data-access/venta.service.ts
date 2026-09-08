@@ -13,6 +13,7 @@ import {
   ClienteResponse,
   CotizarVentaRequest,
   CotizacionVentaResponse,
+  ValidarCuponResponse,
   CorteCajaResponse,
   DevolverVentaRequest,
   DevolucionResponse,
@@ -40,6 +41,18 @@ export class VentaService {
    */
   cotizar(req: CotizarVentaRequest): Observable<CotizacionVentaResponse> {
     return this.http.post<ApiResponse<CotizacionVentaResponse>>(`${this.API_URL}/cotizar`, req).pipe(map(r => r.data));
+  }
+
+  /**
+   * Valida un cupón sin consumirlo (vigencia + límites). Para mostrar "cupón
+   * aplicado" antes de cobrar. Mandar el `codigo_cupon` real en la venta.
+   */
+  validarCupon(codigo: string, clienteId?: string | null): Observable<ValidarCuponResponse> {
+    const body: Record<string, string> = { codigo };
+    if (clienteId) body['cliente_id'] = clienteId;
+    return this.http
+      .post<ApiResponse<ValidarCuponResponse>>(`${this.API_URL}/cupon/validar`, body)
+      .pipe(map(r => r.data));
   }
 
   listar(query: VentaQuery = {}): Observable<ApiResponse<VentaListItem[]>> {

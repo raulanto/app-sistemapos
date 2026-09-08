@@ -1,0 +1,70 @@
+<div class="grid min-h-0 flex-1 auto-rows-min gap-5 overflow-y-auto px-4 pb-4">
+  <p class="text-sm text-muted-foreground">
+    Cupones de <span class="font-medium text-foreground">{{ data.promocion.nombre }}</span>. Un cupón habilita esta
+    promoción sólo si la venta lo trae. El código se guarda en mayúsculas y es único en todo el sistema.
+  </p>
+
+  <form [formGroup]="form" class="grid gap-3 rounded-md border p-3">
+    <div z-field>
+      <label z-field-label for="codigo">Código *</label>
+      <input z-input id="codigo" type="text" formControlName="codigo" maxlength="50" placeholder="VERANO25" class="uppercase" />
+      @if (form.controls.codigo.invalid && form.controls.codigo.touched) {
+        <p class="text-[0.8rem] font-medium text-destructive">El código es obligatorio.</p>
+      }
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div z-field>
+        <label z-field-label for="c_desde">Vigente desde</label>
+        <input z-input id="c_desde" type="datetime-local" formControlName="vigente_desde" />
+      </div>
+      <div z-field>
+        <label z-field-label for="c_hasta">Vigente hasta</label>
+        <input z-input id="c_hasta" type="datetime-local" formControlName="vigente_hasta" />
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div z-field>
+        <label z-field-label for="max_total">Máx. usos total</label>
+        <input z-input id="max_total" type="number" min="1" step="1" formControlName="max_usos_total" placeholder="Sin límite" />
+      </div>
+      <div z-field>
+        <label z-field-label for="max_persona">Máx. por persona</label>
+        <input z-input id="max_persona" type="number" min="1" step="1" formControlName="max_usos_por_persona" placeholder="Sin límite" />
+      </div>
+    </div>
+    <button z-button zType="default" class="justify-self-start" [zLoading]="guardando()" (click)="crear()">
+      <ng-icon name="lucidePlus" class="mr-2 size-4" /> Crear cupón
+    </button>
+  </form>
+
+  @if (loading()) {
+    <p class="text-sm text-muted-foreground">Cargando cupones…</p>
+  } @else if (cupones().length === 0) {
+    <z-empty zIcon="lucideTicket" zTitle="Sin cupones" zDescription="Crea un código para habilitar esta promoción en la venta." class="py-8" />
+  } @else {
+    <ul class="divide-y rounded-md border">
+      @for (c of cupones(); track c.codigo) {
+        <li class="flex items-center justify-between gap-3 p-2.5" [class.opacity-60]="!c.activo">
+          <div class="min-w-0">
+            <p class="flex items-center gap-2 font-mono text-sm font-medium">
+              <ng-icon name="lucideTicket" class="size-4 text-muted-foreground" /> {{ c.codigo }}
+              @if (!c.activo) { <z-badge zType="secondary">Inactivo</z-badge> }
+            </p>
+            <p class="mt-0.5 text-xs text-muted-foreground">
+              @if (c.vigente_desde || c.vigente_hasta) {
+                {{ (c.vigente_desde | date:'dd/MM/yy') || '…' }} – {{ (c.vigente_hasta | date:'dd/MM/yy') || '…' }} ·
+              }
+              usos {{ c.usos ?? 0 }}{{ c.max_usos_total != null ? ' / ' + c.max_usos_total : '' }}
+              @if (c.max_usos_por_persona != null) { · {{ c.max_usos_por_persona }} por persona }
+            </p>
+          </div>
+          @if (c.activo) {
+            <button z-button zType="ghost" zSize="icon-sm" class="shrink-0 text-muted-foreground hover:text-destructive" title="Desactivar" (click)="desactivar(c)">
+              <ng-icon name="lucideBan" class="size-4" />
+            </button>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

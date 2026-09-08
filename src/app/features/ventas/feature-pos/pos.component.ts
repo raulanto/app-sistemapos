@@ -29,6 +29,7 @@ import {
   lucideTrash2,
   lucidePhone,
   lucideWallet,
+  lucideTicket,
 } from '@ng-icons/lucide';
 
 import { ProductoService } from '../../inventario/data-access/producto.service';
@@ -108,6 +109,7 @@ interface LineaCarrito {
       lucideTrash2,
       lucidePhone,
       lucideWallet,
+      lucideTicket,
     }),
   ],
   templateUrl: './pos.component.html',
@@ -162,6 +164,8 @@ export class PosComponent {
 
   readonly canVender = computed(() => this.authService.hasPermission(...PERMISOS.ventas.crear));
   readonly canOperarCaja = computed(() => this.authService.hasPermission(...PERMISOS.caja.operar));
+  /** Sin este permiso el POS no ofrece descuento manual (por línea ni total). */
+  readonly canDescuentoManual = computed(() => this.authService.hasPermission(...PERMISOS.ventas.descuentoManual));
 
   readonly metodosPago = METODOS_PAGO;
 
@@ -187,6 +191,14 @@ export class PosComponent {
   readonly clientesEncontrados = signal<ClienteResponse[]>([]);
   readonly cliente = signal<ClienteResponse | null>(null);
 
+  /** Cupón que habilita una promo `requiere_cupon`. Se valida contra el backend antes de cobrar. */
+  readonly codigoCupon = signal('');
+  readonly cuponEstado = signal<'idle' | 'validando' | 'ok' | 'error'>('idle');
+  readonly cuponMsg = signal('');
+
+  /** Motivo del descuento manual (obligatorio si hay `descuento_linea` / `descuento_total`). */
+  readonly motivoDescuento = signal('');
+
   /** Teléfono para monedero (cashback) + historial. Independiente del cliente/crédito. */
   readonly telefono = signal('');
   /** Saldo del monedero del teléfono; null = teléfono incompleto o sin consultar. */
@@ -207,6 +219,11 @@ export class PosComponent {
     JSON.stringify({
       d: this.round(this.descuentoTotal()),
       l: this.carrito().map(l => [l.producto.id, l.unidad?.id ?? null, l.cantidad, l.precio_unitario, l.descuento_linea]),
+      // Hints de promociones: método de pago, segmento, cupón y teléfono cambian qué promos aplican.
+      m: [...new Set(this.pagos().map(p => p.metodo_pago))].sort(),
+      s: this.cliente()?.segmento ?? '',
+      c: this.codigoCupon().trim(),
+      t: this.telefono().trim(),
     }),
   );
 
@@ -307,6 +324,11 @@ export class PosComponent {
     return desc > 0 && m?.promo_etiqueta ? { etiqueta: m.promo_etiqueta, descuento: desc } : null;
   }
 
+  /** Desglose de promos apiladas en una línea (cuando el backend aplicó más de una). */
+  promosDeLinea(l: LineaCarrito): { promo_etiqueta: string; monto: string }[] {
+    return this.cotizLinea(l)?.promos_aplicadas ?? [];
+  }
+
   /** true si la cotización marcó esta línea sin stock suficiente. */
   sinStock(l: LineaCarrito): boolean {
     const m = this.cotizLinea(l);
@@ -320,6 +342,14 @@ export class PosComponent {
   readonly saldoPendiente = computed(() => this.round(this.total() - this.pagado()));
   readonly requiereCliente = computed(() => this.saldoPendiente() > 0.009);
   readonly hayLineaInvalida = computed(() => this.carrito().some(l => !(l.cantidad > 0)));
+
+  // --- Descuento manual ---
+  /** Hay descuento manual si el total o alguna línea traen un descuento tecleado. */
+  readonly hayDescuentoManual = computed(
+    () => this.descTotalAplicado() > 0.009 || this.carrito().some(l => l.descuento_linea > 0.009),
+  );
+  /** El motivo es obligatorio cuando hay descuento manual. */
+  readonly faltaMotivo = computed(() => this.hayDescuentoManual() && !this.motivoDescuento().trim());
 
   // --- Monedero ---
   /** Sólo dígitos del teléfono; se considera válido con 7+ dígitos. */
@@ -347,6 +377,7 @@ export class PosComponent {
       this.total() > 0 &&
       !this.faltaTelefonoMonedero() &&
       !this.excesoMonedero() &&
+      !this.faltaMotivo() &&
       (!this.requiereCliente() || !!this.cliente()),
   );
 
@@ -368,6 +399,7 @@ export class PosComponent {
             return of(null);
           }
           this.cotizando.set(true);
+          const metodos = [...new Set(this.pagos().map(p => p.metodo_pago))];
           return this.ventaService
             .cotizar({
               descuento_total: this.round(this.descuentoTotal()),
@@ -378,6 +410,10 @@ export class PosComponent {
                 descuento_linea: this.round(l.descuento_linea),
                 producto_unidad_id: l.unidad?.id ?? null,
               })),
+              ...(metodos.length ? { metodos_pago: metodos } : {}),
+              ...(this.cliente()?.segmento ? { cliente_segmento: this.cliente()!.segmento ?? null } : {}),
+              ...(this.codigoCupon().trim() ? { codigo_cupon: this.codigoCupon().trim() } : {}),
+              ...(this.telefono().trim() ? { telefono: this.telefono().trim() } : {}),
             })
             .pipe(catchError(() => of(null))); // error de red / permiso → cálculo local
         }),
@@ -640,10 +676,11 @@ export class PosComponent {
     this.carrito.update(list => list.filter(l => l.key !== key));
   }
 
-  /** Vacía sólo el carrito (deja pagos/cliente/descuento como están). */
+  /** Vacía sólo el carrito (deja pagos/cliente/cupón como están). */
   vaciarCarrito() {
     this.carrito.set([]);
     this.descuentoTotal.set(0);
+    this.motivoDescuento.set('');
   }
 
   aplicaMayoreo(l: LineaCarrito) {
@@ -722,6 +759,47 @@ export class PosComponent {
     this.cliente.set(null);
   }
 
+  // --- Cupón ---
+
+  validarCupon() {
+    const cod = this.codigoCupon().trim();
+    if (!cod) {
+      this.quitarCupon();
+      return;
+    }
+    this.cuponEstado.set('validando');
+    this.ventaService.validarCupon(cod, this.cliente()?.id ?? null).subscribe({
+      next: r => {
+        if (r.valido) {
+          this.cuponEstado.set('ok');
+          this.cuponMsg.set('Cupón aplicado');
+        } else {
+          this.cuponEstado.set('error');
+          this.cuponMsg.set('El cupón no aplica a esta venta');
+        }
+      },
+      error: err => {
+        const code = err?.error?.error?.code;
+        this.cuponEstado.set('error');
+        this.cuponMsg.set(
+          code === 'CuponVencido'
+            ? 'Cupón vencido o desactivado'
+            : code === 'CuponAgotado'
+              ? 'El cupón agotó sus usos'
+              : code === 'CuponNoEncontrado'
+                ? 'El cupón no existe'
+                : (err?.error?.error?.message ?? 'No se pudo validar el cupón'),
+        );
+      },
+    });
+  }
+
+  quitarCupon() {
+    this.codigoCupon.set('');
+    this.cuponEstado.set('idle');
+    this.cuponMsg.set('');
+  }
+
   // --- Cobrar ---
 
   cobrar() {
@@ -733,10 +811,17 @@ export class PosComponent {
     }
     if (!this.puedeCobrar()) return;
 
+    if (this.faltaMotivo()) {
+      this.sonner.error('Captura el motivo del descuento manual.');
+      return;
+    }
+
     const req: CrearVentaRequest = {
       caja_turno_id: t.id,
       cliente_id: this.cliente()?.id ?? null,
       ...(this.telefono().trim() ? { telefono: this.telefono().trim() } : {}),
+      ...(this.codigoCupon().trim() ? { codigo_cupon: this.codigoCupon().trim() } : {}),
+      ...(this.motivoDescuento().trim() ? { motivo_descuento: this.motivoDescuento().trim() } : {}),
       // Se manda el descuento total ya acotado al subtotal (el backend recalcula igual).
       descuento_total: this.round(this.descTotalAplicado()),
       lineas: this.carrito().map(l => ({
@@ -776,7 +861,22 @@ export class PosComponent {
         else if (code === 'VentaCreditoSinCliente') this.sonner.error('Falta seleccionar cliente para la parte a crédito.');
         else if (code === 'SaldoMonederoInsuficiente') this.sonner.error(msg ?? 'El monedero no cubre ese pago. La venta no se registró.');
         else if (code === 'MovimientoMonederoInvalido') this.sonner.error(msg ?? 'Para pagar con monedero hay que capturar el teléfono.');
-        else if (code === 'CajaNoAbierta') {
+        else if (code === 'DescuentoManualNoAutorizado') this.sonner.error(msg ?? 'No tienes permiso para aplicar descuento manual.');
+        else if (code === 'MotivoDescuentoRequerido') this.sonner.error('Captura el motivo del descuento manual.');
+        else if (code === 'DescuentoManualExcedeTope') this.sonner.error(msg ?? 'El descuento manual supera el tope permitido para tu rol.');
+        else if (code === 'CuponVencido') {
+          this.cuponEstado.set('error');
+          this.cuponMsg.set('Cupón vencido o desactivado');
+          this.sonner.error(msg ?? 'El cupón está vencido. La venta no se registró.');
+        } else if (code === 'CuponNoEncontrado') {
+          this.cuponEstado.set('error');
+          this.cuponMsg.set('El cupón no existe');
+          this.sonner.error('El cupón no existe. La venta no se registró.');
+        } else if (code === 'CuponAgotado') {
+          this.cuponEstado.set('error');
+          this.cuponMsg.set('El cupón agotó sus usos');
+          this.sonner.error(msg ?? 'El cupón agotó sus usos. La venta no se registró.');
+        } else if (code === 'CajaNoAbierta') {
           this.sonner.error('El turno de caja ya no está abierto.');
           this.turno.set(null);
         } else this.sonner.error(msg ?? 'No se pudo registrar la venta');
@@ -794,6 +894,8 @@ export class PosComponent {
     this.clientesEncontrados.set([]);
     this.telefono.set('');
     this.monederoSaldo.set(null);
+    this.motivoDescuento.set('');
+    this.quitarCupon();
   }
 
   nuevaVenta() {
@@ -804,6 +906,17 @@ export class PosComponent {
   /** Ahorro total por promociones de una venta ya registrada (para el ticket). */
   ahorroPromo(v: VentaResponse): number {
     return (v.lineas ?? []).reduce((s, l) => s + (Number(l.promo_descuento) || 0), 0);
+  }
+
+  /** Filas de promo para el ticket: el desglose si viene, si no la etiqueta única. */
+  promosTicket(v: VentaResponse): { promo_etiqueta: string; monto: string }[] {
+    return (v.lineas ?? []).flatMap(l => {
+      if (l.promos_aplicadas?.length) return l.promos_aplicadas;
+      if (l.promo_etiqueta && Number(l.promo_descuento) > 0) {
+        return [{ promo_etiqueta: l.promo_etiqueta, monto: l.promo_descuento ?? '0' }];
+      }
+      return [];
+    });
   }
 
   imprimirTicket(ventaId: string) {

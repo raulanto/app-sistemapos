@@ -35,6 +35,8 @@ export const PERMISOS = {
     leer: ['ventas.leer'],
     anular: ['ventas.anular', 'VENTA_CANCELAR'],
     devolver: ['ventas.devolver'],
+    /** Teclear descuento manual (`descuento_linea` / `descuento_total`) en la venta. */
+    descuentoManual: ['ventas.descuento_manual'],
   },
   caja: {
     /** Abrir/cerrar turno y arqueo. `ventas.crear` también lo habilita. */

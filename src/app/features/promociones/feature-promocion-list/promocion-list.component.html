@@ -51,6 +51,13 @@
                     <ng-icon name="lucideTag" class="size-4 text-muted-foreground" />
                     {{ p.nombre }}
                   </span>
+                  @if (condiciones(p).length) {
+                    <span class="mt-1 flex flex-wrap gap-1">
+                      @for (c of condiciones(p); track c) {
+                        <z-badge zType="outline" class="text-[10px] capitalize">{{ c }}</z-badge>
+                      }
+                    </span>
+                  }
                 </td>
                 <td z-table-cell class="text-muted-foreground">{{ etiquetaTipo(p.tipo) }}</td>
                 <td z-table-cell class="tabular-nums font-medium">{{ regla(p) }}</td>
@@ -67,6 +74,11 @@
                 <td z-table-cell>
                   <div class="flex items-center justify-end gap-1">
                     @if (canEditar()) {
+                      @if (p.requiere_cupon) {
+                        <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Cupones" (click)="openCuponSheet(p)">
+                          <ng-icon name="lucideTicket" class="size-4" />
+                        </button>
+                      }
                       <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Editar" (click)="openEditSheet(p)">
                         <ng-icon name="lucidePencil" class="size-4" />
                       </button>
