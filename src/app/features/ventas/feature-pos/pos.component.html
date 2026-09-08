@@ -1,4 +1,4 @@
-<div class="flex h-[calc(100vh-4rem)] flex-col">
+<div class="flex h-[calc(100vh-4rem)] flex-col p-0 m-0">
   <!-- Barra superior -->
   <div class="flex flex-wrap items-center justify-between gap-3 border-b bg-card px-4 py-3">
     <div class="flex items-center gap-2">
@@ -114,6 +114,22 @@
             <ng-icon name="lucideScanBarcode" class="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input z-input class="pl-8" placeholder="Código de barras" [ngModel]="codigo()" (ngModelChange)="codigo.set($event)" (keyup.enter)="escanear()" />
           </div>
+          <div class="flex shrink-0 items-center gap-0.5 self-start rounded-md border p-0.5 sm:self-auto">
+            <button type="button" class="grid size-8 place-items-center rounded transition"
+                    [class.bg-accent]="vista() === 'grid'"
+                    [class.text-accent-foreground]="vista() === 'grid'"
+                    [class.text-muted-foreground]="vista() !== 'grid'"
+                    (click)="setVista('grid')" title="Ver en cuadrícula" aria-label="Ver en cuadrícula">
+              <ng-icon name="lucideLayoutGrid" class="size-4" />
+            </button>
+            <button type="button" class="grid size-8 place-items-center rounded transition"
+                    [class.bg-accent]="vista() === 'lista'"
+                    [class.text-accent-foreground]="vista() === 'lista'"
+                    [class.text-muted-foreground]="vista() !== 'lista'"
+                    (click)="setVista('lista')" title="Ver en lista" aria-label="Ver en lista">
+              <ng-icon name="lucideList" class="size-4" />
+            </button>
+          </div>
         </div>
 
         <!-- Bloques: filtro por categoría -->
@@ -144,44 +160,78 @@
                   <z-badge zType="secondary" class="tabular-nums text-[10px]">{{ bloque.count }}</z-badge>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-                  @for (it of bloque.items; track it.key) {
-                    <button type="button"
-                            class="group flex flex-col overflow-hidden rounded-lg border bg-card text-left transition hover:border-primary hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            (click)="agregar(it.producto, it.unidad)">
-                      <div class="relative aspect-video w-full bg-muted">
-                        @if (imgSrc(it); as src) {
-                          <img [src]="src" [alt]="it.producto.nombre" class="size-full object-cover" (error)="marcarImgRota(it.key)" />
-                        } @else {
-                          <div class="grid size-full place-items-center text-muted-foreground">
-                            <ng-icon [name]="it.producto.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-6" />
-                          </div>
-                        }
-                        <span class="absolute left-1.5 top-1.5 rounded bg-background/90 px-1.5 py-0.5 text-[0.7rem] font-medium shadow-sm">
-                          {{ it.unidad ? it.unidad.nombre : (it.producto.unidad_medida | titlecase) }}
-                        </span>
-                      </div>
-                      <div class="flex flex-1 flex-col p-2.5">
-                        <span class="line-clamp-2 text-sm font-medium">{{ it.producto.nombre }}</span>
-                        <span class="mt-0.5 text-xs text-muted-foreground">{{ it.producto.sku }}</span>
-                        <span class="mt-1 font-semibold tabular-nums text-green-600">
+                @if (vista() === 'grid') {
+                  <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                    @for (it of bloque.items; track it.key) {
+                      <button type="button"
+                              class="group flex flex-col overflow-hidden rounded-lg border bg-card text-left transition hover:border-primary hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              (click)="agregar(it.producto, it.unidad)">
+                        <div class="relative aspect-video w-full bg-muted">
+                          @if (imgSrc(it); as src) {
+                            <img [src]="src" [alt]="it.producto.nombre" class="size-full object-cover" (error)="marcarImgRota(it.key)" />
+                          } @else {
+                            <div class="grid size-full place-items-center text-muted-foreground">
+                              <ng-icon [name]="it.producto.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-6" />
+                            </div>
+                          }
+                          <span class="absolute left-1.5 top-1.5 rounded bg-background/90 px-1.5 py-0.5 text-[0.7rem] font-medium shadow-sm">
+                            {{ it.unidad ? it.unidad.nombre : (it.producto.unidad_medida | titlecase) }}
+                          </span>
+                        </div>
+                        <div class="flex flex-1 flex-col p-2.5">
+                          <span class="line-clamp-2 text-sm font-medium">{{ it.producto.nombre }}</span>
+                          <span class="mt-0.5 text-xs text-muted-foreground">{{ it.producto.sku }}</span>
+                          <span class="mt-1 font-semibold tabular-nums text-green-600">
+                            {{ (it.unidad ? it.unidad.precio_venta : it.producto.precio_venta) | currency }}
+                          </span>
+                          @if (stockDe(it); as s) {
+                            <span class="text-[0.7rem] text-muted-foreground">{{ s }} disp.</span>
+                          } @else if (stockDe(it) === 0) {
+                            <span class="text-[0.7rem] font-medium text-destructive">Sin stock</span>
+                          }
+                          @if (!it.unidad && it.producto.precio_mayoreo && it.producto.cantidad_minima_mayoreo) {
+                            <span class="text-[0.7rem] text-primary">mayoreo {{ it.producto.precio_mayoreo | currency }} · ≥ {{ it.producto.cantidad_minima_mayoreo }}</span>
+                          }
+                          <span class="mt-2 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground group-hover:text-primary">
+                            <ng-icon name="lucidePlus" class="size-3.5" /> Agregar
+                          </span>
+                        </div>
+                      </button>
+                    }
+                  </div>
+                } @else {
+                  <div class="divide-y overflow-hidden rounded-lg border">
+                    @for (it of bloque.items; track it.key) {
+                      <button type="button"
+                              class="group flex w-full items-center gap-3 p-2 text-left transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                              (click)="agregar(it.producto, it.unidad)">
+                        <div class="relative size-11 shrink-0 overflow-hidden rounded-md bg-muted">
+                          @if (imgSrc(it); as src) {
+                            <img [src]="src" [alt]="it.producto.nombre" class="size-full object-cover" (error)="marcarImgRota(it.key)" />
+                          } @else {
+                            <div class="grid size-full place-items-center text-muted-foreground">
+                              <ng-icon [name]="it.producto.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-4" />
+                            </div>
+                          }
+                        </div>
+                        <div class="min-w-0 flex-1">
+                          <p class="truncate text-sm font-medium">{{ it.producto.nombre }}</p>
+                          <p class="truncate text-xs text-muted-foreground">
+                            {{ it.unidad ? it.unidad.nombre : (it.producto.unidad_medida | titlecase) }} · {{ it.producto.sku }}
+                            @if (stockDe(it); as s) { · {{ s }} disp. } @else if (stockDe(it) === 0) { · <span class="text-destructive">sin stock</span> }
+                            @if (!it.unidad && it.producto.precio_mayoreo && it.producto.cantidad_minima_mayoreo) {
+                              · <span class="text-primary">mayoreo {{ it.producto.precio_mayoreo | currency }} ≥ {{ it.producto.cantidad_minima_mayoreo }}</span>
+                            }
+                          </p>
+                        </div>
+                        <span class="shrink-0 text-sm font-semibold tabular-nums text-green-600">
                           {{ (it.unidad ? it.unidad.precio_venta : it.producto.precio_venta) | currency }}
                         </span>
-                        @if (stockDe(it); as s) {
-                          <span class="text-[0.7rem] text-muted-foreground">{{ s }} disp.</span>
-                        } @else if (stockDe(it) === 0) {
-                          <span class="text-[0.7rem] font-medium text-destructive">Sin stock</span>
-                        }
-                        @if (!it.unidad && it.producto.precio_mayoreo && it.producto.cantidad_minima_mayoreo) {
-                          <span class="text-[0.7rem] text-primary">mayoreo {{ it.producto.precio_mayoreo | currency }} · ≥ {{ it.producto.cantidad_minima_mayoreo }}</span>
-                        }
-                        <span class="mt-2 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground group-hover:text-primary">
-                          <ng-icon name="lucidePlus" class="size-3.5" /> Agregar
-                        </span>
-                      </div>
-                    </button>
-                  }
-                </div>
+                        <ng-icon name="lucidePlus" class="size-4 shrink-0 text-muted-foreground group-hover:text-primary" />
+                      </button>
+                    }
+                  </div>
+                }
               </section>
             }
           }
@@ -190,30 +240,55 @@
 
       <!-- Carrito + cobro -->
       <div class="flex flex-col overflow-hidden bg-muted/20">
+        <div class="flex items-center justify-between border-b bg-card px-3 py-2">
+          <div class="flex items-center gap-2">
+            <ng-icon name="lucideShoppingCart" class="size-4 text-muted-foreground" />
+            <span class="text-sm font-semibold">Carrito</span>
+            @if (carrito().length) {
+              <z-badge zType="secondary" class="tabular-nums text-[10px]">{{ carrito().length }}</z-badge>
+            }
+          </div>
+          @if (carrito().length) {
+            <button z-button zType="ghost" zSize="sm" class="text-muted-foreground hover:text-destructive" (click)="vaciarCarrito()">
+              <ng-icon name="lucideTrash2" class="mr-1.5 size-3.5" /> Vaciar
+            </button>
+          }
+        </div>
+
         <div class="flex-1 overflow-y-auto p-3">
           @if (carrito().length === 0) {
-            <z-empty zIcon="lucideShoppingCart" zTitle="Carrito vacío" zDescription="Agrega productos desde el catálogo." class="py-12" />
+            <z-empty zIcon="lucideShoppingCart" zTitle="Carrito vacío" zDescription="Toca un producto del catálogo para agregarlo." class="py-12" />
           } @else {
             <ul class="space-y-2">
               @for (l of carrito(); track l.key) {
-                <li class="rounded-lg border bg-card p-2.5">
-                  <div class="flex items-start justify-between gap-2">
-                    <div class="min-w-0">
-                      <p class="truncate text-sm font-medium">{{ l.producto.nombre }}</p>
-                      <p class="text-xs text-muted-foreground">
+                <li class="rounded-lg border bg-card p-2.5 transition"
+                    [class.border-destructive]="l.cantidad <= 0 || sinStock(l)">
+                  <div class="flex items-start gap-2.5">
+                    <div class="relative size-10 shrink-0 overflow-hidden rounded-md bg-muted">
+                      @if (imgSrc(l); as src) {
+                        <img [src]="src" [alt]="l.producto.nombre" class="size-full object-cover" (error)="marcarImgRota(l.key)" />
+                      } @else {
+                        <div class="grid size-full place-items-center text-muted-foreground">
+                          <ng-icon [name]="l.producto.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-4" />
+                        </div>
+                      }
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate text-sm font-medium leading-tight">{{ l.producto.nombre }}</p>
+                      <p class="mt-0.5 text-xs text-muted-foreground">
                         {{ l.unidad ? l.unidad.nombre : (l.producto.unidad_medida | titlecase) }}
                         @if (aplicaMayoreo(l)) { · <span class="text-primary">mayoreo {{ precioEfectivo(l) | currency }}</span> }
                       </p>
                     </div>
-                    <button z-button zType="ghost" zSize="icon-sm" class="text-destructive" (click)="quitar(l.key)">
+                    <button z-button zType="ghost" zSize="icon-sm" class="-mr-1 -mt-1 shrink-0 text-muted-foreground hover:text-destructive" (click)="quitar(l.key)">
                       <ng-icon name="lucideTrash" class="size-4" />
                     </button>
                   </div>
 
-                  <div class="mt-2 grid grid-cols-[auto_1fr_1fr] items-end gap-2">
+                  <div class="mt-2.5 grid grid-cols-[auto_1fr_1fr] items-end gap-2">
                     <div class="flex items-center gap-1">
                       <button z-button zType="outline" zSize="icon-sm" (click)="pasoCantidad(l.key, -1)"><ng-icon name="lucideMinus" class="size-3.5" /></button>
-                      <input z-input class="w-16 text-center" type="number" [step]="l.producto.permite_venta_fraccionada ? 'any' : '1'" min="0"
+                      <input z-input class="w-14 text-center" type="number" [step]="l.producto.permite_venta_fraccionada ? 'any' : '1'" min="0"
                              [ngModel]="l.cantidad" (ngModelChange)="setCantidad(l.key, $event)" />
                       <button z-button zType="outline" zSize="icon-sm" (click)="pasoCantidad(l.key, 1)"><ng-icon name="lucidePlus" class="size-3.5" /></button>
                     </div>
@@ -225,21 +300,27 @@
                       <input z-input class="mt-0.5" type="number" min="0" step="0.01" [ngModel]="l.descuento_linea" (ngModelChange)="setDescuentoLinea(l.key, $event)" />
                     </label>
                   </div>
+
                   @if (l.cantidad <= 0) {
-                    <p class="mt-1 text-[0.7rem] font-medium text-destructive">La cantidad debe ser mayor a 0.</p>
+                    <p class="mt-1.5 text-[0.7rem] font-medium text-destructive">La cantidad debe ser mayor a 0.</p>
                   }
                   @if (sinStock(l)) {
-                    <p class="mt-1 text-[0.7rem] font-medium text-destructive">Sin stock suficiente.</p>
+                    <p class="mt-1.5 text-[0.7rem] font-medium text-destructive">Sin stock suficiente.</p>
                   }
-                  @if (promoDeLinea(l); as promo) {
-                    <p class="mt-1 flex items-center justify-between text-[0.7rem] text-primary">
-                      <span>{{ promo.etiqueta }}</span>
-                      <span class="tabular-nums">− {{ promo.descuento | currency }}</span>
-                    </p>
-                  }
-                  <p class="mt-1 text-right text-sm font-semibold tabular-nums">
-                    {{ (lineaSubtotal(l) - (promoDeLinea(l)?.descuento ?? 0)) | currency }}
-                  </p>
+
+                  <div class="mt-1.5 flex items-center justify-between gap-2 border-t pt-1.5">
+                    @if (promoDeLinea(l); as promo) {
+                      <span class="flex min-w-0 items-center gap-1 text-[0.7rem] text-primary">
+                        <ng-icon name="lucideTag" class="size-3 shrink-0" />
+                        <span class="truncate">{{ promo.etiqueta }} · − {{ promo.descuento | currency }}</span>
+                      </span>
+                    } @else {
+                      <span></span>
+                    }
+                    <span class="shrink-0 text-sm font-semibold tabular-nums">
+                      {{ (lineaSubtotal(l) - (promoDeLinea(l)?.descuento ?? 0)) | currency }}
+                    </span>
+                  </div>
                 </li>
               }
             </ul>

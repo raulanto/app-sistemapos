@@ -75,7 +75,7 @@ import { ThemeService } from '../theme/theme.service';
           </div>
         </header>
 
-        <div class="flex flex-1 flex-col p-4 md:p-6 pt-0 bg-muted/20 relative">
+        <div class="flex flex-1 flex-col p-0 md:p-0 pt-0 bg-muted/20 relative">
           <router-outlet></router-outlet>
         </div>
       </main>

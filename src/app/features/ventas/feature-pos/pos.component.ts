@@ -23,6 +23,10 @@ import {
   lucidePackage,
   lucideLayers,
   lucidePrinter,
+  lucideLayoutGrid,
+  lucideList,
+  lucideTag,
+  lucideTrash2,
 } from '@ng-icons/lucide';
 
 import { ProductoService } from '../../inventario/data-access/producto.service';
@@ -95,6 +99,10 @@ interface LineaCarrito {
       lucidePackage,
       lucideLayers,
       lucidePrinter,
+      lucideLayoutGrid,
+      lucideList,
+      lucideTag,
+      lucideTrash2,
     }),
   ],
   templateUrl: './pos.component.html',
@@ -160,6 +168,8 @@ export class PosComponent {
   readonly cargandoCatalogo = signal(false);
   readonly q = signal('');
   readonly codigo = signal('');
+  /** Disposición del catálogo: tarjetas (grid) o filas (lista). Se recuerda en localStorage. */
+  readonly vista = signal<'grid' | 'lista'>(this.leerVista());
   /** ids de productos cuya imagen falló al cargar. */
   readonly imgRoto = signal<Set<string>>(new Set());
 
@@ -407,6 +417,22 @@ export class PosComponent {
     this.imgRoto.update(s => new Set(s).add(key));
   }
 
+  private leerVista(): 'grid' | 'lista' {
+    try {
+      return localStorage.getItem('pos-vista') === 'lista' ? 'lista' : 'grid';
+    } catch {
+      return 'grid';
+    }
+  }
+  setVista(v: 'grid' | 'lista') {
+    this.vista.set(v);
+    try {
+      localStorage.setItem('pos-vista', v);
+    } catch {
+      /* almacenamiento no disponible: la vista sólo dura la sesión */
+    }
+  }
+
   /**
    * Stock de la tarjeta en su propia unidad: unidad base para el producto,
    * `base / factor` (piezas enteras) para una presentación. `null` = no lleva
@@ -562,6 +588,12 @@ export class PosComponent {
 
   quitar(key: string) {
     this.carrito.update(list => list.filter(l => l.key !== key));
+  }
+
+  /** Vacía sólo el carrito (deja pagos/cliente/descuento como están). */
+  vaciarCarrito() {
+    this.carrito.set([]);
+    this.descuentoTotal.set(0);
   }
 
   aplicaMayoreo(l: LineaCarrito) {
