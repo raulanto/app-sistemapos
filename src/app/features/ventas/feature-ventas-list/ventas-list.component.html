@@ -1,19 +1,40 @@
 <div class="p-6 w-full space-y-6">
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div class="space-y-1">
-      <a routerLink="/ventas" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ng-icon name="lucideArrowLeft" class="size-4" /> Punto de venta
-      </a>
-      <h1 class="text-2xl font-bold tracking-tight">Historial de ventas</h1>
-    </div>
-    <z-select class="w-48" [ngModel]="estado()" (ngModelChange)="setEstado($event)">
-      <z-select-item zValue="">Todos los estados</z-select-item>
-      <z-select-item zValue="pagada">Pagadas</z-select-item>
-      <z-select-item zValue="pendiente_pago">Pendiente de pago</z-select-item>
-      <z-select-item zValue="devuelta_parcial">Devuelta parcial</z-select-item>
-      <z-select-item zValue="devuelta_total">Devuelta total</z-select-item>
-      <z-select-item zValue="cancelada">Canceladas</z-select-item>
-    </z-select>
+  <div class="space-y-1">
+    <a routerLink="/ventas" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+      <ng-icon name="lucideArrowLeft" class="size-4" /> Punto de venta
+    </a>
+    <h1 class="text-2xl font-bold tracking-tight">Historial de ventas</h1>
+  </div>
+
+  <!-- Filtros -->
+  <div class="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Estado
+      <z-select class="w-44" [ngModel]="estado()" (ngModelChange)="setEstado($event)">
+        <z-select-item zValue="">Todos</z-select-item>
+        <z-select-item zValue="pagada">Pagadas</z-select-item>
+        <z-select-item zValue="pendiente_pago">Pendiente de pago</z-select-item>
+        <z-select-item zValue="devuelta_parcial">Devuelta parcial</z-select-item>
+        <z-select-item zValue="devuelta_total">Devuelta total</z-select-item>
+        <z-select-item zValue="cancelada">Canceladas</z-select-item>
+      </z-select>
+    </label>
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Desde
+      <input z-input type="date" class="w-40" [ngModel]="desde()" (ngModelChange)="setDesde($event)" [max]="hasta() || null" />
+    </label>
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Hasta
+      <input z-input type="date" class="w-40" [ngModel]="hasta()" (ngModelChange)="setHasta($event)" [min]="desde() || null" />
+    </label>
+    @if (hayFiltros()) {
+      <button z-button zType="ghost" zSize="sm" (click)="limpiarFiltros()">
+        <ng-icon name="lucideX" class="mr-1.5 size-3.5" /> Limpiar
+      </button>
+    }
+    <button z-button zType="outline" zSize="sm" class="ml-auto" [zLoading]="loading()" (click)="cargar()">
+      <ng-icon name="lucideRefreshCw" class="mr-1.5 size-3.5" /> Actualizar
+    </button>
   </div>
 
   <div class="overflow-hidden rounded-xl border">
@@ -24,6 +45,7 @@
             <th z-table-head>Fecha</th>
             <th z-table-head>Folio</th>
             <th z-table-head>Cliente</th>
+            <th z-table-head>Cajero</th>
             <th z-table-head class="text-right">Total</th>
             <th z-table-head class="text-right">Saldo</th>
             <th z-table-head>Estado</th>
@@ -32,19 +54,18 @@
         </thead>
         <tbody z-table-body>
           @if (loading()) {
-            @for (i of [1,2,3,4,5]; track i) {
+            @for (i of [1,2,3,4,5,6,7,8]; track i) {
               <tr z-table-row>
-                <td z-table-cell colspan="7"><z-skeleton class="h-5 w-full" /></td>
+                <td z-table-cell colspan="8"><z-skeleton class="h-5 w-full" /></td>
               </tr>
             }
           } @else {
             @for (v of ventas(); track v.id) {
-              <tr z-table-row>
+              <tr z-table-row class="cursor-pointer hover:bg-muted/40" [routerLink]="['/ventas/historial', v.id]">
                 <td z-table-cell class="whitespace-nowrap text-xs text-muted-foreground">{{ v.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
-                <td z-table-cell class="font-mono text-xs">
-                  <a [routerLink]="['/ventas/historial', v.id]" class="text-primary hover:underline">{{ v.id.slice(0, 8) }}</a>
-                </td>
-                <td z-table-cell class="text-sm">{{ v.cliente?.nombre || '—' }}</td>
+                <td z-table-cell class="font-mono text-xs text-primary">{{ v.id.slice(0, 8) }}</td>
+                <td z-table-cell class="text-sm">{{ v.cliente?.nombre || 'Mostrador' }}</td>
+                <td z-table-cell class="text-sm text-muted-foreground">{{ v.usuario?.nombre || '—' }}</td>
                 <td z-table-cell class="text-right tabular-nums font-medium">{{ v.total | currency }}</td>
                 <td z-table-cell class="text-right tabular-nums" [class.text-amber-600]="+v.saldo_pendiente > 0" [class.text-muted-foreground]="+v.saldo_pendiente <= 0">
                   {{ v.saldo_pendiente | currency }}
@@ -52,7 +73,7 @@
                 <td z-table-cell>
                   <z-badge [zType]="badge(v.estado)" class="capitalize">{{ v.estado.replace('_', ' ') }}</z-badge>
                 </td>
-                <td z-table-cell class="text-right">
+                <td z-table-cell class="text-right" (click)="$event.stopPropagation()">
                   <div class="flex items-center justify-end gap-1">
                     <a z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Ver detalle" [routerLink]="['/ventas/historial', v.id]">
                       <ng-icon name="lucideReceiptText" class="size-4" />
@@ -67,8 +88,13 @@
               </tr>
             } @empty {
               <tr z-table-row>
-                <td z-table-cell colspan="7" class="p-0">
-                  <z-empty zIcon="lucideReceiptText" zTitle="Sin ventas" zDescription="No hay ventas para el filtro seleccionado." class="py-12" />
+                <td z-table-cell colspan="8" class="p-0">
+                  <z-empty
+                    zIcon="lucideReceiptText"
+                    zTitle="Sin ventas"
+                    [zDescription]="hayFiltros() ? 'Ninguna venta coincide con los filtros.' : 'Todavía no hay ventas registradas.'"
+                    class="py-12"
+                  />
                 </td>
               </tr>
             }
@@ -76,5 +102,55 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Paginación -->
+    @if (!loading() && totalItems() > 0) {
+      <div class="flex flex-col items-center justify-between gap-4 border-t p-3 sm:flex-row">
+        <div class="text-sm text-muted-foreground tabular-nums">
+          {{ totalItems() }} venta(s) · página {{ page() }} de {{ totalPages() }}
+        </div>
+
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium">Filas</span>
+            <z-select [ngModel]="pageSize().toString()" (ngModelChange)="setPageSize($event)">
+              <z-select-item zValue="20">20</z-select-item>
+              <z-select-item zValue="50">50</z-select-item>
+              <z-select-item zValue="100">100</z-select-item>
+            </z-select>
+          </div>
+
+          @if (totalPages() > 1) {
+            <z-pagination [zTotal]="totalPages()" [zPageIndex]="page()" [zContent]="content" />
+            <ng-template #content>
+              <ul z-pagination-content>
+                <li z-pagination-item>
+                  <z-pagination-previous (click)="prev()" [zDisabled]="page() === 1" />
+                </li>
+
+                @for (p of pages(); track p) {
+                  <li z-pagination-item>
+                    <button type="button" z-pagination-button [zActive]="p === page()" (click)="irAPagina(p)">
+                      <span class="sr-only">Ir a página</span>
+                      {{ p }}
+                    </button>
+                  </li>
+                }
+
+                @if (pages().length > 0 && pages()[pages().length - 1] < totalPages()) {
+                  <li z-pagination-item>
+                    <z-pagination-ellipsis />
+                  </li>
+                }
+
+                <li z-pagination-item>
+                  <z-pagination-next (click)="next()" [zDisabled]="page() === totalPages()" />
+                </li>
+              </ul>
+            </ng-template>
+          }
+        </div>
+      </div>
+    }
   </div>
 </div>

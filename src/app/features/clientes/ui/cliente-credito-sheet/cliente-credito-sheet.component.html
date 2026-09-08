@@ -1,0 +1,51 @@
+<div class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
+  <p class="text-sm text-muted-foreground">
+    Cliente <span class="font-medium text-foreground">{{ data.cliente.nombre }}</span>
+  </p>
+
+  <dl class="grid grid-cols-3 gap-2 rounded-lg border bg-muted/30 p-3 text-center">
+    <div>
+      <dt class="text-[0.7rem] uppercase tracking-wide text-muted-foreground">Deuda</dt>
+      <dd class="tabular-nums font-semibold" [class.text-amber-600]="saldo > 0">{{ saldo | currency }}</dd>
+    </div>
+    <div>
+      <dt class="text-[0.7rem] uppercase tracking-wide text-muted-foreground">Límite</dt>
+      <dd class="tabular-nums font-semibold">{{ limite | currency }}</dd>
+    </div>
+    <div>
+      <dt class="text-[0.7rem] uppercase tracking-wide text-muted-foreground">Disponible</dt>
+      <dd class="tabular-nums font-semibold text-green-600">{{ disponible | currency }}</dd>
+    </div>
+  </dl>
+
+  @if (esAbono) {
+    <div class="space-y-1.5">
+      <label for="monto" class="text-sm font-medium">Monto a abonar</label>
+      <input z-input id="monto" type="number" min="0" step="0.01"
+             [ngModel]="monto()" (ngModelChange)="setMonto($event)" />
+      <div class="flex items-center justify-between text-xs text-muted-foreground">
+        <button type="button" class="text-primary hover:underline" (click)="pagarTodo()">Abonar toda la deuda</button>
+        @if (monto() > saldo) {
+          <span class="text-amber-600">El abono supera la deuda actual.</span>
+        }
+      </div>
+      @if (!valido()) {
+        <p class="text-[0.8rem] font-medium text-destructive">Ingresa un monto mayor a 0.</p>
+      }
+    </div>
+  } @else {
+    <div class="space-y-1.5">
+      <label for="limite" class="text-sm font-medium">Nuevo límite de crédito</label>
+      <input z-input id="limite" type="number" min="0" step="0.01"
+             [ngModel]="monto()" (ngModelChange)="setMonto($event)" />
+      @if (monto() < saldo) {
+        <p class="text-[0.8rem] text-amber-600">
+          El nuevo límite es menor a la deuda actual ({{ saldo | currency }}); el cliente no podrá comprar a crédito hasta abonar.
+        </p>
+      }
+      @if (!valido()) {
+        <p class="text-[0.8rem] font-medium text-destructive">El límite no puede ser negativo.</p>
+      }
+    </div>
+  }
+</div>

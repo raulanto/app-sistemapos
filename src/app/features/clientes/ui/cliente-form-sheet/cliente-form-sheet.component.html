@@ -1,0 +1,40 @@
+<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
+  <div z-field>
+    <label z-field-label for="nombre">Nombre *</label>
+    <input z-input id="nombre" type="text" formControlName="nombre" maxlength="150" placeholder="Nombre o razón social" />
+    @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
+      <p class="text-[0.8rem] font-medium text-destructive">El nombre es obligatorio.</p>
+    }
+  </div>
+
+  <div z-field>
+    <label z-field-label for="email">Correo</label>
+    <input z-input id="email" type="email" formControlName="email" placeholder="cliente@correo.com" />
+    @if (form.controls.email.invalid && form.controls.email.touched) {
+      <p class="text-[0.8rem] font-medium text-destructive">Ingresa un correo válido.</p>
+    }
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div z-field>
+      <label z-field-label for="telefono">Teléfono</label>
+      <input z-input id="telefono" type="tel" formControlName="telefono" placeholder="10 dígitos" />
+    </div>
+    <div z-field>
+      <label z-field-label for="rfc">RFC / Identificación</label>
+      <input z-input id="rfc" type="text" formControlName="rfc_identificacion" placeholder="Opcional" />
+    </div>
+  </div>
+
+  @if (!isEditing) {
+    <div z-field>
+      <label z-field-label for="limite">Límite de crédito</label>
+      <input z-input id="limite" type="number" min="0" step="0.01" formControlName="limite_credito" />
+      <p z-field-description>Máximo que este cliente puede deber. Déjalo en 0 si sólo compra de contado.</p>
+    </div>
+  } @else {
+    <p class="text-[0.8rem] text-muted-foreground">
+      El límite de crédito se ajusta desde su acción propia en la tabla.
+    </p>
+  }
+</form>
