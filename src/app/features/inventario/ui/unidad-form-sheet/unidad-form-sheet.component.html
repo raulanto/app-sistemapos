@@ -72,6 +72,20 @@
     </div>
   </div>
 
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label>Monedero % (opcional)</label>
+      <input z-input type="number" formControlName="monedero_pct" min="0" max="100" step="0.01" placeholder="Hereda del producto" />
+    </div>
+    <div z-field>
+      <label z-field-label>Monedero monto fijo (opcional)</label>
+      <input z-input type="number" formControlName="monedero_monto" min="0" step="0.01" placeholder="Hereda del producto" />
+    </div>
+  </div>
+  <p class="text-[0.8rem] text-muted-foreground -mt-3">
+    Si defines alguno, esta presentación usa ese cashback en vez del configurado en el producto.
+  </p>
+
   @if (isEditing && sheetData?.unidad) {
     <div class="grid grid-cols-1 gap-2">
       <label z-field-label>Fotos de la presentación</label>

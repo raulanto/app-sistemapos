@@ -239,6 +239,16 @@
               <input z-input id="cantidad_minima_mayoreo" type="number" min="0" step="any" formControlName="cantidad_minima_mayoreo" placeholder="Opcional">
             </div>
             <p z-field-description class="md:col-span-2">Ambos van juntos: a partir de esa cantidad (unidad base) la venta usa el precio de mayoreo.</p>
+
+            <div z-field>
+              <label z-field-label for="monedero_pct">Monedero %</label>
+              <input z-input id="monedero_pct" type="number" min="0" max="100" step="0.01" formControlName="monedero_pct" placeholder="Opcional">
+            </div>
+            <div z-field>
+              <label z-field-label for="monedero_monto">Monedero monto fijo</label>
+              <input z-input id="monedero_monto" type="number" min="0" step="0.01" formControlName="monedero_monto" placeholder="Opcional">
+            </div>
+            <p z-field-description class="md:col-span-2">Cashback al vender con teléfono: el % (sobre el subtotal) tiene prioridad; el monto es fijo por unidad.</p>
           </div>
         </fieldset>
 

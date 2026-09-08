@@ -59,6 +59,8 @@ export class UnidadFormSheetComponent implements OnInit {
       factor: [null as number | null],
       precio_venta: [0, [Validators.required, Validators.min(0)]],
       codigo_barras: [''],
+      monedero_pct: [null as number | null],
+      monedero_monto: [null as number | null],
     },
     { validators: equivalenciaValidator },
   );
@@ -90,7 +92,13 @@ export class UnidadFormSheetComponent implements OnInit {
       factor: factor >= 1 ? factor : null,
       precio_venta: Number(unidad.precio_venta),
       codigo_barras: unidad.codigo_barras || '',
+      monedero_pct: unidad.monedero_pct != null ? Number(unidad.monedero_pct) : null,
+      monedero_monto: unidad.monedero_monto != null ? Number(unidad.monedero_monto) : null,
     });
+  }
+
+  private numOrNull(v: unknown): number | null {
+    return v === '' || v == null ? null : Number(v);
   }
 
   save(): Observable<UnidadResponse> | void {
@@ -105,6 +113,9 @@ export class UnidadFormSheetComponent implements OnInit {
       ? { factor: Number(data.factor), unidades_por_base: null }
       : { unidades_por_base: Number(data.unidades_por_base), factor: null };
 
+    const monederoCambio =
+      !!this.form.controls.monedero_pct.dirty || !!this.form.controls.monedero_monto.dirty;
+
     if (this.isEditing) {
       const codigoCambio = (data.codigo_barras || null) !== this.originalCodigoBarras;
       const payload: ActualizarUnidadRequest = {
@@ -113,6 +124,13 @@ export class UnidadFormSheetComponent implements OnInit {
         precio_venta: data.precio_venta!,
         ...equivalencia,
         ...(codigoCambio ? { codigo_barras: data.codigo_barras || null, cambiar_codigo_barras: true } : {}),
+        ...(monederoCambio
+          ? {
+              monedero_pct: this.numOrNull(data.monedero_pct),
+              monedero_monto: this.numOrNull(data.monedero_monto),
+              cambiar_monedero: true,
+            }
+          : {}),
       };
       return this.productoService.actualizarUnidad(this.sheetData!.productoId, this.sheetData!.unidad!.id, payload);
     }
@@ -123,6 +141,8 @@ export class UnidadFormSheetComponent implements OnInit {
       precio_venta: data.precio_venta!,
       ...equivalencia,
       codigo_barras: data.codigo_barras || null,
+      monedero_pct: this.numOrNull(data.monedero_pct),
+      monedero_monto: this.numOrNull(data.monedero_monto),
     };
     return this.productoService.agregarUnidad(this.sheetData!.productoId, payload);
   }

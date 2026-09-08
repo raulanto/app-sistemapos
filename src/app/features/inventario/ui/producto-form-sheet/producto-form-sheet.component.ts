@@ -91,6 +91,8 @@ export class ProductoFormSheetComponent implements OnInit {
     es_sobre_pedido: [false],
     precio_mayoreo: [null as number | null],
     cantidad_minima_mayoreo: [null as number | null],
+    monedero_pct: [null as number | null],
+    monedero_monto: [null as number | null],
     tipo: ['simple' as TipoProducto, Validators.required],
     activo: [true],
     existencias: this.fb.array([])
@@ -254,6 +256,8 @@ export class ProductoFormSheetComponent implements OnInit {
     data.instancia_capacidad_default = numOrNull(data.instancia_capacidad_default);
     data.precio_mayoreo = numOrNull(data.precio_mayoreo);
     data.cantidad_minima_mayoreo = numOrNull(data.cantidad_minima_mayoreo);
+    data.monedero_pct = numOrNull(data.monedero_pct);
+    data.monedero_monto = numOrNull(data.monedero_monto);
 
     let request$: Observable<any>;
 
@@ -268,6 +272,8 @@ export class ProductoFormSheetComponent implements OnInit {
       updateData.cambiar_instancia_capacidad_default = this.form.get('instancia_capacidad_default')?.dirty ?? false;
       updateData.cambiar_mayoreo =
         (this.form.get('precio_mayoreo')?.dirty || this.form.get('cantidad_minima_mayoreo')?.dirty) ?? false;
+      updateData.cambiar_monedero =
+        (this.form.get('monedero_pct')?.dirty || this.form.get('monedero_monto')?.dirty) ?? false;
 
       // Ensure numeric fields are numbers
       updateData.precio_venta = Number(updateData.precio_venta);

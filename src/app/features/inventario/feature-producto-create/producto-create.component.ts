@@ -98,6 +98,8 @@ export class ProductoCreateComponent implements OnInit {
     es_sobre_pedido: [false],
     precio_mayoreo: [null as number | null],
     cantidad_minima_mayoreo: [null as number | null],
+    monedero_pct: [null as number | null],
+    monedero_monto: [null as number | null],
     activo: [true],
     tipo: ['simple' as TipoProducto, Validators.required],
     existencias: this.fb.array([]),
@@ -386,6 +388,8 @@ export class ProductoCreateComponent implements OnInit {
     data.instancia_capacidad_default = numOrNull(data.instancia_capacidad_default);
     data.precio_mayoreo = numOrNull(data.precio_mayoreo);
     data.cantidad_minima_mayoreo = numOrNull(data.cantidad_minima_mayoreo);
+    data.monedero_pct = numOrNull(data.monedero_pct);
+    data.monedero_monto = numOrNull(data.monedero_monto);
 
     // Fotos: se suben tras crear el producto; portada = la marcada, o la primera.
     const fotos = this.imagenesNuevas();

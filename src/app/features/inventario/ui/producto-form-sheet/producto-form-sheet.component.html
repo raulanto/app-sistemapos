@@ -165,6 +165,18 @@
       </div>
     </div>
     <p class="text-[0.8rem] text-muted-foreground -mt-1">Los dos van juntos: a partir de esa cantidad (en unidad base) la venta usa el precio de mayoreo.</p>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div z-field>
+        <label z-field-label for="monedero_pct">Monedero %</label>
+        <input z-input id="monedero_pct" type="number" step="0.01" min="0" max="100" formControlName="monedero_pct" placeholder="Opcional">
+      </div>
+      <div z-field>
+        <label z-field-label for="monedero_monto">Monedero monto fijo</label>
+        <input z-input id="monedero_monto" type="number" step="0.01" min="0" formControlName="monedero_monto" placeholder="Opcional">
+      </div>
+    </div>
+    <p class="text-[0.8rem] text-muted-foreground -mt-1">Cashback al vender con teléfono. Usá uno u otro: el % (sobre el subtotal) tiene prioridad; el monto es fijo por unidad.</p>
   </div>
 
   @if (!sheetData?.productoId && !esServicio()) {

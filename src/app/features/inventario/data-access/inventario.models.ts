@@ -32,6 +32,10 @@ export interface ProductoResponse {
   cantidad_minima_mayoreo?: string | null;
   /** No se mantiene en stock; se vende sin existencia. */
   es_sobre_pedido?: boolean;
+  /** Monedero (cashback): % del subtotal por línea al vender con teléfono. Si null, se usa `monedero_monto`. */
+  monedero_pct?: string | null;
+  /** Monedero: monto fijo por unidad. Ambos null = el producto no genera cashback. */
+  monedero_monto?: string | null;
   activo: boolean;
   tipo?: TipoProducto;
   categoria?: any;
@@ -128,6 +132,9 @@ export interface UnidadResponse {
   unidades_por_base?: string | null;
   precio_venta: string;
   codigo_barras?: string | null;
+  /** Monedero propio de la presentación; si está definido, sobreescribe al del producto. */
+  monedero_pct?: string | null;
+  monedero_monto?: string | null;
   activo: boolean;
   producto?: ProductoResponse;
   /** Portada de la presentación (llega con `?include=unidades`, mismo formato que la del producto). */
@@ -147,6 +154,9 @@ export interface AgregarUnidadRequest {
   factor?: number | string | null;
   unidades_por_base?: number | string | null;
   codigo_barras?: string | null;
+  /** Monedero propio de la presentación (sobreescribe al del producto). `pct` 0-100 tiene prioridad. */
+  monedero_pct?: number | string | null;
+  monedero_monto?: number | string | null;
 }
 
 export interface ActualizarUnidadRequest {
@@ -157,6 +167,10 @@ export interface ActualizarUnidadRequest {
   precio_venta?: number | string;
   codigo_barras?: string | null;
   cambiar_codigo_barras?: boolean;
+  monedero_pct?: number | string | null;
+  monedero_monto?: number | string | null;
+  /** Con el flag en true, mandar `monedero_pct`/`monedero_monto` null limpia el monedero de la presentación. */
+  cambiar_monedero?: boolean;
 }
 
 export type TipoMagnitud = 'conteo' | 'masa' | 'volumen' | 'longitud' | 'tiempo';
@@ -220,6 +234,9 @@ export interface CrearProductoRequest {
   precio_mayoreo?: number | string | null;
   cantidad_minima_mayoreo?: number | string | null;
   es_sobre_pedido?: boolean;
+  /** Monedero (cashback): `monedero_pct` (0-100) tiene prioridad; si no, `monedero_monto` fijo por unidad. */
+  monedero_pct?: number | string | null;
+  monedero_monto?: number | string | null;
   tipo?: TipoProducto;
   activo?: boolean;
 }
@@ -253,6 +270,10 @@ export interface ActualizarProductoRequest {
   cantidad_minima_mayoreo?: number | string | null;
   /** Con el flag en true, mandar `precio_mayoreo`/`cantidad_minima_mayoreo` null los borra (van juntos). */
   cambiar_mayoreo?: boolean;
+  monedero_pct?: number | string | null;
+  monedero_monto?: number | string | null;
+  /** Con el flag en true, mandar `monedero_pct`/`monedero_monto` null limpia el monedero. */
+  cambiar_monedero?: boolean;
   codigo_barras?: string | null;
   cambiar_codigo_barras?: boolean;
   cambiar_descripcion?: boolean;

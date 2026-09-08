@@ -632,6 +632,15 @@
                   </dd>
                 </div>
               }
+              @if (prod.monedero_pct || prod.monedero_monto) {
+                <div class="flex items-center justify-between py-2.5">
+                  <dt class="text-muted-foreground">Monedero</dt>
+                  <dd class="font-medium tabular-nums">
+                    @if (prod.monedero_pct) { {{ prod.monedero_pct }}% del subtotal }
+                    @else { {{ prod.monedero_monto | currency }} por unidad }
+                  </dd>
+                </div>
+              }
             </dl>
           </z-card-content>
         </div>
