@@ -37,6 +37,8 @@ export interface CorteCajaResponse {
   total_tarjeta: string;
   total_transferencia: string;
   total_credito: string;
+  /** Pagos cobrados con saldo de monedero (no es efectivo, no entra al arqueo). */
+  total_monedero: string;
   total_descuento_promo: string;
   total_devoluciones_efectivo: string;
   monto_final_esperado: string;

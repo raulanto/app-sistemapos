@@ -28,4 +28,6 @@ export interface CotizacionVentaResponse {
   descuento_total: string;
   total_promociones: string;
   total: string;
+  /** Cashback que generaría esta venta si se cobra con un teléfono. */
+  monedero_a_generar?: string;
 }

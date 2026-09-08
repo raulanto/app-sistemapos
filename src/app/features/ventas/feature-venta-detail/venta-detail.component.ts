@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideBan, lucideReceiptText, lucideUser, lucideStore, lucideUndo2, lucidePrinter } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideBan, lucideReceiptText, lucideUser, lucideStore, lucideUndo2, lucidePrinter, lucidePhone } from '@ng-icons/lucide';
 
 import { VentaService } from '../data-access/venta.service';
 import { CajaService } from '../data-access/caja.service';
@@ -44,7 +44,7 @@ import { DevolucionSheetComponent } from '../ui/devolucion-sheet/devolucion-shee
     ZardSkeletonComponent,
     ZardSeparatorComponent,
   ],
-  viewProviders: [provideIcons({ lucideArrowLeft, lucideBan, lucideReceiptText, lucideUser, lucideStore, lucideUndo2, lucidePrinter })],
+  viewProviders: [provideIcons({ lucideArrowLeft, lucideBan, lucideReceiptText, lucideUser, lucideStore, lucideUndo2, lucidePrinter, lucidePhone })],
   templateUrl: './venta-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -90,11 +90,13 @@ export class VentaDetailComponent {
     tarjeta_credito: 'Tarjeta crédito',
     transferencia: 'Transferencia',
     credito: 'Crédito',
+    monedero: 'Monedero',
   };
   readonly metodoDevLabel: Record<MetodoDevolucion, string> = {
     efectivo: 'Efectivo',
     tarjeta: 'Tarjeta',
     credito: 'Crédito',
+    monedero: 'Monedero',
   };
 
   constructor() {

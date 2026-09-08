@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import {
   ApiResponse,
@@ -11,6 +11,9 @@ import {
   ActualizarClienteRequest,
   AbonarClienteRequest,
   CambiarLimiteCreditoRequest,
+  MonederoResponse,
+  MovimientoMonederoResponse,
+  AjustarMonederoRequest,
 } from './clientes.models';
 import { VentaListItem } from '../../ventas/data-access/venta.models';
 
@@ -72,5 +75,36 @@ export class ClienteService {
       if (v != null && v !== '') params = params.set(k, String(v));
     }
     return this.http.get<ApiResponse<VentaListItem[]>>(`${this.API_URL}/${clienteId}/ventas`, { params });
+  }
+
+  // --- Monedero electrónico (cashback por teléfono) ---
+
+  /** Saldo del monedero de un teléfono. `null` si el teléfono todavía no tiene monedero (404). */
+  monederoSaldo(telefono: string): Observable<MonederoResponse | null> {
+    return this.http.get<ApiResponse<MonederoResponse>>(`${this.API_URL}/monedero/${encodeURIComponent(telefono)}`).pipe(
+      map(r => r.data),
+      catchError(err => (err?.status === 404 ? of(null) : throwError(() => err))),
+    );
+  }
+
+  monederoMovimientos(
+    telefono: string,
+    query: { page?: number; page_size?: number; sort?: string } = {},
+  ): Observable<ApiResponse<MovimientoMonederoResponse[]>> {
+    let params = new HttpParams();
+    for (const [k, v] of Object.entries(query)) {
+      if (v != null && v !== '') params = params.set(k, String(v));
+    }
+    return this.http.get<ApiResponse<MovimientoMonederoResponse[]>>(
+      `${this.API_URL}/monedero/${encodeURIComponent(telefono)}/movimientos`,
+      { params },
+    );
+  }
+
+  /** Carga saldo inicial o corrige (crea la cuenta si no existe). Permiso `monedero.ajustar`. */
+  ajustarMonedero(telefono: string, req: AjustarMonederoRequest): Observable<MonederoResponse> {
+    return this.http
+      .post<ApiResponse<MonederoResponse>>(`${this.API_URL}/monedero/${encodeURIComponent(telefono)}/ajustar`, req)
+      .pipe(map(r => r.data));
   }
 }

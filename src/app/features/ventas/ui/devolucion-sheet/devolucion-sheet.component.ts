@@ -45,7 +45,8 @@ export class DevolucionSheetComponent {
   private ventaService = inject(VentaService);
   public sheetData = injectSheetData<DevolucionSheetData>();
 
-  readonly metodos = METODOS_DEVOLUCION;
+  /** El monedero sólo se puede reintegrar si la venta se registró con teléfono. */
+  readonly metodos = METODOS_DEVOLUCION.filter(m => m.value !== 'monedero' || !!this.sheetData.venta.telefono);
   readonly metodo = signal<MetodoDevolucion>('efectivo');
   readonly motivo = signal('');
 

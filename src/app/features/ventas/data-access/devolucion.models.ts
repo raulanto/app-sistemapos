@@ -1,9 +1,10 @@
-export type MetodoDevolucion = 'efectivo' | 'tarjeta' | 'credito';
+export type MetodoDevolucion = 'efectivo' | 'tarjeta' | 'credito' | 'monedero';
 
 export const METODOS_DEVOLUCION: { value: MetodoDevolucion; label: string }[] = [
   { value: 'efectivo', label: 'Efectivo (sale del cajón)' },
   { value: 'tarjeta', label: 'Tarjeta (reverso)' },
   { value: 'credito', label: 'Crédito (baja la deuda)' },
+  { value: 'monedero', label: 'Monedero (reintegra al teléfono)' },
 ];
 
 export interface DevolverVentaLineaRequest {

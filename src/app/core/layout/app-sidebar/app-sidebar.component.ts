@@ -88,6 +88,10 @@ export class AppSidebarComponent {
       title: 'Clientes',
       url: '/clientes',
       icon: 'lucideUsers',
+      items: [
+        { title: 'Clientes', url: '/clientes' },
+        { title: 'Monedero', url: '/clientes/monedero' },
+      ],
     },
     {
       title: 'Usuarios',

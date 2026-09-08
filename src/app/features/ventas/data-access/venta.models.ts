@@ -1,6 +1,12 @@
 import { CajaTurnoResponse } from './caja.models';
 
-export type MetodoPago = 'efectivo' | 'tarjeta_credito' | 'tarjeta_debito' | 'transferencia' | 'credito';
+export type MetodoPago =
+  | 'efectivo'
+  | 'tarjeta_credito'
+  | 'tarjeta_debito'
+  | 'transferencia'
+  | 'credito'
+  | 'monedero';
 export type EstadoVenta = 'pagada' | 'pendiente_pago' | 'cancelada' | 'devuelta_parcial' | 'devuelta_total';
 
 export const METODOS_PAGO: { value: MetodoPago; label: string }[] = [
@@ -31,6 +37,11 @@ export interface CrearVentaRequest {
   caja_turno_id: string;
   /** Requerido solo si queda saldo a crédito. */
   cliente_id?: string | null;
+  /**
+   * Teléfono para el monedero (cashback) y el historial por teléfono. No exige
+   * `cliente` ni toca el crédito. Obligatorio si algún pago usa `metodo_pago: 'monedero'`.
+   */
+  telefono?: string | null;
   descuento_total?: number | string;
   lineas: LineaVentaRequest[];
   pagos: PagoRequest[];
@@ -80,6 +91,12 @@ export interface VentaResponse {
   /** Vuelto total entregado. */
   cambio: string;
   saldo_pendiente: string;
+  /** Teléfono asociado (monedero / historial), si se registró en la venta. */
+  telefono?: string | null;
+  /** Cashback acreditado al monedero del teléfono por esta venta. */
+  monedero_generado?: string;
+  /** Saldo de monedero consumido como pago en esta venta. */
+  monedero_usado?: string;
   created_at: string;
   lineas: LineaVentaResponse[];
   pagos: PagoResponse[];
@@ -99,6 +116,7 @@ export interface VentaListItem {
   total_promociones: string;
   total: string;
   saldo_pendiente: string;
+  telefono?: string | null;
   created_at: string;
   cliente?: { id: string; nombre: string } | null;
   usuario?: { id: string; nombre: string } | null;
@@ -112,6 +130,8 @@ export interface AnularVentaRequest {
 export interface VentaQuery {
   caja_turno_id?: string;
   cliente_id?: string;
+  /** Filtra las ventas registradas con este teléfono (historial por monedero). */
+  telefono?: string;
   estado?: EstadoVenta;
   desde?: string;
   hasta?: string;

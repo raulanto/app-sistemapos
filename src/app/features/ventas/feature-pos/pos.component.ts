@@ -27,11 +27,14 @@ import {
   lucideList,
   lucideTag,
   lucideTrash2,
+  lucidePhone,
+  lucideWallet,
 } from '@ng-icons/lucide';
 
 import { ProductoService } from '../../inventario/data-access/producto.service';
 import { CategoriaService } from '../../inventario/data-access/categoria.service';
 import { ProductoResponse, UnidadResponse, CategoriaResponse } from '../../inventario/data-access/inventario.models';
+import { ClienteService } from '../../clientes/data-access/cliente.service';
 import { CajaService } from '../data-access/caja.service';
 import { VentaService } from '../data-access/venta.service';
 import {
@@ -103,6 +106,8 @@ interface LineaCarrito {
       lucideList,
       lucideTag,
       lucideTrash2,
+      lucidePhone,
+      lucideWallet,
     }),
   ],
   templateUrl: './pos.component.html',
@@ -148,6 +153,7 @@ interface LineaCarrito {
 export class PosComponent {
   private productoService = inject(ProductoService);
   private categoriaService = inject(CategoriaService);
+  private clienteService = inject(ClienteService);
   private cajaService = inject(CajaService);
   private ventaService = inject(VentaService);
   private sheetService = inject(ZardSheetService);
@@ -180,6 +186,12 @@ export class PosComponent {
   readonly clienteBusqueda = signal('');
   readonly clientesEncontrados = signal<ClienteResponse[]>([]);
   readonly cliente = signal<ClienteResponse | null>(null);
+
+  /** Teléfono para monedero (cashback) + historial. Independiente del cliente/crédito. */
+  readonly telefono = signal('');
+  /** Saldo del monedero del teléfono; null = teléfono incompleto o sin consultar. */
+  readonly monederoSaldo = signal<number | null>(null);
+  readonly consultandoMonedero = signal(false);
 
   readonly cobrando = signal(false);
   readonly ventaOk = signal<VentaResponse | null>(null);
@@ -308,12 +320,33 @@ export class PosComponent {
   readonly saldoPendiente = computed(() => this.round(this.total() - this.pagado()));
   readonly requiereCliente = computed(() => this.saldoPendiente() > 0.009);
   readonly hayLineaInvalida = computed(() => this.carrito().some(l => !(l.cantidad > 0)));
+
+  // --- Monedero ---
+  /** Sólo dígitos del teléfono; se considera válido con 7+ dígitos. */
+  private telDigitos = computed(() => this.telefono().replace(/\D/g, ''));
+  readonly telefonoValido = computed(() => this.telDigitos().length >= 7);
+  readonly monederoDisponible = computed(() => this.monederoSaldo() ?? 0);
+  /** Cashback que generaría la venta (de la cotización) — sólo aplica si hay teléfono. */
+  readonly monederoAGenerar = computed(() => {
+    if (!this.telefono().trim()) return 0;
+    const v = Number(this.cotizacion()?.monedero_a_generar);
+    return Number.isFinite(v) && v > 0 ? this.round(v) : 0;
+  });
+  readonly monederoUsado = computed(() =>
+    this.pagos().filter(p => p.metodo_pago === 'monedero').reduce((s, p) => s + (Number(p.monto) || 0), 0),
+  );
+  readonly hayPagoMonedero = computed(() => this.monederoUsado() > 0);
+  readonly faltaTelefonoMonedero = computed(() => this.hayPagoMonedero() && !this.telefono().trim());
+  readonly excesoMonedero = computed(() => this.monederoUsado() > this.monederoDisponible() + 0.009);
+
   readonly puedeCobrar = computed(
     () =>
       this.carrito().length > 0 &&
       !this.hayLineaInvalida() &&
       !this.hayLineaSinStock() &&
       this.total() > 0 &&
+      !this.faltaTelefonoMonedero() &&
+      !this.excesoMonedero() &&
       (!this.requiereCliente() || !!this.cliente()),
   );
 
@@ -353,6 +386,23 @@ export class PosComponent {
       .subscribe(res => {
         this.cotizando.set(false);
         this.cotizacion.set(res);
+      });
+
+    // Saldo de monedero: al escribir un teléfono válido, se consulta (404 / sin permiso → 0).
+    toObservable(this.telefono)
+      .pipe(
+        debounceTime(400),
+        switchMap(() => {
+          this.monederoSaldo.set(null);
+          if (!this.telefonoValido()) return of(null);
+          this.consultandoMonedero.set(true);
+          return this.clienteService.monederoSaldo(this.telefono().trim()).pipe(catchError(() => of(null)));
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe(m => {
+        this.consultandoMonedero.set(false);
+        this.monederoSaldo.set(this.telefonoValido() ? (m ? Number(m.saldo) || 0 : 0) : null);
       });
   }
 
@@ -609,11 +659,21 @@ export class PosComponent {
 
   agregarPago(metodo: MetodoPago) {
     const falta = Math.max(0, this.saldoPendiente());
-    this.pagos.update(list => [...list, { monto: this.round(falta || this.total()), metodo_pago: metodo }]);
+    let monto = this.round(falta || this.total());
+    // El monedero no puede exceder el saldo disponible del teléfono.
+    if (metodo === 'monedero') monto = this.round(Math.min(monto, this.monederoDisponible()));
+    this.pagos.update(list => [...list, { monto, metodo_pago: metodo }]);
   }
 
   setMontoPago(i: number, monto: number) {
-    this.pagos.update(list => list.map((p, idx) => (idx === i ? { ...p, monto: Math.max(0, Number(monto) || 0) } : p)));
+    this.pagos.update(list =>
+      list.map((p, idx) => {
+        if (idx !== i) return p;
+        let m = Math.max(0, Number(monto) || 0);
+        if (p.metodo_pago === 'monedero') m = Math.min(m, this.monederoDisponible());
+        return { ...p, monto: m };
+      }),
+    );
   }
 
   /** Efectivo: con cuánto pagó el cliente (para calcular el cambio). */
@@ -676,6 +736,7 @@ export class PosComponent {
     const req: CrearVentaRequest = {
       caja_turno_id: t.id,
       cliente_id: this.cliente()?.id ?? null,
+      ...(this.telefono().trim() ? { telefono: this.telefono().trim() } : {}),
       // Se manda el descuento total ya acotado al subtotal (el backend recalcula igual).
       descuento_total: this.round(this.descTotalAplicado()),
       lineas: this.carrito().map(l => ({
@@ -713,6 +774,8 @@ export class PosComponent {
         if (code === 'StockInsuficiente') this.sonner.error(msg ?? 'Stock insuficiente en una línea. La venta no se registró.');
         else if (code === 'LimiteCreditoExcedido') this.sonner.error(msg ?? 'La deuda supera el límite de crédito del cliente.');
         else if (code === 'VentaCreditoSinCliente') this.sonner.error('Falta seleccionar cliente para la parte a crédito.');
+        else if (code === 'SaldoMonederoInsuficiente') this.sonner.error(msg ?? 'El monedero no cubre ese pago. La venta no se registró.');
+        else if (code === 'MovimientoMonederoInvalido') this.sonner.error(msg ?? 'Para pagar con monedero hay que capturar el teléfono.');
         else if (code === 'CajaNoAbierta') {
           this.sonner.error('El turno de caja ya no está abierto.');
           this.turno.set(null);
@@ -729,6 +792,8 @@ export class PosComponent {
     this.cliente.set(null);
     this.clienteBusqueda.set('');
     this.clientesEncontrados.set([]);
+    this.telefono.set('');
+    this.monederoSaldo.set(null);
   }
 
   nuevaVenta() {

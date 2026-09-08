@@ -75,6 +75,9 @@ export interface CerrarCajaSheetData {
           <div class="flex justify-between px-3 py-1.5"><dt class="text-muted-foreground">Tarjeta</dt><dd class="tabular-nums">{{ c.total_tarjeta | currency }}</dd></div>
           <div class="flex justify-between px-3 py-1.5"><dt class="text-muted-foreground">Transferencia</dt><dd class="tabular-nums">{{ c.total_transferencia | currency }}</dd></div>
           <div class="flex justify-between px-3 py-1.5"><dt class="text-muted-foreground">Crédito</dt><dd class="tabular-nums">{{ c.total_credito | currency }}</dd></div>
+          @if (+c.total_monedero > 0) {
+            <div class="flex justify-between px-3 py-1.5"><dt class="text-muted-foreground">Monedero</dt><dd class="tabular-nums">{{ c.total_monedero | currency }}</dd></div>
+          }
           @if (+c.total_descuento_promo > 0) {
             <div class="flex justify-between px-3 py-1.5 text-primary"><dt>Descuento por promos</dt><dd class="tabular-nums">{{ c.total_descuento_promo | currency }}</dd></div>
           }

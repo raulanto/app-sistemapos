@@ -55,7 +55,10 @@ export class VentasListComponent {
   readonly estado = signal<EstadoVenta | ''>('');
   readonly desde = signal('');
   readonly hasta = signal('');
-  readonly hayFiltros = computed(() => !!this.estado() || !!this.desde() || !!this.hasta());
+  readonly telefono = signal('');
+  readonly hayFiltros = computed(
+    () => !!this.estado() || !!this.desde() || !!this.hasta() || !!this.telefono().trim(),
+  );
 
   readonly page = signal(1);
   readonly pageSize = signal(20);
@@ -84,6 +87,7 @@ export class VentasListComponent {
     this.ventaService
       .listar({
         estado: this.estado() || undefined,
+        telefono: this.telefono().trim() || undefined,
         // `desde`/`hasta` son date-time: se cubre el día completo.
         desde: this.desde() ? `${this.desde()}T00:00:00` : undefined,
         hasta: this.hasta() ? `${this.hasta()}T23:59:59` : undefined,
@@ -126,10 +130,15 @@ export class VentasListComponent {
     this.hasta.set(v);
     this.recargarDesdeInicio();
   }
+  setTelefono(v: string) {
+    this.telefono.set(v);
+    this.recargarDesdeInicio();
+  }
   limpiarFiltros() {
     this.estado.set('');
     this.desde.set('');
     this.hasta.set('');
+    this.telefono.set('');
     this.recargarDesdeInicio();
   }
 

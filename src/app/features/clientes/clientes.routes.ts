@@ -11,6 +11,12 @@ export const CLIENTES_ROUTES: Routes = [
       import('./feature-cliente-list/cliente-list.component').then(m => m.ClienteListComponent),
   },
   {
+    path: 'monedero',
+    canActivate: [permissionGuard(...PERMISOS.clientes.leer)],
+    loadComponent: () =>
+      import('./feature-monedero/monedero.component').then(m => m.MonederoComponent),
+  },
+  {
     path: ':id',
     canActivate: [permissionGuard(...PERMISOS.clientes.leer)],
     loadComponent: () =>

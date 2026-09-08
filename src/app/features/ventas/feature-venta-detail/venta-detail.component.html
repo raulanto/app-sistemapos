@@ -106,6 +106,12 @@
               @if (+v.saldo_pendiente > 0) {
                 <div class="flex justify-between text-amber-600"><dt>Saldo a crédito</dt><dd class="tabular-nums">{{ v.saldo_pendiente | currency }}</dd></div>
               }
+              @if (+(v.monedero_usado ?? 0) > 0) {
+                <div class="flex justify-between"><dt class="text-muted-foreground">Pagado con monedero</dt><dd class="tabular-nums">{{ v.monedero_usado | currency }}</dd></div>
+              }
+              @if (+(v.monedero_generado ?? 0) > 0) {
+                <div class="flex justify-between text-primary"><dt>Monedero acumulado</dt><dd class="tabular-nums">+ {{ v.monedero_generado | currency }}</dd></div>
+              }
               @if (+v.total_devuelto > 0) {
                 <div class="flex justify-between text-amber-600"><dt>Devuelto</dt><dd class="tabular-nums">− {{ v.total_devuelto | currency }}</dd></div>
               }
@@ -161,6 +167,12 @@
                 <dt class="flex items-center gap-1.5 text-muted-foreground"><ng-icon name="lucideUser" class="size-3.5" /> Cajero</dt>
                 <dd class="truncate font-medium">{{ v.usuario?.nombre || '—' }}</dd>
               </div>
+              @if (v.telefono) {
+                <div class="flex items-center justify-between gap-3">
+                  <dt class="flex items-center gap-1.5 text-muted-foreground"><ng-icon name="lucidePhone" class="size-3.5" /> Teléfono</dt>
+                  <dd class="truncate font-medium tabular-nums">{{ v.telefono }}</dd>
+                </div>
+              }
               <div class="flex items-center justify-between gap-3">
                 <dt class="flex items-center gap-1.5 text-muted-foreground"><ng-icon name="lucideStore" class="size-3.5" /> Turno</dt>
                 <dd class="truncate font-mono text-xs">{{ v.caja_turno_id.slice(0, 8) }}</dd>

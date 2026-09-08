@@ -1,0 +1,32 @@
+<div class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
+  <p class="text-sm text-muted-foreground">
+    Teléfono <span class="font-mono font-medium text-foreground">{{ data.telefono }}</span> ·
+    saldo actual <span class="font-medium text-foreground tabular-nums">{{ data.saldoActual | currency }}</span>
+  </p>
+
+  <div class="space-y-1.5">
+    <label for="monto" class="text-sm font-medium">Monto del ajuste</label>
+    <input z-input id="monto" type="number" step="0.01" [ngModel]="monto()" (ngModelChange)="setMonto($event)" />
+    <p class="text-xs text-muted-foreground">
+      Positivo carga saldo (p. ej. saldo inicial); negativo lo corrige a la baja. No puede dejar el saldo negativo.
+    </p>
+  </div>
+
+  <div class="space-y-1.5">
+    <label for="motivo" class="text-sm font-medium">Motivo</label>
+    <input z-input id="motivo" [ngModel]="motivo()" (ngModelChange)="motivo.set($event)" placeholder="Opcional" />
+  </div>
+
+  <div class="rounded-md border bg-muted/30 p-2.5 text-sm">
+    <div class="flex justify-between">
+      <span class="text-muted-foreground">Saldo resultante</span>
+      <span class="tabular-nums font-semibold" [class.text-destructive]="saldoResultante() < 0">{{ saldoResultante() | currency }}</span>
+    </div>
+  </div>
+
+  @if (!valido()) {
+    <p class="text-[0.8rem] font-medium text-destructive">
+      Ingresa un monto distinto de 0 que no deje el saldo en negativo.
+    </p>
+  }
+</div>

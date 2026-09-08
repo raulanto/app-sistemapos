@@ -26,6 +26,10 @@ export const PERMISOS = {
     eliminar: ['clientes.eliminar'],
     credito: ['clientes.credito.gestionar', 'CLI_CREDITO'],
   },
+  monedero: {
+    /** Ajustar (cargar/corregir) saldos de monedero. Consultar saldo/ledger usa `clientes.leer`. */
+    ajustar: ['monedero.ajustar'],
+  },
   ventas: {
     crear: ['ventas.crear', 'VENTA_CREAR'],
     leer: ['ventas.leer'],

@@ -74,6 +74,12 @@
             @if (+v.saldo_pendiente > 0) {
               <div class="flex justify-between"><dt class="text-muted-foreground">A crédito</dt><dd class="tabular-nums text-amber-600">{{ v.saldo_pendiente | currency }}</dd></div>
             }
+            @if (+(v.monedero_usado ?? 0) > 0) {
+              <div class="flex justify-between"><dt class="text-muted-foreground">Pagado con monedero</dt><dd class="tabular-nums">{{ v.monedero_usado | currency }}</dd></div>
+            }
+            @if (+(v.monedero_generado ?? 0) > 0) {
+              <div class="flex justify-between text-primary"><dt>Monedero acumulado</dt><dd class="tabular-nums font-medium">+ {{ v.monedero_generado | currency }}</dd></div>
+            }
             <div class="flex justify-between"><dt class="text-muted-foreground">Estado</dt><dd><z-badge [zType]="v.estado === 'pagada' ? 'default' : 'secondary'">{{ v.estado }}</z-badge></dd></div>
           </dl>
 
@@ -352,6 +358,27 @@
             <span class="tabular-nums">{{ total() | currency }}</span>
           </div>
 
+          <!-- Teléfono / monedero -->
+          <div class="rounded-md border p-2">
+            <div class="relative">
+              <ng-icon name="lucidePhone" class="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <input z-input class="h-8 pl-8 text-sm" inputmode="tel" placeholder="Teléfono (monedero, opcional)"
+                     [ngModel]="telefono()" (ngModelChange)="telefono.set($event)" />
+            </div>
+            @if (telefono().trim()) {
+              <div class="mt-1.5 flex items-center justify-between text-xs">
+                <span class="text-muted-foreground">
+                  @if (consultandoMonedero()) { Consultando saldo… }
+                  @else if (!telefonoValido()) { Teléfono incompleto }
+                  @else { Saldo: <span class="font-medium text-foreground tabular-nums">{{ monederoDisponible() | currency }}</span> }
+                </span>
+                @if (monederoAGenerar() > 0) {
+                  <span class="text-primary">genera {{ monederoAGenerar() | currency }}</span>
+                }
+              </div>
+            }
+          </div>
+
           <!-- Pagos -->
           <div class="space-y-1.5">
             @for (p of pagos(); track $index) {
@@ -374,6 +401,11 @@
             <div class="flex flex-wrap gap-1.5">
               @for (m of metodosPago; track m.value) {
                 <button z-button zType="outline" zSize="sm" (click)="agregarPago(m.value)">+ {{ m.label }}</button>
+              }
+              @if (monederoDisponible() > 0) {
+                <button z-button zType="outline" zSize="sm" (click)="agregarPago('monedero')">
+                  <ng-icon name="lucideWallet" class="mr-1 size-3.5" /> Monedero
+                </button>
               }
               <button z-button zType="secondary" zSize="sm" (click)="pagoExacto()">Efectivo exacto</button>
             </div>
@@ -424,6 +456,12 @@
           }
           @if (hayLineaSinStock()) {
             <p class="text-[0.8rem] font-medium text-destructive">Hay líneas sin stock suficiente. Ajusta las cantidades.</p>
+          }
+          @if (faltaTelefonoMonedero()) {
+            <p class="text-[0.8rem] font-medium text-destructive">Captura el teléfono para pagar con monedero.</p>
+          }
+          @if (excesoMonedero()) {
+            <p class="text-[0.8rem] font-medium text-destructive">El pago con monedero supera el saldo disponible.</p>
           }
           <button z-button zType="default" class="w-full" [zLoading]="cobrando()" [zDisabled]="!puedeCobrar() || cobrando()" (click)="cobrar()">
             <ng-icon name="lucideReceiptText" class="mr-2 size-4" />

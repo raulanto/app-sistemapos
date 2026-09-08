@@ -27,6 +27,12 @@
       Hasta
       <input z-input type="date" class="w-40" [ngModel]="hasta()" (ngModelChange)="setHasta($event)" [min]="desde() || null" />
     </label>
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Teléfono
+      <input z-input class="w-40" inputmode="tel" placeholder="Monedero…"
+             [ngModel]="telefono()" (ngModelChange)="telefono.set($event)"
+             (keyup.enter)="setTelefono(telefono())" (blur)="setTelefono(telefono())" />
+    </label>
     @if (hayFiltros()) {
       <button z-button zType="ghost" zSize="sm" (click)="limpiarFiltros()">
         <ng-icon name="lucideX" class="mr-1.5 size-3.5" /> Limpiar

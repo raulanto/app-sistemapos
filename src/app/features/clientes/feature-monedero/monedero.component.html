@@ -1,0 +1,90 @@
+<div class="p-6 w-full max-w-4xl mx-auto space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Monedero electrónico</h1>
+    <p class="text-muted-foreground">Consulta el saldo y el historial de cashback de un teléfono.</p>
+  </div>
+
+  <div class="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
+    <label class="flex flex-1 flex-col gap-1 text-xs font-medium text-muted-foreground sm:max-w-xs">
+      Teléfono
+      <span class="relative">
+        <ng-icon name="lucideSearch" class="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <input z-input class="pl-8" inputmode="tel" placeholder="10 dígitos"
+               [ngModel]="telefono()" (ngModelChange)="telefono.set($event)" (keyup.enter)="buscar()" />
+      </span>
+    </label>
+    <button z-button zType="default" zSize="sm" [zLoading]="loading()" (click)="buscar()">
+      <ng-icon name="lucideSearch" class="mr-1.5 size-3.5" /> Consultar
+    </button>
+  </div>
+
+  @if (loading()) {
+    <z-skeleton class="h-28 w-full" />
+    <z-skeleton class="h-40 w-full" />
+  } @else if (noExiste()) {
+    <z-empty
+      zIcon="lucideWallet"
+      zTitle="Sin monedero"
+      [zDescription]="'El teléfono ' + buscado() + ' todavía no tiene monedero. Se crea con la primera compra o con un ajuste.'"
+      class="py-12"
+    />
+    @if (canAjustar()) {
+      <div class="text-center">
+        <button z-button zType="outline" (click)="ajustar()">
+          <ng-icon name="lucidePlus" class="mr-2 size-4" /> Crear con saldo inicial
+        </button>
+      </div>
+    }
+  } @else if (monedero(); as m) {
+    <div class="flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="space-y-1">
+        <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Saldo · {{ m.telefono }}</p>
+        <p class="text-3xl font-semibold tabular-nums">{{ saldo() | currency }}</p>
+        <p class="text-xs text-muted-foreground">Alta {{ m.created_at | date:'dd/MM/yyyy' }}</p>
+      </div>
+      @if (canAjustar()) {
+        <button z-button zType="outline" (click)="ajustar()">
+          <ng-icon name="lucideArrowUpDown" class="mr-2 size-4" /> Ajustar saldo
+        </button>
+      }
+    </div>
+
+    <div class="overflow-hidden rounded-xl border">
+      <div class="border-b bg-muted/30 px-4 py-2.5 text-sm font-semibold">Movimientos</div>
+      <div class="overflow-x-auto">
+        <table z-table>
+          <thead z-table-header class="bg-muted/50">
+            <tr z-table-row>
+              <th z-table-head>Fecha</th>
+              <th z-table-head>Tipo</th>
+              <th z-table-head class="text-right">Monto</th>
+              <th z-table-head class="text-right">Saldo</th>
+              <th z-table-head>Motivo</th>
+            </tr>
+          </thead>
+          <tbody z-table-body>
+            @for (mv of movimientos(); track mv.id) {
+              <tr z-table-row>
+                <td z-table-cell class="whitespace-nowrap text-xs text-muted-foreground">{{ mv.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td z-table-cell><z-badge zType="secondary" class="capitalize">{{ mv.tipo }}</z-badge></td>
+                <td z-table-cell class="text-right tabular-nums font-medium" [class.text-green-600]="signo(mv) > 0" [class.text-destructive]="signo(mv) < 0">
+                  {{ signo(mv) > 0 ? '+ ' : '' }}{{ mv.monto | currency }}
+                </td>
+                <td z-table-cell class="text-right tabular-nums text-muted-foreground">{{ mv.saldo_resultante | currency }}</td>
+                <td z-table-cell class="text-sm text-muted-foreground">{{ mv.motivo || (mv.venta_id ? 'Venta ' + mv.venta_id.slice(0, 8) : '—') }}</td>
+              </tr>
+            } @empty {
+              <tr z-table-row>
+                <td z-table-cell colspan="5" class="p-0">
+                  <z-empty zIcon="lucideWallet" zTitle="Sin movimientos" zDescription="Este monedero todavía no registra actividad." class="py-10" />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else {
+    <z-empty zIcon="lucideWallet" zTitle="Consulta un teléfono" zDescription="Escribe un número para ver su saldo y movimientos." class="py-16" />
+  }
+</div>
