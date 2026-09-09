@@ -523,7 +523,10 @@
           }
           <button z-button zType="default" class="w-full" [zLoading]="cobrando()" [zDisabled]="!puedeCobrar() || cobrando()" (click)="cobrar()">
             <ng-icon name="lucideReceiptText" class="mr-2 size-4" />
-            Cobrar {{ total() | currency }}
+            Cobrar {{ aCobrar() | currency }}
+            @if (hayPagoMonedero()) {
+              <span class="ml-1 text-xs font-normal opacity-80">(monedero − {{ monederoUsado() | currency }})</span>
+            }
           </button>
         </div>
       </div>

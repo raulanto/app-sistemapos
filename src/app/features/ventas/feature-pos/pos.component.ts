@@ -368,6 +368,8 @@ export class PosComponent {
   readonly monederoUsado = computed(() =>
     this.pagos().filter(p => p.metodo_pago === 'monedero').reduce((s, p) => s + (Number(p.monto) || 0), 0),
   );
+  /** Lo que el cliente entrega ahora (efectivo/tarjeta): el total menos lo cubierto por el monedero. */
+  readonly aCobrar = computed(() => this.round(Math.max(0, this.total() - this.monederoUsado())));
   readonly hayPagoMonedero = computed(() => this.monederoUsado() > 0);
   readonly faltaTelefonoMonedero = computed(() => this.hayPagoMonedero() && !this.telefono().trim());
   readonly excesoMonedero = computed(() => this.monederoUsado() > this.monederoDisponible() + 0.009);
@@ -726,11 +728,28 @@ export class PosComponent {
   // --- Pagos ---
 
   agregarPago(metodo: MetodoPago) {
+    if (metodo === 'monedero') return this.usarMonedero();
     const falta = Math.max(0, this.saldoPendiente());
-    let monto = this.round(falta || this.total());
-    // El monedero no puede exceder el saldo disponible del teléfono.
-    if (metodo === 'monedero') monto = this.round(Math.min(monto, this.monederoDisponible()));
+    const monto = this.round(falta || this.total());
     this.pagos.update(list => [...list, { monto, metodo_pago: metodo }]);
+  }
+
+  /**
+   * El monedero se aplica como un vale contra la cuenta: consume el saldo disponible
+   * (tope = total) y deja el resto listo para cobrar en efectivo. No es crédito.
+   * Recalcula efectivo y un monedero previo; conserva tarjeta/transferencia.
+   */
+  private usarMonedero() {
+    const usar = this.round(Math.min(this.monederoDisponible(), this.total()));
+    if (usar <= 0) return;
+    const otros = this.pagos().filter(p => p.metodo_pago !== 'monedero' && p.metodo_pago !== 'efectivo');
+    const cubiertoOtros = otros.reduce((s, p) => s + (Number(p.monto) || 0), 0);
+    const efectivo = this.round(this.total() - usar - cubiertoOtros);
+    this.pagos.set([
+      { monto: usar, metodo_pago: 'monedero' },
+      ...otros,
+      ...(efectivo > 0.009 ? [{ monto: efectivo, metodo_pago: 'efectivo' as MetodoPago }] : []),
+    ]);
   }
 
   setMontoPago(i: number, monto: number) {
@@ -763,7 +782,12 @@ export class PosComponent {
   }
 
   pagoExacto() {
-    this.pagos.set([{ monto: this.round(this.total()), metodo_pago: 'efectivo' }]);
+    const usar = this.round(this.monederoUsado());
+    const efectivo = this.round(this.total() - usar);
+    this.pagos.set([
+      ...(usar > 0.009 ? [{ monto: usar, metodo_pago: 'monedero' as MetodoPago }] : []),
+      ...(efectivo > 0.009 ? [{ monto: efectivo, metodo_pago: 'efectivo' as MetodoPago }] : []),
+    ]);
   }
 
   // --- Cliente (crédito) ---
