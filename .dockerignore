@@ -1,0 +1,25 @@
+# ── Dependencias ──────────────────────────────────────────
+node_modules
+dist
+.angular
+
+# ── Control de versiones ──────────────────────────────────
+.git
+.gitignore
+
+# ── IDE / editor ──────────────────────────────────────────
+.vscode
+.idea
+*.swp
+*.swo
+
+# ── Docker (evitar recursión) ─────────────────────────────
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# ── Misc ──────────────────────────────────────────────────
+README.md
+.agents
+.gemini
+*.md
