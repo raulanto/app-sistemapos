@@ -105,7 +105,9 @@ export class ProductoTableComponent {
   imagenMiniatura(producto: ProductoResponse): string | null {
     if (this.imagenesRotas().has(producto.id)) return null;
     const img = producto.imagen_principal;
-    return img?.thumbnail_url ?? img?.url ?? null;
+    // Se prefiere la original (`url`) sobre `thumbnail_url`: la miniatura la genera una
+    // Lambda que puede no existir en entornos locales y devolver 404 (igual que en el detalle y el POS).
+    return img?.url ?? img?.thumbnail_url ?? null;
   }
 
   marcarImagenRota(id: string) {

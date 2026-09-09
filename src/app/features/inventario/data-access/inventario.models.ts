@@ -321,14 +321,7 @@ export interface MovimientoResponse {
   usuario?: any;
 }
 
-export interface PaginationMeta {
-  page: number;
-  page_size: number;
-  total_items: number;
-  total_pages: number;
-  has_next: boolean;
-  has_prev: boolean;
-}
+export type { PaginationMeta, ApiResponse } from '@core/api.model';
 
 export interface ProductoQuery {
   categoria_id?: string[] | null;
@@ -339,22 +332,6 @@ export interface ProductoQuery {
   page_size?: number;
   sort?: string;
   include?: Array<'existencias' | 'categoria' | 'componentes' | 'unidades' | 'imagenes' | { type: 'existencias'; sucursal_id: string }>;
-}
-
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  meta?: {
-    pagination?: PaginationMeta;
-    sort?: string;
-    filters?: any;
-    summary?: any;
-  };
-  links?: {
-    self?: string;
-    next?: string;
-    prev?: string;
-  };
 }
 
 
