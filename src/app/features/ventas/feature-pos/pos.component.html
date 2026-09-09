@@ -5,7 +5,9 @@
       <ng-icon name="lucideShoppingCart" class="size-5 text-primary" />
       <h1 class="text-lg font-bold tracking-tight">Punto de venta</h1>
       @if (turno(); as t) {
-        <z-badge zType="secondary" class="ml-1">Caja abierta · {{ t.abierto_en | date:'HH:mm' }}</z-badge>
+        <z-badge zType="secondary" class="ml-1">
+          {{ t.caja?.nombre ? t.caja?.nombre + ' · ' : 'Caja abierta · ' }}{{ t.abierto_en | date:'HH:mm' }}
+        </z-badge>
       }
     </div>
     <div class="flex items-center gap-2">
@@ -13,6 +15,9 @@
         <ng-icon name="lucideHistory" class="mr-1.5 size-4" /> Historial
       </a>
       @if (turno() && canOperarCaja()) {
+        <button z-button zType="ghost" zSize="sm" (click)="abrirMovimientos()">
+          <ng-icon name="lucideArrowLeftRight" class="mr-1.5 size-4" /> Movimientos
+        </button>
         <button z-button zType="outline" zSize="sm" (click)="cerrarCaja()">
           <ng-icon name="lucideLockKeyhole" class="mr-1.5 size-4" /> Cerrar caja
         </button>

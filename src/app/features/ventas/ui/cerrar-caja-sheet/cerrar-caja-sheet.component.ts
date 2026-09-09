@@ -6,7 +6,12 @@ import { Observable } from 'rxjs';
 import { CajaService } from '../../data-access/caja.service';
 import { VentaService } from '../../data-access/venta.service';
 import { injectSheetData } from '../../../../shared/components/sheet/sheet.service';
-import { CajaTurnoResponse, ResumenTurnoResponse, CorteCajaResponse } from '../../data-access/ventas.models';
+import {
+  CajaTurnoResponse,
+  ResumenTurnoResponse,
+  CorteCajaResponse,
+  DIFERENCIA_UMBRAL,
+} from '../../data-access/ventas.models';
 import { ZardFieldImports } from '../../../../shared/components/field/field.imports';
 import { ZardInputComponent } from '../../../../shared/components/input/input.component';
 
@@ -30,6 +35,24 @@ export interface CerrarCajaSheetData {
             <dt class="text-muted-foreground">+ Ventas en efectivo ({{ r.cantidad_ventas }})</dt>
             <dd class="tabular-nums">{{ r.total_efectivo | currency }}</dd>
           </div>
+          @if (+(r.total_ingresos ?? 0) > 0) {
+            <div class="flex justify-between border-b px-3 py-2">
+              <dt class="text-muted-foreground">+ Ingresos de caja</dt>
+              <dd class="tabular-nums">{{ r.total_ingresos | currency }}</dd>
+            </div>
+          }
+          @if (+(r.total_retiros ?? 0) > 0) {
+            <div class="flex justify-between border-b px-3 py-2 text-amber-600">
+              <dt>− Retiros de caja</dt>
+              <dd class="tabular-nums">{{ r.total_retiros | currency }}</dd>
+            </div>
+          }
+          @if (+(r.total_gastos ?? 0) > 0) {
+            <div class="flex justify-between border-b px-3 py-2 text-amber-600">
+              <dt>− Gastos del cajón</dt>
+              <dd class="tabular-nums">{{ r.total_gastos | currency }}</dd>
+            </div>
+          }
           @if (+r.total_devoluciones_efectivo > 0) {
             <div class="flex justify-between border-b px-3 py-2 text-amber-600">
               <dt>− Devoluciones en efectivo</dt>
@@ -64,8 +87,19 @@ export interface CerrarCajaSheetData {
         </div>
       }
 
+      @if (requiereNota()) {
+        <div z-field>
+          <label z-field-label for="nota_cierre">Nota de cierre *</label>
+          <input z-input id="nota_cierre" type="text" formControlName="nota_cierre"
+                 placeholder="Ej. faltante de 50, se avisó a gerencia" />
+          <p class="text-[0.8rem] text-amber-600">
+            La diferencia supera {{ umbral | currency }}: el turno quedará pendiente de conciliar por un gerente.
+          </p>
+        </div>
+      }
+
       <p class="text-[0.8rem] text-muted-foreground">
-        El arqueo solo cuenta efectivo. Tarjeta y transferencia se concilian aparte.
+        El arqueo solo cuenta efectivo. Tarjeta, transferencia y monedero se concilian aparte.
       </p>
 
       @if (corte(); as c) {
@@ -98,11 +132,13 @@ export class CerrarCajaSheetComponent implements OnInit {
   private ventaService = inject(VentaService);
   public sheetData = injectSheetData<CerrarCajaSheetData>();
 
+  readonly umbral = DIFERENCIA_UMBRAL;
   readonly resumen = signal<ResumenTurnoResponse | null>(null);
   readonly corte = signal<CorteCajaResponse | null>(null);
 
   form = this.fb.group({
     saldo_final_declarado: [0, [Validators.required, Validators.min(0)]],
+    nota_cierre: [''],
   });
 
   readonly diferencia = computed(() => {
@@ -110,6 +146,8 @@ export class CerrarCajaSheetComponent implements OnInit {
     if (!r) return 0;
     return Number(this.form.controls.saldo_final_declarado.value ?? 0) - Number(r.saldo_esperado);
   });
+
+  readonly requiereNota = computed(() => Math.abs(this.diferencia()) >= this.umbral);
 
   ngOnInit() {
     this.cajaService.resumen(this.sheetData.turnoId).subscribe({
@@ -124,12 +162,14 @@ export class CerrarCajaSheetComponent implements OnInit {
   }
 
   save(): Observable<CajaTurnoResponse> | void {
-    if (this.form.invalid) {
+    const nota = (this.form.getRawValue().nota_cierre ?? '').trim();
+    if (this.form.invalid || (this.requiereNota() && !nota)) {
       this.form.markAllAsTouched();
       return;
     }
     return this.cajaService.cerrar(this.sheetData.turnoId, {
       saldo_final_declarado: Number(this.form.getRawValue().saldo_final_declarado),
+      ...(nota ? { nota_cierre: nota } : {}),
     });
   }
 }

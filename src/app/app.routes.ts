@@ -36,6 +36,10 @@ export const routes: Routes = [
           import('./features/promociones/promociones.routes').then((m) => m.PROMOCIONES_ROUTES),
       },
       {
+        path: 'cajas',
+        loadChildren: () => import('./features/cajas/cajas.routes').then((m) => m.CAJAS_ROUTES),
+      },
+      {
         path: 'reportes',
         loadChildren: () =>
           import('./features/reportes/reportes.routes').then((m) => m.REPORTES_ROUTES),

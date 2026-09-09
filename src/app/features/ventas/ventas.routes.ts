@@ -19,4 +19,10 @@ export const VENTAS_ROUTES: Routes = [
     canActivate: [permissionGuard(...PERMISOS.ventas.leer)],
     loadComponent: () => import('./feature-venta-detail/venta-detail.component').then(m => m.VentaDetailComponent),
   },
+  {
+    path: 'turnos',
+    canActivate: [permissionGuard(...PERMISOS.caja.verHistorico)],
+    loadComponent: () =>
+      import('./feature-turnos-historico/turnos-historico.component').then(m => m.TurnosHistoricoComponent),
+  },
 ];

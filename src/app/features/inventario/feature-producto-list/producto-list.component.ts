@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { debounceTime, switchMap, tap, map } from 'rxjs/operators';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucidePlus, lucideTrendingUp, lucideTrendingDown, lucideMinus, lucideAlertCircle } from '@ng-icons/lucide';
+import { lucidePlus, lucideTrendingUp, lucideTrendingDown, lucideMinus, lucideAlertCircle, lucideRefreshCw } from '@ng-icons/lucide';
 import { ProductoService } from '../data-access/producto.service';
 import { CategoriaService } from '../data-access/categoria.service';
 import { CategoriaResponse, ProductoQuery, ProductoResponse, ProductoKpiResponse } from '../data-access/inventario.models';
@@ -41,7 +41,7 @@ import { InventarioActionService } from '../data-access/inventario-action.servic
     ProductoTableComponent
   ],
   viewProviders: [
-    provideIcons({ lucidePlus, lucideTrendingUp, lucideTrendingDown, lucideMinus, lucideAlertCircle })
+    provideIcons({ lucidePlus, lucideTrendingUp, lucideTrendingDown, lucideMinus, lucideAlertCircle, lucideRefreshCw })
   ],
   templateUrl: './producto-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush

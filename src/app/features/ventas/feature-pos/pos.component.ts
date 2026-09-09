@@ -30,6 +30,7 @@ import {
   lucidePhone,
   lucideWallet,
   lucideTicket,
+  lucideArrowLeftRight,
 } from '@ng-icons/lucide';
 
 import { ProductoService } from '../../inventario/data-access/producto.service';
@@ -59,6 +60,7 @@ import { ZardSheetService } from '../../../shared/components/sheet/sheet.service
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
 import { AbrirCajaSheetComponent } from '../ui/abrir-caja-sheet/abrir-caja-sheet.component';
 import { CerrarCajaSheetComponent } from '../ui/cerrar-caja-sheet/cerrar-caja-sheet.component';
+import { MovimientosCajaSheetComponent } from '../ui/movimientos-caja-sheet/movimientos-caja-sheet.component';
 
 interface LineaCarrito {
   key: string;
@@ -110,6 +112,7 @@ interface LineaCarrito {
       lucidePhone,
       lucideWallet,
       lucideTicket,
+      lucideArrowLeftRight,
     }),
   ],
   templateUrl: './pos.component.html',
@@ -562,6 +565,20 @@ export class PosComponent {
     });
   }
 
+  abrirMovimientos() {
+    const t = this.turno();
+    if (!t) return;
+    this.sheetService.create({
+      zTitle: 'Movimientos de caja',
+      zDescription: 'Retiros, ingresos y gastos del turno.',
+      zContent: MovimientosCajaSheetComponent,
+      zSize: 'lg',
+      zData: { turnoId: t.id },
+      zOkText: null,
+      zCancelText: 'Cerrar',
+    });
+  }
+
   cerrarCaja() {
     const t = this.turno();
     if (!t) return;
@@ -579,9 +596,13 @@ export class PosComponent {
           obs.subscribe({
             next: (turno: CajaTurnoResponse) => {
               const dif = Number(turno.diferencia ?? 0);
-              this.sonner.success(
-                dif === 0 ? 'Turno cerrado, la caja cuadra' : `Turno cerrado · diferencia ${dif > 0 ? '+' : ''}${dif.toFixed(2)}`,
-              );
+              if (turno.estado === 'cerrado_con_diferencia') {
+                this.sonner.warning(`Turno cerrado con diferencia ${dif > 0 ? '+' : ''}${dif.toFixed(2)} · pendiente de conciliar`);
+              } else {
+                this.sonner.success(
+                  dif === 0 ? 'Turno cerrado, la caja cuadra' : `Turno cerrado · diferencia ${dif > 0 ? '+' : ''}${dif.toFixed(2)}`,
+                );
+              }
               this.turno.set(null);
               this.limpiarVenta();
               resolve();

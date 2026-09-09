@@ -1,0 +1,90 @@
+<div class="w-full space-y-6 p-6">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Turnos de caja</h1>
+    <p class="text-muted-foreground">Histórico de aperturas y cierres, diferencias y conciliación.</p>
+  </div>
+
+  @if (efectivoActual() !== null) {
+    <div z-card class="max-w-xs">
+      <div z-card-content class="flex items-center gap-3 p-4">
+        <span class="grid size-10 place-items-center rounded-full bg-primary/10 text-primary">
+          <ng-icon name="lucideWallet" class="size-5" />
+        </span>
+        <div>
+          <p class="text-xs text-muted-foreground">Efectivo en cajones abiertos ahora</p>
+          <p class="text-xl font-bold tabular-nums">{{ efectivoActual() | currency }}</p>
+        </div>
+      </div>
+    </div>
+  }
+
+  <div class="flex flex-wrap items-end gap-3">
+    <z-select class="w-52" [ngModel]="filtroEstado()" (ngModelChange)="filtroEstado.set($event)">
+      <z-select-item zValue="">Todos los estados</z-select-item>
+      @for (e of estados; track e.value) { <z-select-item [zValue]="e.value">{{ e.label }}</z-select-item> }
+    </z-select>
+    <label class="text-xs text-muted-foreground">Desde
+      <input z-input class="mt-0.5 block" type="date" [ngModel]="desde()" (ngModelChange)="desde.set($event)" />
+    </label>
+    <label class="text-xs text-muted-foreground">Hasta
+      <input z-input class="mt-0.5 block" type="date" [ngModel]="hasta()" (ngModelChange)="hasta.set($event)" />
+    </label>
+  </div>
+
+  <div class="overflow-hidden rounded-xl border">
+    <div class="overflow-x-auto">
+      <table z-table>
+        <thead z-table-header class="bg-muted/50">
+          <tr z-table-row>
+            <th z-table-head>Apertura</th>
+            <th z-table-head>Cierre</th>
+            <th z-table-head>Terminal</th>
+            <th z-table-head>Cajero</th>
+            <th z-table-head class="text-right">Inicial</th>
+            <th z-table-head class="text-right">Declarado</th>
+            <th z-table-head class="text-right">Diferencia</th>
+            <th z-table-head>Estado</th>
+            <th z-table-head class="text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody z-table-body>
+          @if (loading()) {
+            @for (i of [1,2,3,4,5]; track i) {
+              <tr z-table-row><td z-table-cell colspan="9"><z-skeleton class="h-5 w-full" /></td></tr>
+            }
+          } @else {
+            @for (t of turnos(); track t.id) {
+              <tr z-table-row>
+                <td z-table-cell class="whitespace-nowrap text-sm">{{ t.abierto_en | date:'dd/MM/yy HH:mm' }}</td>
+                <td z-table-cell class="whitespace-nowrap text-sm text-muted-foreground">{{ (t.cerrado_en | date:'dd/MM/yy HH:mm') || '—' }}</td>
+                <td z-table-cell class="text-sm">{{ t.caja?.nombre ?? '—' }}</td>
+                <td z-table-cell class="text-sm">{{ t.usuario?.nombre ?? '—' }}</td>
+                <td z-table-cell class="text-right tabular-nums">{{ t.saldo_inicial | currency }}</td>
+                <td z-table-cell class="text-right tabular-nums">{{ (t.saldo_final_declarado | currency) || '—' }}</td>
+                <td z-table-cell class="text-right tabular-nums"
+                    [class.text-destructive]="+(t.diferencia ?? 0) < 0"
+                    [class.text-green-600]="+(t.diferencia ?? 0) > 0">
+                  {{ t.diferencia != null ? (t.diferencia | currency) : '—' }}
+                </td>
+                <td z-table-cell><z-badge [zType]="badgeTipo(t.estado)">{{ etiquetaEstado(t.estado) }}</z-badge></td>
+                <td z-table-cell class="text-right">
+                  @if (t.estado === 'cerrado_con_diferencia' && canConciliar()) {
+                    <button z-button zType="outline" zSize="sm" (click)="conciliar(t)">
+                      <ng-icon name="lucideScale" class="mr-1.5 size-3.5" /> Conciliar
+                    </button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr z-table-row>
+                <td z-table-cell colspan="9" class="p-0">
+                  <z-empty zIcon="lucideBanknote" zTitle="Sin turnos" zDescription="No hay turnos para los filtros elegidos." class="py-12" />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

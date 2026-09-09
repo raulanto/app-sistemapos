@@ -1,0 +1,77 @@
+<div class="w-full space-y-6 p-6">
+  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Terminales de caja</h1>
+      <p class="text-muted-foreground">Cajas físicas de tu sucursal. Cada turno se abre sobre una terminal.</p>
+    </div>
+    @if (canAdministrar()) {
+      <button z-button zType="default" (click)="openCreateSheet()">
+        <ng-icon name="lucidePlus" class="mr-2" /> Nueva terminal
+      </button>
+    }
+  </div>
+
+  <label class="flex w-fit items-center gap-2 text-sm text-muted-foreground">
+    <z-switch [zChecked]="incluirInactivas()" (zCheckedChange)="toggleInactivas($event)" zId="incluir_inactivas"></z-switch>
+    Incluir inactivas
+  </label>
+
+  <div class="overflow-hidden rounded-xl border">
+    <div class="overflow-x-auto">
+      <table z-table>
+        <thead z-table-header class="bg-muted/50">
+          <tr z-table-row>
+            <th z-table-head>Terminal</th>
+            <th z-table-head>Estado</th>
+            <th z-table-head class="text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody z-table-body>
+          @if (loading()) {
+            @for (i of [1,2,3]; track i) {
+              <tr z-table-row><td z-table-cell colspan="3"><z-skeleton class="h-5 w-full" /></td></tr>
+            }
+          } @else {
+            @for (c of cajas(); track c.id) {
+              <tr z-table-row [class.opacity-60]="!c.activo">
+                <td z-table-cell class="font-medium">
+                  <span class="flex items-center gap-2">
+                    <ng-icon name="lucideMonitor" class="size-4 text-muted-foreground" />
+                    {{ c.nombre }}
+                  </span>
+                </td>
+                <td z-table-cell>
+                  <z-badge [zType]="c.activo ? 'default' : 'secondary'">{{ c.activo ? 'Activa' : 'Inactiva' }}</z-badge>
+                </td>
+                <td z-table-cell>
+                  <div class="flex items-center justify-end gap-1">
+                    @if (canAdministrar()) {
+                      <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Renombrar" (click)="openEditSheet(c)">
+                        <ng-icon name="lucidePencil" class="size-4" />
+                      </button>
+                      @if (c.activo) {
+                        <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-destructive" title="Desactivar" (click)="desactivar(c)">
+                          <ng-icon name="lucideBan" class="size-4" />
+                        </button>
+                      } @else {
+                        <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-green-600" title="Reactivar" (click)="reactivar(c)">
+                          <ng-icon name="lucideCircleCheck" class="size-4" />
+                        </button>
+                      }
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr z-table-row>
+                <td z-table-cell colspan="3" class="p-0">
+                  <z-empty zIcon="lucideMonitor" zTitle="Sin terminales" zDescription="Crea una terminal para poder abrir turnos de caja." class="py-12" />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

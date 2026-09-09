@@ -1,0 +1,66 @@
+<div class="grid min-h-0 flex-1 auto-rows-min gap-5 overflow-y-auto px-4 pb-4">
+  <p class="text-sm text-muted-foreground">
+    Efectivo que entra o sale del cajón por algo que no es una venta. Ajusta el efectivo esperado del arqueo y
+    queda en auditoría (no se edita ni se borra).
+  </p>
+
+  <form [formGroup]="form" class="grid gap-3 rounded-md border p-3">
+    <div class="grid grid-cols-2 gap-3">
+      <div z-field>
+        <label z-field-label>Tipo *</label>
+        <z-select formControlName="tipo" placeholder="Tipo">
+          @for (t of tipos; track t.value) {
+            <z-select-item [zValue]="t.value">{{ t.label }}</z-select-item>
+          }
+        </z-select>
+      </div>
+      <div z-field>
+        <label z-field-label for="monto">Monto *</label>
+        <input z-input id="monto" type="number" min="0" step="0.01" formControlName="monto" placeholder="0.00" />
+      </div>
+    </div>
+    <p class="-mt-1 text-[0.8rem] text-muted-foreground">
+      @for (t of tipos; track t.value) { @if (t.value === tipoSel()) { {{ t.hint }} } }
+    </p>
+    <div z-field>
+      <label z-field-label for="motivo">Motivo {{ motivoRequerido() ? '*' : '(opcional)' }}</label>
+      <input z-input id="motivo" type="text" formControlName="motivo" placeholder="Ej. traslado a caja fuerte" />
+      @if (motivoRequerido() && form.controls.motivo.touched && !form.controls.motivo.value?.trim()) {
+        <p class="text-[0.8rem] font-medium text-destructive">Retiro y gasto necesitan un motivo.</p>
+      }
+    </div>
+    <button z-button zType="default" class="justify-self-start" [zLoading]="guardando()" (click)="registrar()">
+      <ng-icon name="lucidePlus" class="mr-2 size-4" /> Registrar movimiento
+    </button>
+  </form>
+
+  @if (loading()) {
+    <p class="text-sm text-muted-foreground">Cargando movimientos…</p>
+  } @else if (movimientos().length === 0) {
+    <z-empty zIcon="lucideReceipt" zTitle="Sin movimientos" zDescription="Todavía no se registraron retiros, ingresos ni gastos en este turno." class="py-8" />
+  } @else {
+    <ul class="divide-y rounded-md border">
+      @for (m of movimientos(); track m.id) {
+        <li class="flex items-center justify-between gap-3 p-2.5">
+          <div class="flex min-w-0 items-center gap-2.5">
+            <span class="grid size-8 shrink-0 place-items-center rounded-full"
+                  [class]="m.tipo === 'ingreso' ? 'bg-green-500/10 text-green-600' : 'bg-amber-500/10 text-amber-600'">
+              <ng-icon [name]="iconoDe(m.tipo)" class="size-4" />
+            </span>
+            <div class="min-w-0">
+              <p class="flex items-center gap-2 text-sm font-medium capitalize">
+                {{ m.tipo }}
+                <z-badge zType="outline" class="text-[10px]">{{ m.created_at | date:'dd/MM HH:mm' }}</z-badge>
+              </p>
+              @if (m.motivo) { <p class="truncate text-xs text-muted-foreground">{{ m.motivo }}</p> }
+            </div>
+          </div>
+          <span class="shrink-0 text-sm font-semibold tabular-nums"
+                [class]="m.tipo === 'ingreso' ? 'text-green-600' : 'text-amber-600'">
+            {{ m.tipo === 'ingreso' ? '+ ' : '− ' }}{{ m.monto | currency }}
+          </span>
+        </li>
+      }
+    </ul>
+  }
+</div>

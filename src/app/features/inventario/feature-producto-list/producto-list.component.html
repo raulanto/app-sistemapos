@@ -4,13 +4,16 @@
       <h1 class="text-6xl font-extrabold">Productos</h1>
       <p class="text-muted-foreground">Gestiona el catálogo de productos y precios.</p>
     </div>
-    @if (canCrear()) {
-      <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2">
+      <button z-button zType="outline" zSize="icon" (click)="refreshTrigger.update(v => v + 1)" aria-label="Refrescar datos">
+        <ng-icon name="lucideRefreshCw" class="size-4" />
+      </button>
+      @if (canCrear()) {
         <a z-button zType="default" routerLink="/inventario/productos/nuevo">
           <ng-icon name="lucidePlus" class="mr-2" /> Nuevo Producto
         </a>
-      </div>
-    }
+      }
+    </div>
   </div>
 
   <!-- KPIs -->

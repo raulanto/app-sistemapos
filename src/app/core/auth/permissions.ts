@@ -39,8 +39,16 @@ export const PERMISOS = {
     descuentoManual: ['ventas.descuento_manual'],
   },
   caja: {
-    /** Abrir/cerrar turno y arqueo. `ventas.crear` también lo habilita. */
+    /** Abrir/cerrar turno, movimientos y arqueo. `ventas.crear` también lo habilita. */
     operar: ['caja.operar', 'ventas.crear', 'VENTA_CREAR'],
+    /** Alta/baja/rename de terminales físicas. */
+    administrar: ['caja.administrar'],
+    /** Cerrar u operar el turno de otro cajero (turno abandonado). */
+    forzarCierre: ['caja.forzar_cierre'],
+    /** Conciliar un turno `cerrado_con_diferencia`. */
+    autorizarDiferencia: ['caja.autorizar_diferencia'],
+    /** Histórico de turnos y efectivo en tiempo real. */
+    verHistorico: ['caja.ver_historico'],
   },
   promociones: {
     crear: ['promociones.crear'],
