@@ -1,0 +1,233 @@
+<div class="p-6 w-full max-w-5xl mx-auto space-y-6">
+  <a routerLink="/pedidos" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+    <ng-icon name="lucideArrowLeft" class="size-4" /> Pedidos
+  </a>
+
+  @if (loading()) {
+    <z-skeleton class="h-10 w-72" />
+    <z-skeleton class="h-56 w-full" />
+  } @else if (error() || !pedido()) {
+    <z-empty zIcon="lucideReceiptText" zTitle="Pedido no encontrado" zDescription="El folio no existe o no tienes acceso." class="py-16" />
+  } @else if (pedido(); as p) {
+    <!-- Encabezado -->
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div class="space-y-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <h1 class="text-2xl font-bold tracking-tight">{{ labelTipo(p.tipo) }}</h1>
+          <z-badge [zType]="estadoBadge(p.estado)">{{ labelEstado(p.estado) }}</z-badge>
+          @if (p.estado_entrega) {
+            <z-badge [zType]="entregaBadge(p.estado_entrega)">{{ labelEntrega(p.estado_entrega) }}</z-badge>
+          }
+          <z-badge zType="outline" class="uppercase">{{ p.canal }}</z-badge>
+        </div>
+        <p class="font-mono text-xs text-muted-foreground">{{ p.id }}</p>
+        <p class="text-sm text-muted-foreground">{{ p.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
+      </div>
+
+      <!-- Acciones por estado -->
+      <div class="flex flex-wrap items-center gap-2">
+        @if (p.estado === 'borrador') {
+          @if (canEditar()) {
+            <button z-button zType="outline" zSize="sm" (click)="editar()">
+              <ng-icon name="lucidePencil" class="mr-2 size-4" /> Editar
+            </button>
+          }
+          @if (canConfirmar()) {
+            <button z-button zType="default" zSize="sm" [zLoading]="working()" (click)="confirmar()">
+              <ng-icon name="lucideCircleCheck" class="mr-2 size-4" /> Confirmar
+            </button>
+          }
+        }
+        @if (p.estado === 'confirmado') {
+          @if (canEditar()) {
+            <button z-button zType="outline" zSize="sm" [zLoading]="working()" (click)="reabrir()">
+              <ng-icon name="lucideRotateCcw" class="mr-2 size-4" /> Reabrir
+            </button>
+          }
+          @if (canFacturar()) {
+            <button z-button zType="default" zSize="sm" (click)="facturar()">
+              <ng-icon name="lucideReceiptText" class="mr-2 size-4" /> Facturar
+            </button>
+          }
+        }
+        @if ((p.estado === 'borrador' || p.estado === 'confirmado')) {
+          @if (canEditar()) {
+            <button z-button zType="outline" zSize="sm" (click)="anticipo()">
+              <ng-icon name="lucideWallet" class="mr-2 size-4" /> Anticipo
+            </button>
+          }
+          @if (canCancelar()) {
+            <button z-button zType="outline" zSize="sm" class="text-destructive hover:bg-destructive/10" (click)="cancelar()">
+              <ng-icon name="lucideBan" class="mr-2 size-4" /> Cancelar
+            </button>
+          }
+        }
+        @if (p.estado === 'facturado' && p.venta_id) {
+          <a z-button zType="outline" zSize="sm" [routerLink]="['/ventas/historial', p.venta_id]">
+            <ng-icon name="lucideReceiptText" class="mr-2 size-4" /> Ver venta
+          </a>
+          <button z-button zType="outline" zSize="sm" (click)="imprimirTicket()">
+            <ng-icon name="lucidePrinter" class="mr-2 size-4" /> Ticket
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+      <!-- Líneas -->
+      <div z-card class="lg:col-span-2">
+        <z-card-header><z-card-title zTitle="Productos" class="text-base" /></z-card-header>
+        <z-card-content class="p-0">
+          <div class="overflow-x-auto">
+            <table z-table>
+              <thead z-table-header class="bg-muted/50">
+                <tr z-table-row>
+                  <th z-table-head>Producto</th>
+                  <th z-table-head class="text-right">Cant.</th>
+                  <th z-table-head class="text-right">Precio</th>
+                  <th z-table-head class="text-right">Desc.</th>
+                  <th z-table-head class="text-right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody z-table-body>
+                @for (l of p.lineas; track l.id) {
+                  <tr z-table-row>
+                    <td z-table-cell>
+                      <div class="font-medium">{{ nombreProducto(l.producto_id) }}</div>
+                      @if (l.producto_unidad_id) {
+                        <div class="text-xs text-muted-foreground">Presentación</div>
+                      }
+                      @if (l.promo_etiqueta) {
+                        <div class="text-xs text-primary">{{ l.promo_etiqueta }} · − {{ l.promo_descuento | currency }}</div>
+                      }
+                    </td>
+                    <td z-table-cell class="text-right tabular-nums">{{ l.cantidad }}</td>
+                    <td z-table-cell class="text-right tabular-nums">{{ l.precio_unitario | currency }}</td>
+                    <td z-table-cell class="text-right tabular-nums text-muted-foreground">
+                      {{ (+l.descuento_linea + (+(l.promo_descuento || 0))) | currency }}
+                    </td>
+                    <td z-table-cell class="text-right tabular-nums font-medium">{{ l.subtotal | currency }}</td>
+                  </tr>
+                } @empty {
+                  <tr z-table-row><td z-table-cell colspan="5" class="py-8 text-center text-muted-foreground">Pedido sin líneas.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </z-card-content>
+      </div>
+
+      <!-- Resumen + entrega + pagos + datos -->
+      <div class="space-y-6">
+        <div z-card>
+          <z-card-header><z-card-title zTitle="Resumen" class="text-base" /></z-card-header>
+          <z-card-content>
+            <dl class="space-y-2 text-sm">
+              <div class="flex justify-between"><dt class="text-muted-foreground">Subtotal</dt><dd class="tabular-nums">{{ p.subtotal | currency }}</dd></div>
+              @if (ahorroPromo() > 0) {
+                <div class="flex justify-between text-primary"><dt>Ahorro por promos</dt><dd class="tabular-nums">− {{ ahorroPromo() | currency }}</dd></div>
+              }
+              @if (+p.descuento_total > 0) {
+                <div class="flex justify-between"><dt class="text-muted-foreground">Descuento total</dt><dd class="tabular-nums">− {{ p.descuento_total | currency }}</dd></div>
+              }
+              @if (+p.costo_envio > 0) {
+                <div class="flex justify-between"><dt class="text-muted-foreground">Envío</dt><dd class="tabular-nums">{{ p.costo_envio | currency }}</dd></div>
+              }
+              <z-separator />
+              <div class="flex justify-between text-base font-semibold"><dt>Total</dt><dd class="tabular-nums">{{ p.total | currency }}</dd></div>
+              @if (+p.total_anticipos > 0) {
+                <div class="flex justify-between text-emerald-600 dark:text-emerald-400"><dt>Anticipos</dt><dd class="tabular-nums">− {{ p.total_anticipos | currency }}</dd></div>
+              }
+              <div class="flex justify-between" [class.text-amber-600]="+p.saldo_por_cobrar > 0">
+                <dt class="text-muted-foreground">Saldo por cobrar</dt><dd class="tabular-nums font-medium">{{ p.saldo_por_cobrar | currency }}</dd>
+              </div>
+            </dl>
+          </z-card-content>
+        </div>
+
+        @if (esEntrega()) {
+          <div z-card>
+            <z-card-header>
+              <z-card-title zTitle="Entrega" class="text-base" />
+              @if (canRepartir() && p.estado !== 'cancelado') {
+                <div z-card-action>
+                  <button z-button zType="outline" zSize="sm" (click)="gestionarEntrega()">
+                    <ng-icon name="lucideTruck" class="mr-2 size-4" /> Gestionar
+                  </button>
+                </div>
+              }
+            </z-card-header>
+            <z-card-content>
+              <dl class="space-y-2 text-sm">
+                @if (p.estado_entrega) {
+                  <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Estado</dt>
+                    <dd><z-badge [zType]="entregaBadge(p.estado_entrega)">{{ labelEntrega(p.estado_entrega) }}</z-badge></dd>
+                  </div>
+                }
+                @if (p.direccion_texto) {
+                  <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Dirección</dt><dd class="text-right">{{ p.direccion_texto }}</dd></div>
+                }
+                @if (p.referencia_direccion) {
+                  <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Referencia</dt><dd class="text-right">{{ p.referencia_direccion }}</dd></div>
+                }
+                <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Repartidor</dt><dd class="text-right font-medium">{{ nombreRepartidor(p.repartidor_id) }}</dd></div>
+                @if (p.fecha_promesa) {
+                  <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Promesa</dt><dd class="tabular-nums">{{ p.fecha_promesa | date:'dd/MM HH:mm' }}</dd></div>
+                }
+                @if (p.despachado_en) {
+                  <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Despachado</dt><dd class="tabular-nums">{{ p.despachado_en | date:'dd/MM HH:mm' }}</dd></div>
+                }
+                @if (p.entregado_en) {
+                  <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Entregado</dt><dd class="tabular-nums">{{ p.entregado_en | date:'dd/MM HH:mm' }}</dd></div>
+                }
+                @if (p.entrega_fallo_motivo) {
+                  <div class="text-destructive">Fallo: {{ p.entrega_fallo_motivo }}</div>
+                }
+              </dl>
+            </z-card-content>
+          </div>
+        }
+
+        <div z-card>
+          <z-card-header><z-card-title zTitle="Anticipos y pagos" class="text-base" /></z-card-header>
+          <z-card-content class="space-y-2 text-sm">
+            @for (pg of p.pagos; track pg.id) {
+              <div class="flex items-center justify-between" [class.opacity-50]="pg.reembolsado">
+                <span class="text-muted-foreground">
+                  {{ pg.created_at | date:'dd/MM/yy HH:mm' }} · {{ metodoLabel[pg.metodo_pago] || pg.metodo_pago }}
+                  @if (pg.reembolsado) { <span class="text-xs">· reembolsado</span> }
+                </span>
+                <span class="tabular-nums font-medium">{{ pg.monto | currency }}</span>
+              </div>
+            } @empty {
+              <p class="text-muted-foreground">Sin anticipos registrados.</p>
+            }
+          </z-card-content>
+        </div>
+
+        <div z-card>
+          <z-card-header><z-card-title zTitle="Datos" class="text-base" /></z-card-header>
+          <z-card-content>
+            <dl class="space-y-2 text-sm">
+              @if (p.telefono) {
+                <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Teléfono</dt><dd class="tabular-nums font-medium">{{ p.telefono }}</dd></div>
+              }
+              @if (p.cliente_id) {
+                <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Cliente</dt><dd class="font-mono text-xs">{{ p.cliente_id.slice(0, 8) }}</dd></div>
+              }
+              @if (p.codigo_cupon) {
+                <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Cupón</dt><dd class="font-medium">{{ p.codigo_cupon }}</dd></div>
+              }
+              @if (p.motivo_descuento) {
+                <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Motivo desc.</dt><dd class="text-right">{{ p.motivo_descuento }}</dd></div>
+              }
+              @if (p.notas) {
+                <div><dt class="text-muted-foreground">Notas</dt><dd class="mt-1">{{ p.notas }}</dd></div>
+              }
+            </dl>
+          </z-card-content>
+        </div>
+      </div>
+    </div>
+  }
+</div>

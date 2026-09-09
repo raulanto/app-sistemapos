@@ -5,6 +5,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideLayoutDashboard,
   lucideShoppingCart,
+  lucideClipboardList,
   lucidePackage,
   lucideUsers,
   lucideBarChart3,
@@ -37,6 +38,7 @@ export interface Sidebar07NavItem {
     provideIcons({
       lucideLayoutDashboard,
       lucideShoppingCart,
+      lucideClipboardList,
       lucidePackage,
       lucideUsers,
       lucideBarChart3,

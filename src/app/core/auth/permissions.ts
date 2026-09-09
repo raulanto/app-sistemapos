@@ -55,6 +55,17 @@ export const PERMISOS = {
     editar: ['promociones.editar'],
     leer: ['promociones.leer', 'ventas.leer'],
   },
+  pedidos: {
+    crear: ['pedidos.crear'],
+    leer: ['pedidos.leer'],
+    editar: ['pedidos.editar'],
+    confirmar: ['pedidos.confirmar'],
+    cancelar: ['pedidos.cancelar'],
+    /** Asignar repartidor y avanzar `estado_entrega`. */
+    repartir: ['pedidos.repartir'],
+    /** Emitir la venta de un pedido confirmado. */
+    facturar: ['pedidos.facturar'],
+  },
   reportes: {
     leer: ['reportes.leer', 'REP_VER'],
   },

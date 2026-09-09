@@ -1,0 +1,207 @@
+<div class="p-6 w-full space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Pedidos</h1>
+      <p class="text-muted-foreground">Órdenes que se cotizan y se facturan después, y envíos a domicilio.</p>
+    </div>
+    @if (canCrear()) {
+      <a z-button zType="default" routerLink="/pedidos/nuevo">
+        <ng-icon name="lucidePlus" class="mr-2" /> Nuevo pedido
+      </a>
+    }
+  </div>
+
+  <!-- Contadores -->
+  @if (resumen(); as r) {
+    <div class="flex flex-wrap gap-2 text-xs">
+      @for (e of estados; track e.value) {
+        <button type="button"
+                class="rounded-lg border px-2.5 py-1.5 transition-colors hover:bg-muted"
+                [class.border-primary]="estado() === e.value"
+                [class.bg-muted]="estado() === e.value"
+                (click)="setEstado(estado() === e.value ? '' : e.value)">
+          {{ e.label }}
+          <span class="ml-1 font-semibold tabular-nums">{{ r.por_estado[e.value] ?? 0 }}</span>
+        </button>
+      }
+      <span class="mx-1 self-center text-muted-foreground">·</span>
+      @for (e of estadosEntrega; track e.value) {
+        <button type="button"
+                class="rounded-lg border px-2.5 py-1.5 transition-colors hover:bg-muted"
+                [class.border-primary]="estadoEntrega() === e.value"
+                [class.bg-muted]="estadoEntrega() === e.value"
+                (click)="setEstadoEntrega(estadoEntrega() === e.value ? '' : e.value)">
+          {{ e.label }}
+          <span class="ml-1 font-semibold tabular-nums">{{ r.por_estado_entrega[e.value] ?? 0 }}</span>
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Filtros -->
+  <div class="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Tipo
+      <z-select class="w-40" [ngModel]="tipo()" (ngModelChange)="setTipo($event)">
+        <z-select-item zValue="">Todos</z-select-item>
+        @for (t of tipos; track t.value) { <z-select-item [zValue]="t.value">{{ t.label }}</z-select-item> }
+      </z-select>
+    </label>
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Canal
+      <z-select class="w-36" [ngModel]="canal()" (ngModelChange)="setCanal($event)">
+        <z-select-item zValue="">Todos</z-select-item>
+        @for (c of canales; track c.value) { <z-select-item [zValue]="c.value">{{ c.label }}</z-select-item> }
+      </z-select>
+    </label>
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Desde
+      <input z-input type="date" class="w-40" [ngModel]="desde()" (ngModelChange)="setDesde($event)" [max]="hasta() || null" />
+    </label>
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Hasta
+      <input z-input type="date" class="w-40" [ngModel]="hasta()" (ngModelChange)="setHasta($event)" [min]="desde() || null" />
+    </label>
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Teléfono
+      <input z-input class="w-40" inputmode="tel" placeholder="Cliente…"
+             [ngModel]="telefono()" (ngModelChange)="telefono.set($event)"
+             (keyup.enter)="setTelefono(telefono())" (blur)="setTelefono(telefono())" />
+    </label>
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Orden
+      <z-select class="w-44" [ngModel]="sort()" (ngModelChange)="setSort($event)">
+        <z-select-item zValue="created_at:desc">Más recientes</z-select-item>
+        <z-select-item zValue="fecha_promesa:asc">Próximas entregas</z-select-item>
+      </z-select>
+    </label>
+    @if (hayFiltros()) {
+      <button z-button zType="ghost" zSize="sm" (click)="limpiarFiltros()">
+        <ng-icon name="lucideX" class="mr-1.5 size-3.5" /> Limpiar
+      </button>
+    }
+    <button z-button zType="outline" zSize="sm" class="ml-auto" [zLoading]="loading()" (click)="refrescar()">
+      <ng-icon name="lucideRefreshCw" class="mr-1.5 size-3.5" /> Actualizar
+    </button>
+  </div>
+
+  <div class="overflow-hidden rounded-xl border">
+    <div class="overflow-x-auto">
+      <table z-table>
+        <thead z-table-header class="bg-muted/50">
+          <tr z-table-row>
+            <th z-table-head>Fecha</th>
+            <th z-table-head>Folio</th>
+            <th z-table-head>Tipo</th>
+            <th z-table-head>Canal</th>
+            <th z-table-head>Estado</th>
+            <th z-table-head>Entrega</th>
+            <th z-table-head>Teléfono</th>
+            <th z-table-head class="text-right">Total</th>
+            <th z-table-head class="text-right">Saldo</th>
+            <th z-table-head>Promesa</th>
+            <th z-table-head class="text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody z-table-body>
+          @if (loading()) {
+            @for (i of [1,2,3,4,5,6,7,8]; track i) {
+              <tr z-table-row><td z-table-cell colspan="11"><z-skeleton class="h-5 w-full" /></td></tr>
+            }
+          } @else {
+            @for (p of pedidos(); track p.id) {
+              <tr z-table-row class="cursor-pointer hover:bg-muted/40" [routerLink]="['/pedidos', p.id]">
+                <td z-table-cell class="whitespace-nowrap text-xs text-muted-foreground">{{ p.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td z-table-cell class="font-mono text-xs text-primary">{{ p.id.slice(0, 8) }}</td>
+                <td z-table-cell class="text-sm">{{ labelTipo(p.tipo) }}</td>
+                <td z-table-cell class="text-sm text-muted-foreground uppercase">{{ p.canal }}</td>
+                <td z-table-cell><z-badge [zType]="estadoBadge(p.estado)">{{ labelEstado(p.estado) }}</z-badge></td>
+                <td z-table-cell>
+                  @if (p.estado_entrega) {
+                    <z-badge [zType]="entregaBadge(p.estado_entrega)">{{ labelEntrega(p.estado_entrega) }}</z-badge>
+                  } @else {
+                    <span class="text-muted-foreground">—</span>
+                  }
+                </td>
+                <td z-table-cell class="text-sm text-muted-foreground">{{ p.telefono || '—' }}</td>
+                <td z-table-cell class="text-right tabular-nums font-medium">{{ p.total | currency }}</td>
+                <td z-table-cell class="text-right tabular-nums"
+                    [class.text-amber-600]="+p.saldo_por_cobrar > 0" [class.text-muted-foreground]="+p.saldo_por_cobrar <= 0">
+                  {{ p.saldo_por_cobrar | currency }}
+                </td>
+                <td z-table-cell class="whitespace-nowrap text-xs text-muted-foreground">
+                  {{ p.fecha_promesa ? (p.fecha_promesa | date:'dd/MM HH:mm') : '—' }}
+                </td>
+                <td z-table-cell class="text-right" (click)="$event.stopPropagation()">
+                  <div class="flex items-center justify-end gap-1">
+                    <a z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Ver detalle" [routerLink]="['/pedidos', p.id]">
+                      <ng-icon name="lucideReceiptText" class="size-4" />
+                    </a>
+                    @if (p.venta_id) {
+                      <a z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Ver venta" [routerLink]="['/ventas/historial', p.venta_id]">
+                        <ng-icon name="lucideTruck" class="size-4" />
+                      </a>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr z-table-row>
+                <td z-table-cell colspan="11" class="p-0">
+                  <z-empty
+                    zIcon="lucideClipboardList"
+                    zTitle="Sin pedidos"
+                    [zDescription]="hayFiltros() ? 'Ningún pedido coincide con los filtros.' : 'Todavía no hay pedidos registrados.'"
+                    class="py-12"
+                  />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (!loading() && totalItems() > 0) {
+      <div class="flex flex-col items-center justify-between gap-4 border-t p-3 sm:flex-row">
+        <div class="text-sm text-muted-foreground tabular-nums">
+          {{ totalItems() }} pedido(s) · página {{ page() }} de {{ totalPages() }}
+        </div>
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium">Filas</span>
+            <z-select [ngModel]="pageSize().toString()" (ngModelChange)="setPageSize($event)">
+              <z-select-item zValue="20">20</z-select-item>
+              <z-select-item zValue="50">50</z-select-item>
+              <z-select-item zValue="100">100</z-select-item>
+            </z-select>
+          </div>
+          @if (totalPages() > 1) {
+            <z-pagination [zTotal]="totalPages()" [zPageIndex]="page()" [zContent]="content" />
+            <ng-template #content>
+              <ul z-pagination-content>
+                <li z-pagination-item>
+                  <z-pagination-previous (click)="prev()" [zDisabled]="page() === 1" />
+                </li>
+                @for (p of pages(); track p) {
+                  <li z-pagination-item>
+                    <button type="button" z-pagination-button [zActive]="p === page()" (click)="irAPagina(p)">
+                      <span class="sr-only">Ir a página</span>
+                      {{ p }}
+                    </button>
+                  </li>
+                }
+                @if (pages().length > 0 && pages()[pages().length - 1] < totalPages()) {
+                  <li z-pagination-item><z-pagination-ellipsis /></li>
+                }
+                <li z-pagination-item>
+                  <z-pagination-next (click)="next()" [zDisabled]="page() === totalPages()" />
+                </li>
+              </ul>
+            </ng-template>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

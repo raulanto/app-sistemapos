@@ -72,6 +72,15 @@ export class AppSidebarComponent {
       ],
     },
     {
+      title: 'Pedidos',
+      url: '/pedidos',
+      icon: 'lucideClipboardList',
+      items: [
+        { title: 'Tablero', url: '/pedidos' },
+        { title: 'Nuevo pedido', url: '/pedidos/nuevo' },
+      ],
+    },
+    {
       title: 'Inventario',
       url: '/inventario',
       icon: 'lucidePackage',
