@@ -177,7 +177,7 @@
                               (click)="agregar(it.producto, it.unidad)">
                         <div class="relative aspect-video w-full bg-muted">
                           @if (imgSrc(it); as src) {
-                            <img [src]="src" [alt]="it.producto.nombre" class="size-full object-cover" (error)="marcarImgRota(it.key)" />
+                            <img [src]="src" [alt]="it.producto.nombre" class="size-full object-cover" (error)="marcarImgRota(src)" />
                           } @else {
                             <div class="grid size-full place-items-center text-muted-foreground">
                               <ng-icon [name]="it.producto.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-6" />
@@ -216,7 +216,7 @@
                               (click)="agregar(it.producto, it.unidad)">
                         <div class="relative size-11 shrink-0 overflow-hidden rounded-md bg-muted">
                           @if (imgSrc(it); as src) {
-                            <img [src]="src" [alt]="it.producto.nombre" class="size-full object-cover" (error)="marcarImgRota(it.key)" />
+                            <img [src]="src" [alt]="it.producto.nombre" class="size-full object-cover" (error)="marcarImgRota(src)" />
                           } @else {
                             <div class="grid size-full place-items-center text-muted-foreground">
                               <ng-icon [name]="it.producto.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-4" />
@@ -275,7 +275,7 @@
                   <div class="flex items-start gap-2.5">
                     <div class="relative size-10 shrink-0 overflow-hidden rounded-md bg-muted">
                       @if (imgSrc(l); as src) {
-                        <img [src]="src" [alt]="l.producto.nombre" class="size-full object-cover" (error)="marcarImgRota(l.key)" />
+                        <img [src]="src" [alt]="l.producto.nombre" class="size-full object-cover" (error)="marcarImgRota(src)" />
                       } @else {
                         <div class="grid size-full place-items-center text-muted-foreground">
                           <ng-icon [name]="l.producto.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-4" />

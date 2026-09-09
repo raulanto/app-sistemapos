@@ -496,14 +496,24 @@ export class PosComponent {
     this.categoriaSel.set(this.categoriaSel() === id ? null : id);
   }
 
-  /** Foto de la tarjeta: portada de la presentación si tiene; si no, cae a la del producto. */
-  imgSrc(it: { key: string; producto: ProductoResponse; unidad: UnidadResponse | null }): string | null {
-    if (this.imgRoto().has(it.key)) return null;
-    const img = it.unidad?.imagen_principal ?? it.producto.imagen_principal;
-    return img?.url ?? img?.thumbnail_url ?? null;
+  /**
+   * Foto de la tarjeta: portada de la presentación; si no tiene (o su URL falla), cae
+   * a la del producto; si esa también falla, al icono. Prefiere la original sobre el
+   * thumbnail (la miniatura la genera una Lambda que puede no existir y dar 404).
+   */
+  imgSrc(it: { producto: ProductoResponse; unidad: UnidadResponse | null }): string | null {
+    const roto = this.imgRoto();
+    const candidatos = [
+      it.unidad?.imagen_principal?.url,
+      it.unidad?.imagen_principal?.thumbnail_url,
+      it.producto.imagen_principal?.url,
+      it.producto.imagen_principal?.thumbnail_url,
+    ];
+    return candidatos.find((u): u is string => !!u && !roto.has(u)) ?? null;
   }
-  marcarImgRota(key: string) {
-    this.imgRoto.update(s => new Set(s).add(key));
+  /** La imagen `src` no cargó: se descarta y la tarjeta prueba el siguiente candidato. */
+  marcarImgRota(src: string | null) {
+    if (src) this.imgRoto.update(s => new Set(s).add(src));
   }
 
   private leerVista(): 'grid' | 'lista' {
