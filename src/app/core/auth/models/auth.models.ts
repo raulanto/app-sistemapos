@@ -47,9 +47,4 @@ export interface UsuarioResponse {
   sucursal: SucursalEmbed | null;
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  meta?: any;
-  links?: any;
-}
+export type { ApiResponse } from '@core/api.model';

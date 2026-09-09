@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { ApiResponse } from '@core/api.model';
 
 export interface SucursalResponse {
   id: string;
@@ -11,12 +12,7 @@ export interface SucursalResponse {
   created_at: string;
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  meta?: any;
-  links?: any;
-}
+
 
 @Injectable({
   providedIn: 'root'

@@ -4963,6 +4963,112 @@
         }
       }
     },
+    "/api/v1/promociones/{promocion_id}/cupones": {
+      "post": {
+        "tags": ["promociones"],
+        "summary": "Crear Cupon",
+        "operationId": "crear_cupon_api_v1_promociones__promocion_id__cupones_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "promocion_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Promocion Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/_CrearCuponRequest" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse__CuponResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["promociones"],
+        "summary": "Listar Cupones",
+        "operationId": "listar_cupones_api_v1_promociones__promocion_id__cupones_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "promocion_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Promocion Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_list__CuponResponse__" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promociones/cupones/{codigo}/desactivar": {
+      "patch": {
+        "tags": ["promociones"],
+        "summary": "Desactivar Cupon",
+        "operationId": "desactivar_cupon_api_v1_promociones_cupones__codigo__desactivar_patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Codigo" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse__CuponResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/ventas/": {
       "post": {
         "tags": ["ventas"],
@@ -5180,6 +5286,39 @@
         "security": [{ "OAuth2PasswordBearer": [] }]
       }
     },
+    "/api/v1/ventas/cupon/validar": {
+      "post": {
+        "tags": ["ventas"],
+        "summary": "Validar Cupon",
+        "description": "Previsualiza un código de cupón: devuelve la `promocion_id` que habilita\n(o el error si está vencido/agotado). No consume el cupón.",
+        "operationId": "validar_cupon_api_v1_ventas_cupon_validar_post",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CuponValidarRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_CuponValidacionResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
     "/api/v1/ventas/{venta_id}": {
       "get": {
         "tags": ["ventas"],
@@ -5381,6 +5520,736 @@
         }
       }
     },
+    "/api/v1/pedidos/": {
+      "post": {
+        "tags": ["pedidos"],
+        "summary": "Crear Pedido",
+        "operationId": "crear_pedido_api_v1_pedidos__post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CrearPedidoRequest" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_PedidoResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["pedidos"],
+        "summary": "Listar Pedidos",
+        "operationId": "listar_pedidos_api_v1_pedidos__get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "sucursal_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Sucursal Id"
+            }
+          },
+          {
+            "name": "cliente_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Cliente Id"
+            }
+          },
+          {
+            "name": "repartidor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Repartidor Id"
+            }
+          },
+          {
+            "name": "telefono",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Telefono" }
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "$ref": "#/components/schemas/TipoPedido" }, { "type": "null" }],
+              "title": "Tipo"
+            }
+          },
+          {
+            "name": "canal",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "$ref": "#/components/schemas/CanalPedido" }, { "type": "null" }],
+              "title": "Canal"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "$ref": "#/components/schemas/EstadoPedido" }, { "type": "null" }],
+              "title": "Estado"
+            }
+          },
+          {
+            "name": "estado_entrega",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "$ref": "#/components/schemas/EstadoEntrega" }, { "type": "null" }],
+              "title": "Estado Entrega"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+              "title": "Desde"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+              "title": "Hasta"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Número de página (1-indexada)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Número de página (1-indexada)"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Tamaño de página",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Tamaño de página"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Orden `campo:asc|desc`. Campos: created_at, fecha_promesa",
+              "default": "created_at:desc",
+              "title": "Sort"
+            },
+            "description": "Orden `campo:asc|desc`. Campos: created_at, fecha_promesa"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_list_PedidoListItem__" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pedidos/resumen": {
+      "get": {
+        "tags": ["pedidos"],
+        "summary": "Resumen Pedidos",
+        "operationId": "resumen_pedidos_api_v1_pedidos_resumen_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "sucursal_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Sucursal Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ResumenPedidosResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pedidos/{pedido_id}": {
+      "get": {
+        "tags": ["pedidos"],
+        "summary": "Obtener Pedido",
+        "operationId": "obtener_pedido_api_v1_pedidos__pedido_id__get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Pedido Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_PedidoResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["pedidos"],
+        "summary": "Actualizar Pedido",
+        "operationId": "actualizar_pedido_api_v1_pedidos__pedido_id__patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Pedido Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ActualizarPedidoRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_PedidoResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pedidos/{pedido_id}/confirmar": {
+      "post": {
+        "tags": ["pedidos"],
+        "summary": "Confirmar Pedido",
+        "operationId": "confirmar_pedido_api_v1_pedidos__pedido_id__confirmar_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Pedido Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_PedidoResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pedidos/{pedido_id}/reabrir": {
+      "post": {
+        "tags": ["pedidos"],
+        "summary": "Reabrir Pedido",
+        "operationId": "reabrir_pedido_api_v1_pedidos__pedido_id__reabrir_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Pedido Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_PedidoResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pedidos/{pedido_id}/cancelar": {
+      "post": {
+        "tags": ["pedidos"],
+        "summary": "Cancelar Pedido",
+        "operationId": "cancelar_pedido_api_v1_pedidos__pedido_id__cancelar_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Pedido Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CancelarPedidoRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_PedidoResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pedidos/{pedido_id}/entrega": {
+      "patch": {
+        "tags": ["pedidos"],
+        "summary": "Cambiar Entrega",
+        "operationId": "cambiar_entrega_api_v1_pedidos__pedido_id__entrega_patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Pedido Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CambiarEntregaRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_PedidoResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pedidos/{pedido_id}/anticipos": {
+      "post": {
+        "tags": ["pedidos"],
+        "summary": "Registrar Anticipo",
+        "operationId": "registrar_anticipo_api_v1_pedidos__pedido_id__anticipos_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Pedido Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegistrarAnticipoRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_PedidoPagoResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pedidos/{pedido_id}/facturar": {
+      "post": {
+        "tags": ["pedidos"],
+        "summary": "Facturar Pedido",
+        "operationId": "facturar_pedido_api_v1_pedidos__pedido_id__facturar_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Pedido Id" }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FacturarPedidoRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_VentaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cajas/": {
+      "post": {
+        "tags": ["caja"],
+        "summary": "Crear Caja",
+        "operationId": "crear_caja_api_v1_cajas__post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CajaCreateRequest" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_CajaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["caja"],
+        "summary": "Listar Cajas",
+        "operationId": "listar_cajas_api_v1_cajas__get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "sucursal_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Sucursal Id"
+            }
+          },
+          {
+            "name": "incluir_inactivas",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": false, "title": "Incluir Inactivas" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_list_CajaResponse__" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cajas/{caja_id}": {
+      "patch": {
+        "tags": ["caja"],
+        "summary": "Renombrar Caja",
+        "operationId": "renombrar_caja_api_v1_cajas__caja_id__patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "caja_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Caja Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CajaRenameRequest" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_CajaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["caja"],
+        "summary": "Desactivar Caja",
+        "operationId": "desactivar_caja_api_v1_cajas__caja_id__delete",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "caja_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Caja Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_CajaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cajas/{caja_id}/reactivar": {
+      "patch": {
+        "tags": ["caja"],
+        "summary": "Reactivar Caja",
+        "operationId": "reactivar_caja_api_v1_cajas__caja_id__reactivar_patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "caja_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Caja Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_CajaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/caja-turnos/abrir": {
       "post": {
         "tags": ["caja"],
@@ -5413,6 +6282,181 @@
           }
         },
         "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/api/v1/caja-turnos/actual": {
+      "get": {
+        "tags": ["caja"],
+        "summary": "Turno Actual",
+        "operationId": "turno_actual_api_v1_caja_turnos_actual_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_CajaTurnoResponse_" }
+              }
+            }
+          }
+        },
+        "security": [{ "OAuth2PasswordBearer": [] }]
+      }
+    },
+    "/api/v1/caja-turnos/historico": {
+      "get": {
+        "tags": ["caja"],
+        "summary": "Historico Turnos",
+        "operationId": "historico_turnos_api_v1_caja_turnos_historico_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "sucursal_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Sucursal Id"
+            }
+          },
+          {
+            "name": "caja_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Caja Id"
+            }
+          },
+          {
+            "name": "usuario_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "description": "Diferencias por cajero",
+              "title": "Usuario Id"
+            },
+            "description": "Diferencias por cajero"
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Estado" }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+              "title": "Desde"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+              "title": "Hasta"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Número de página (1-indexada)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Número de página (1-indexada)"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Tamaño de página",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Tamaño de página"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Orden `campo:asc|desc`. Campos: abierto_en, cerrado_en",
+              "default": "abierto_en:desc",
+              "title": "Sort"
+            },
+            "description": "Orden `campo:asc|desc`. Campos: abierto_en, cerrado_en"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_list_TurnoListItem__" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/caja-turnos/efectivo-actual": {
+      "get": {
+        "tags": ["caja"],
+        "summary": "Efectivo Actual",
+        "operationId": "efectivo_actual_api_v1_caja_turnos_efectivo_actual_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "sucursal_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Sucursal Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_EfectivoSucursalResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/caja-turnos/{turno_id}/cerrar": {
@@ -5457,11 +6501,104 @@
         }
       }
     },
-    "/api/v1/caja-turnos/actual": {
+    "/api/v1/caja-turnos/{turno_id}/movimientos": {
+      "post": {
+        "tags": ["caja"],
+        "summary": "Registrar Movimiento",
+        "operationId": "registrar_movimiento_api_v1_caja_turnos__turno_id__movimientos_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "turno_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Turno Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MovimientoCajaRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_MovimientoCajaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
       "get": {
         "tags": ["caja"],
-        "summary": "Turno Actual",
-        "operationId": "turno_actual_api_v1_caja_turnos_actual_get",
+        "summary": "Listar Movimientos",
+        "operationId": "listar_movimientos_api_v1_caja_turnos__turno_id__movimientos_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "turno_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Turno Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_list_MovimientoCajaResponse__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/caja-turnos/{turno_id}/conciliar": {
+      "post": {
+        "tags": ["caja"],
+        "summary": "Conciliar Turno",
+        "operationId": "conciliar_turno_api_v1_caja_turnos__turno_id__conciliar_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "turno_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Turno Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ConciliarTurnoRequest" }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -5470,9 +6607,16 @@
                 "schema": { "$ref": "#/components/schemas/ApiResponse_CajaTurnoResponse_" }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
           }
-        },
-        "security": [{ "OAuth2PasswordBearer": [] }]
+        }
       }
     },
     "/api/v1/caja-turnos/{turno_id}": {
@@ -6139,17 +7283,24 @@
       },
       "AbrirCajaTurnoRequest": {
         "properties": {
+          "caja_id": { "type": "string", "format": "uuid", "title": "Caja Id" },
           "saldo_inicial": {
             "anyOf": [
               { "type": "number", "minimum": 0.0 },
               { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
             ],
             "title": "Saldo Inicial"
+          },
+          "denominaciones": {
+            "items": { "$ref": "#/components/schemas/DenominacionInput" },
+            "type": "array",
+            "title": "Denominaciones",
+            "default": []
           }
         },
         "additionalProperties": false,
         "type": "object",
-        "required": ["saldo_inicial"],
+        "required": ["caja_id", "saldo_inicial"],
         "title": "AbrirCajaTurnoRequest"
       },
       "AbrirInstanciaRequest": {
@@ -6217,6 +7368,10 @@
           "rfc_identificacion": {
             "anyOf": [{ "type": "string", "maxLength": 50 }, { "type": "null" }],
             "title": "Rfc Identificacion"
+          },
+          "segmento": {
+            "anyOf": [{ "type": "string", "maxLength": 30 }, { "type": "null" }],
+            "title": "Segmento"
           }
         },
         "additionalProperties": false,
@@ -6301,6 +7456,77 @@
         "additionalProperties": false,
         "type": "object",
         "title": "ActualizarLoteRequest"
+      },
+      "ActualizarPedidoRequest": {
+        "properties": {
+          "lineas": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/LineaPedidoRequest" },
+                "type": "array",
+                "minItems": 1
+              },
+              { "type": "null" }
+            ],
+            "title": "Lineas"
+          },
+          "cliente_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Cliente Id"
+          },
+          "telefono": {
+            "anyOf": [{ "type": "string", "maxLength": 50 }, { "type": "null" }],
+            "title": "Telefono"
+          },
+          "descuento_total": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Descuento Total"
+          },
+          "motivo_descuento": {
+            "anyOf": [{ "type": "string", "maxLength": 255 }, { "type": "null" }],
+            "title": "Motivo Descuento"
+          },
+          "costo_envio": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Costo Envio"
+          },
+          "codigo_cupon": {
+            "anyOf": [{ "type": "string", "maxLength": 40 }, { "type": "null" }],
+            "title": "Codigo Cupon"
+          },
+          "cliente_segmento": {
+            "anyOf": [{ "type": "string", "maxLength": 60 }, { "type": "null" }],
+            "title": "Cliente Segmento"
+          },
+          "notas": {
+            "anyOf": [{ "type": "string", "maxLength": 1000 }, { "type": "null" }],
+            "title": "Notas"
+          },
+          "fecha_promesa": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Fecha Promesa"
+          },
+          "direccion_texto": {
+            "anyOf": [{ "type": "string", "maxLength": 1000 }, { "type": "null" }],
+            "title": "Direccion Texto"
+          },
+          "referencia_direccion": {
+            "anyOf": [{ "type": "string", "maxLength": 500 }, { "type": "null" }],
+            "title": "Referencia Direccion"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ActualizarPedidoRequest",
+        "description": "Todo opcional. Sólo se aplican las claves presentes en el body."
       },
       "ActualizarProductoRequest": {
         "properties": {
@@ -6477,11 +7703,56 @@
           "tipo": {
             "anyOf": [{ "$ref": "#/components/schemas/TipoPromocion" }, { "type": "null" }]
           },
-          "sucursal_id": {
-            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
-            "title": "Sucursal Id"
+          "combinable": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Combinable"
           },
-          "cambiar_sucursal": { "type": "boolean", "title": "Cambiar Sucursal", "default": false },
+          "tope_descuento": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Tope Descuento"
+          },
+          "monto_minimo_compra": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Monto Minimo Compra"
+          },
+          "cambiar_topes": { "type": "boolean", "title": "Cambiar Topes", "default": false },
+          "metodo_pago_requerido": {
+            "anyOf": [{ "type": "string", "maxLength": 20 }, { "type": "null" }],
+            "title": "Metodo Pago Requerido"
+          },
+          "cliente_segmento": {
+            "anyOf": [{ "type": "string", "maxLength": 30 }, { "type": "null" }],
+            "title": "Cliente Segmento"
+          },
+          "requiere_cupon": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Requiere Cupon"
+          },
+          "cambiar_condiciones": {
+            "type": "boolean",
+            "title": "Cambiar Condiciones",
+            "default": false
+          },
+          "sucursales": {
+            "anyOf": [
+              { "items": { "type": "string", "format": "uuid" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Sucursales"
+          },
+          "cambiar_sucursales": {
+            "type": "boolean",
+            "title": "Cambiar Sucursales",
+            "default": false
+          },
           "vigente_desde": {
             "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
             "title": "Vigente Desde"
@@ -6491,6 +7762,19 @@
             "title": "Vigente Hasta"
           },
           "cambiar_vigencia": { "type": "boolean", "title": "Cambiar Vigencia", "default": false },
+          "hora_desde": {
+            "anyOf": [{ "type": "string", "format": "time" }, { "type": "null" }],
+            "title": "Hora Desde"
+          },
+          "hora_hasta": {
+            "anyOf": [{ "type": "string", "format": "time" }, { "type": "null" }],
+            "title": "Hora Hasta"
+          },
+          "dias_semana": {
+            "anyOf": [{ "type": "integer", "maximum": 127.0, "minimum": 1.0 }, { "type": "null" }],
+            "title": "Dias Semana"
+          },
+          "cambiar_horario": { "type": "boolean", "title": "Cambiar Horario", "default": false },
           "nxm_lleva": {
             "anyOf": [{ "type": "integer", "minimum": 1.0 }, { "type": "null" }],
             "title": "Nxm Lleva"
@@ -6877,6 +8161,17 @@
         "type": "object",
         "title": "AnularVentaRequest"
       },
+      "ApiResponse_CajaResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/CajaResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[CajaResponse]"
+      },
       "ApiResponse_CajaTurnoResponse_": {
         "properties": {
           "success": { "type": "boolean", "title": "Success", "default": true },
@@ -6943,6 +8238,17 @@
         "required": ["data"],
         "title": "ApiResponse[CotizacionResponse]"
       },
+      "ApiResponse_CuponValidacionResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/CuponValidacionResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[CuponValidacionResponse]"
+      },
       "ApiResponse_DesgloseStockResponse_": {
         "properties": {
           "success": { "type": "boolean", "title": "Success", "default": true },
@@ -6964,6 +8270,17 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[DevolucionResponse]"
+      },
+      "ApiResponse_EfectivoSucursalResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/EfectivoSucursalResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[EfectivoSucursalResponse]"
       },
       "ApiResponse_ExistenciaResponse_": {
         "properties": {
@@ -7042,6 +8359,17 @@
         "required": ["data"],
         "title": "ApiResponse[MonederoResponse]"
       },
+      "ApiResponse_MovimientoCajaResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/MovimientoCajaResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[MovimientoCajaResponse]"
+      },
       "ApiResponse_MovimientoResponse_": {
         "properties": {
           "success": { "type": "boolean", "title": "Success", "default": true },
@@ -7052,6 +8380,28 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[MovimientoResponse]"
+      },
+      "ApiResponse_PedidoPagoResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/PedidoPagoResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[PedidoPagoResponse]"
+      },
+      "ApiResponse_PedidoResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/PedidoResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[PedidoResponse]"
       },
       "ApiResponse_ProductoKpisResponse_": {
         "properties": {
@@ -7107,6 +8457,17 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[ResolucionCodigoResponse]"
+      },
+      "ApiResponse_ResumenPedidosResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/ResumenPedidosResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[ResumenPedidosResponse]"
       },
       "ApiResponse_ResumenTurnoResponse_": {
         "properties": {
@@ -7196,6 +8557,17 @@
         "required": ["data"],
         "title": "ApiResponse[VentasPorMetodoResponse]"
       },
+      "ApiResponse__CuponResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/_CuponResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[_CuponResponse]"
+      },
       "ApiResponse_dict_": {
         "properties": {
           "success": { "type": "boolean", "title": "Success", "default": true },
@@ -7206,6 +8578,21 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[dict]"
+      },
+      "ApiResponse_list_CajaResponse__": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": {
+            "items": { "$ref": "#/components/schemas/CajaResponse" },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[list[CajaResponse]]"
       },
       "ApiResponse_list_CategoriaResponse__": {
         "properties": {
@@ -7372,6 +8759,21 @@
         "required": ["data"],
         "title": "ApiResponse[list[LoteResponse]]"
       },
+      "ApiResponse_list_MovimientoCajaResponse__": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": {
+            "items": { "$ref": "#/components/schemas/MovimientoCajaResponse" },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[list[MovimientoCajaResponse]]"
+      },
       "ApiResponse_list_MovimientoMonederoResponse__": {
         "properties": {
           "success": { "type": "boolean", "title": "Success", "default": true },
@@ -7401,6 +8803,21 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[list[MovimientoResponse]]"
+      },
+      "ApiResponse_list_PedidoListItem__": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": {
+            "items": { "$ref": "#/components/schemas/PedidoListItem" },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[list[PedidoListItem]]"
       },
       "ApiResponse_list_PermisoResponse__": {
         "properties": {
@@ -7492,6 +8909,21 @@
         "required": ["data"],
         "title": "ApiResponse[list[SucursalResponse]]"
       },
+      "ApiResponse_list_TurnoListItem__": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": {
+            "items": { "$ref": "#/components/schemas/TurnoListItem" },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[list[TurnoListItem]]"
+      },
       "ApiResponse_list_UnidadMedidaResponse__": {
         "properties": {
           "success": { "type": "boolean", "title": "Success", "default": true },
@@ -7566,6 +8998,21 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[list[VentaPorUsuarioResponse]]"
+      },
+      "ApiResponse_list__CuponResponse__": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": {
+            "items": { "$ref": "#/components/schemas/_CuponResponse" },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[list[_CuponResponse]]"
       },
       "AplicarMovimientoRequest": {
         "properties": {
@@ -7743,6 +9190,36 @@
         "required": ["file"],
         "title": "Body_subir_imagen_unidad_api_v1_inventario_productos__producto_id__unidades__unidad_id__imagenes_upload_post"
       },
+      "CajaCreateRequest": {
+        "properties": {
+          "nombre": { "type": "string", "maxLength": 60, "minLength": 1, "title": "Nombre" }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["nombre"],
+        "title": "CajaCreateRequest"
+      },
+      "CajaRenameRequest": {
+        "properties": {
+          "nombre": { "type": "string", "maxLength": 60, "minLength": 1, "title": "Nombre" }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["nombre"],
+        "title": "CajaRenameRequest"
+      },
+      "CajaResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "sucursal_id": { "type": "string", "format": "uuid", "title": "Sucursal Id" },
+          "nombre": { "type": "string", "title": "Nombre" },
+          "activa": { "type": "boolean", "title": "Activa" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": ["id", "sucursal_id", "nombre", "activa", "created_at"],
+        "title": "CajaResponse"
+      },
       "CajaTurnoEmbed": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -7763,6 +9240,7 @@
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "sucursal_id": { "type": "string", "format": "uuid", "title": "Sucursal Id" },
+          "caja_id": { "type": "string", "format": "uuid", "title": "Caja Id" },
           "usuario_id": { "type": "string", "format": "uuid", "title": "Usuario Id" },
           "saldo_inicial": {
             "type": "string",
@@ -7788,12 +9266,25 @@
               { "type": "null" }
             ],
             "title": "Diferencia"
+          },
+          "nota_cierre": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Nota Cierre"
+          },
+          "conciliado_por": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Conciliado Por"
+          },
+          "conciliado_en": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Conciliado En"
           }
         },
         "type": "object",
         "required": [
           "id",
           "sucursal_id",
+          "caja_id",
           "usuario_id",
           "saldo_inicial",
           "estado",
@@ -7803,6 +9294,24 @@
           "diferencia"
         ],
         "title": "CajaTurnoResponse"
+      },
+      "CambiarEntregaRequest": {
+        "properties": {
+          "estado_entrega": {
+            "anyOf": [{ "$ref": "#/components/schemas/EstadoEntrega" }, { "type": "null" }]
+          },
+          "repartidor_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Repartidor Id"
+          },
+          "motivo": {
+            "anyOf": [{ "type": "string", "maxLength": 255 }, { "type": "null" }],
+            "title": "Motivo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CambiarEntregaRequest"
       },
       "CambiarLimiteCreditoRequest": {
         "properties": {
@@ -7841,6 +9350,22 @@
         "type": "object",
         "required": ["rol_id"],
         "title": "CambiarRolRequest"
+      },
+      "CanalPedido": {
+        "type": "string",
+        "enum": ["pos", "web", "telefono"],
+        "title": "CanalPedido"
+      },
+      "CancelarPedidoRequest": {
+        "properties": {
+          "motivo": {
+            "anyOf": [{ "type": "string", "maxLength": 255 }, { "type": "null" }],
+            "title": "Motivo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CancelarPedidoRequest"
       },
       "CategoriaEmbed": {
         "properties": {
@@ -7896,6 +9421,16 @@
               { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
             ],
             "title": "Saldo Final Declarado"
+          },
+          "nota_cierre": {
+            "anyOf": [{ "type": "string", "maxLength": 500 }, { "type": "null" }],
+            "title": "Nota Cierre"
+          },
+          "denominaciones": {
+            "items": { "$ref": "#/components/schemas/DenominacionInput" },
+            "type": "array",
+            "title": "Denominaciones",
+            "default": []
           }
         },
         "additionalProperties": false,
@@ -7937,6 +9472,7 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Rfc Identificacion"
           },
+          "segmento": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Segmento" },
           "limite_credito": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -8030,6 +9566,17 @@
         "required": ["producto_kit_id", "producto_componente_id", "cantidad"],
         "title": "ComponenteResponse"
       },
+      "ConciliarTurnoRequest": {
+        "properties": {
+          "nota": {
+            "anyOf": [{ "type": "string", "maxLength": 500 }, { "type": "null" }],
+            "title": "Nota"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ConciliarTurnoRequest"
+      },
       "ConfigurarUmbralesRequest": {
         "properties": {
           "stock_minimo": {
@@ -8120,6 +9667,24 @@
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Total Devoluciones Efectivo"
+          },
+          "total_ingresos": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Ingresos",
+            "default": "0"
+          },
+          "total_retiros": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Retiros",
+            "default": "0"
+          },
+          "total_gastos": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Gastos",
+            "default": "0"
           },
           "nota": { "type": "string", "title": "Nota" }
         },
@@ -8259,6 +9824,24 @@
             "items": { "$ref": "#/components/schemas/LineaVentaRequest" },
             "type": "array",
             "title": "Lineas"
+          },
+          "metodos_pago": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Metodos Pago",
+            "default": []
+          },
+          "cliente_segmento": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Cliente Segmento"
+          },
+          "codigo_cupon": {
+            "anyOf": [{ "type": "string", "maxLength": 40 }, { "type": "null" }],
+            "title": "Codigo Cupon"
+          },
+          "telefono": {
+            "anyOf": [{ "type": "string", "maxLength": 50 }, { "type": "null" }],
+            "title": "Telefono"
           }
         },
         "additionalProperties": false,
@@ -8292,6 +9875,10 @@
           "rfc_identificacion": {
             "anyOf": [{ "type": "string", "maxLength": 50 }, { "type": "null" }],
             "title": "Rfc Identificacion"
+          },
+          "segmento": {
+            "anyOf": [{ "type": "string", "maxLength": 30 }, { "type": "null" }],
+            "title": "Segmento"
           },
           "limite_credito": {
             "anyOf": [
@@ -8334,6 +9921,75 @@
         "type": "object",
         "required": ["codigo_lote", "costo"],
         "title": "CrearLoteRequest"
+      },
+      "CrearPedidoRequest": {
+        "properties": {
+          "tipo": { "$ref": "#/components/schemas/TipoPedido" },
+          "canal": { "$ref": "#/components/schemas/CanalPedido", "default": "pos" },
+          "lineas": {
+            "items": { "$ref": "#/components/schemas/LineaPedidoRequest" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Lineas"
+          },
+          "cliente_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Cliente Id"
+          },
+          "telefono": {
+            "anyOf": [{ "type": "string", "maxLength": 50 }, { "type": "null" }],
+            "title": "Telefono"
+          },
+          "descuento_total": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Descuento Total",
+            "default": "0"
+          },
+          "motivo_descuento": {
+            "anyOf": [{ "type": "string", "maxLength": 255 }, { "type": "null" }],
+            "title": "Motivo Descuento"
+          },
+          "costo_envio": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Costo Envio",
+            "default": "0"
+          },
+          "codigo_cupon": {
+            "anyOf": [{ "type": "string", "maxLength": 40 }, { "type": "null" }],
+            "title": "Codigo Cupon"
+          },
+          "cliente_segmento": {
+            "anyOf": [{ "type": "string", "maxLength": 60 }, { "type": "null" }],
+            "title": "Cliente Segmento"
+          },
+          "notas": {
+            "anyOf": [{ "type": "string", "maxLength": 1000 }, { "type": "null" }],
+            "title": "Notas"
+          },
+          "fecha_promesa": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Fecha Promesa"
+          },
+          "direccion_texto": {
+            "anyOf": [{ "type": "string", "maxLength": 1000 }, { "type": "null" }],
+            "title": "Direccion Texto"
+          },
+          "referencia_direccion": {
+            "anyOf": [{ "type": "string", "maxLength": 500 }, { "type": "null" }],
+            "title": "Referencia Direccion"
+          },
+          "confirmar": { "type": "boolean", "title": "Confirmar", "default": false }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["tipo", "lineas"],
+        "title": "CrearPedidoRequest"
       },
       "CrearProductoRequest": {
         "properties": {
@@ -8467,9 +10123,37 @@
         "properties": {
           "prioridad": { "type": "integer", "minimum": 0.0, "title": "Prioridad", "default": 100 },
           "activo": { "type": "boolean", "title": "Activo", "default": true },
-          "sucursal_id": {
-            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
-            "title": "Sucursal Id"
+          "combinable": { "type": "boolean", "title": "Combinable", "default": false },
+          "tope_descuento": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Tope Descuento"
+          },
+          "monto_minimo_compra": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Monto Minimo Compra"
+          },
+          "metodo_pago_requerido": {
+            "anyOf": [{ "type": "string", "maxLength": 20 }, { "type": "null" }],
+            "title": "Metodo Pago Requerido"
+          },
+          "cliente_segmento": {
+            "anyOf": [{ "type": "string", "maxLength": 30 }, { "type": "null" }],
+            "title": "Cliente Segmento"
+          },
+          "requiere_cupon": { "type": "boolean", "title": "Requiere Cupon", "default": false },
+          "sucursales": {
+            "items": { "type": "string", "format": "uuid" },
+            "type": "array",
+            "title": "Sucursales",
+            "default": []
           },
           "vigente_desde": {
             "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
@@ -8478,6 +10162,18 @@
           "vigente_hasta": {
             "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
             "title": "Vigente Hasta"
+          },
+          "hora_desde": {
+            "anyOf": [{ "type": "string", "format": "time" }, { "type": "null" }],
+            "title": "Hora Desde"
+          },
+          "hora_hasta": {
+            "anyOf": [{ "type": "string", "format": "time" }, { "type": "null" }],
+            "title": "Hora Hasta"
+          },
+          "dias_semana": {
+            "anyOf": [{ "type": "integer", "maximum": 127.0, "minimum": 1.0 }, { "type": "null" }],
+            "title": "Dias Semana"
           },
           "nxm_lleva": {
             "anyOf": [{ "type": "integer", "minimum": 1.0 }, { "type": "null" }],
@@ -8681,11 +10377,74 @@
           "telefono": {
             "anyOf": [{ "type": "string", "maxLength": 50 }, { "type": "null" }],
             "title": "Telefono"
+          },
+          "motivo_descuento": {
+            "anyOf": [{ "type": "string", "maxLength": 255 }, { "type": "null" }],
+            "title": "Motivo Descuento"
+          },
+          "codigo_cupon": {
+            "anyOf": [{ "type": "string", "maxLength": 40 }, { "type": "null" }],
+            "title": "Codigo Cupon"
           }
         },
         "type": "object",
         "required": ["caja_turno_id", "lineas", "pagos"],
         "title": "CrearVentaRequest"
+      },
+      "CuponValidacionResponse": {
+        "properties": {
+          "promocion_id": { "type": "string", "format": "uuid", "title": "Promocion Id" },
+          "valido": { "type": "boolean", "title": "Valido", "default": true }
+        },
+        "type": "object",
+        "required": ["promocion_id"],
+        "title": "CuponValidacionResponse"
+      },
+      "CuponValidarRequest": {
+        "properties": {
+          "codigo": { "type": "string", "maxLength": 40, "minLength": 1, "title": "Codigo" },
+          "telefono": {
+            "anyOf": [{ "type": "string", "maxLength": 50 }, { "type": "null" }],
+            "title": "Telefono"
+          },
+          "cliente_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Cliente Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["codigo"],
+        "title": "CuponValidarRequest"
+      },
+      "DenominacionInput": {
+        "properties": {
+          "valor": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Valor"
+          },
+          "cantidad": { "type": "integer", "minimum": 0.0, "title": "Cantidad" }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["valor", "cantidad"],
+        "title": "DenominacionInput"
+      },
+      "DenominacionResponse": {
+        "properties": {
+          "valor": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Valor"
+          },
+          "cantidad": { "type": "integer", "title": "Cantidad" }
+        },
+        "type": "object",
+        "required": ["valor", "cantidad"],
+        "title": "DenominacionResponse"
       },
       "DescartarInstanciaRequest": {
         "properties": {
@@ -8778,6 +10537,73 @@
         "type": "object",
         "required": ["sucursal_id", "cantidad_base", "stock_minimo", "presentaciones"],
         "title": "DesgloseSucursalResponse"
+      },
+      "DetallePedidoResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
+          "producto_unidad_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Producto Unidad Id"
+          },
+          "cantidad": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cantidad"
+          },
+          "cantidad_en_unidad_base": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Cantidad En Unidad Base"
+          },
+          "precio_unitario": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Precio Unitario"
+          },
+          "descuento_linea": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Descuento Linea"
+          },
+          "impuesto_tasa": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Impuesto Tasa"
+          },
+          "promo_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Promo Id"
+          },
+          "promo_etiqueta": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Promo Etiqueta"
+          },
+          "promo_descuento": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Promo Descuento"
+          },
+          "subtotal": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Subtotal"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "producto_id",
+          "cantidad",
+          "precio_unitario",
+          "descuento_linea",
+          "impuesto_tasa",
+          "promo_descuento",
+          "subtotal"
+        ],
+        "title": "DetallePedidoResponse"
       },
       "DevolucionLineaResponse": {
         "properties": {
@@ -8901,10 +10727,34 @@
         "type": "object",
         "title": "EditarUsuarioRequest"
       },
+      "EfectivoSucursalResponse": {
+        "properties": {
+          "sucursal_id": { "type": "string", "format": "uuid", "title": "Sucursal Id" },
+          "efectivo_esperado": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Efectivo Esperado"
+          }
+        },
+        "type": "object",
+        "required": ["sucursal_id", "efectivo_esperado"],
+        "title": "EfectivoSucursalResponse"
+      },
+      "EstadoEntrega": {
+        "type": "string",
+        "enum": ["pendiente", "en_preparacion", "en_reparto", "entregado", "fallido"],
+        "title": "EstadoEntrega",
+        "description": "Sólo aplica a `tipo=domicilio` (y `recoger`). Ortogonal a `EstadoPedido`."
+      },
       "EstadoInstancia": {
         "type": "string",
         "enum": ["abierta", "agotada", "descartada"],
         "title": "EstadoInstancia"
+      },
+      "EstadoPedido": {
+        "type": "string",
+        "enum": ["borrador", "confirmado", "facturado", "cancelado"],
+        "title": "EstadoPedido"
       },
       "EstadoVenta": {
         "type": "string",
@@ -8976,6 +10826,26 @@
           "updated_at"
         ],
         "title": "ExistenciaResponse"
+      },
+      "FacturarPedidoRequest": {
+        "properties": {
+          "caja_turno_id": { "type": "string", "format": "uuid", "title": "Caja Turno Id" },
+          "pagos": {
+            "items": { "$ref": "#/components/schemas/PagoRequest" },
+            "type": "array",
+            "title": "Pagos",
+            "default": []
+          },
+          "recalcular_precios": {
+            "type": "boolean",
+            "title": "Recalcular Precios",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["caja_turno_id"],
+        "title": "FacturarPedidoRequest"
       },
       "HTTPValidationError": {
         "properties": {
@@ -9124,6 +10994,49 @@
         "required": ["sucursal_id", "categoria_id", "valor_total", "por_categoria"],
         "title": "InventarioValorizadoResponse"
       },
+      "LineaPedidoRequest": {
+        "properties": {
+          "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
+          "cantidad": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Cantidad"
+          },
+          "precio_unitario": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Precio Unitario"
+          },
+          "descuento_linea": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Descuento Linea",
+            "default": "0"
+          },
+          "impuesto_tasa": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Impuesto Tasa",
+            "default": "0"
+          },
+          "producto_unidad_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Producto Unidad Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["producto_id", "cantidad", "precio_unitario"],
+        "title": "LineaPedidoRequest"
+      },
       "LineaVentaRequest": {
         "properties": {
           "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
@@ -9210,6 +11123,12 @@
           "promo_etiqueta": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Promo Etiqueta"
+          },
+          "promos_aplicadas": {
+            "items": { "$ref": "#/components/schemas/PromoAplicadaResponse" },
+            "type": "array",
+            "title": "Promos Aplicadas",
+            "default": []
           },
           "cantidad_devuelta": {
             "type": "string",
@@ -9437,6 +11356,44 @@
         "required": ["id", "telefono", "saldo", "activo", "created_at"],
         "title": "MonederoResponse"
       },
+      "MovimientoCajaRequest": {
+        "properties": {
+          "tipo": { "$ref": "#/components/schemas/TipoMovimientoCaja" },
+          "monto": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Monto"
+          },
+          "motivo": {
+            "anyOf": [{ "type": "string", "maxLength": 255 }, { "type": "null" }],
+            "title": "Motivo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["tipo", "monto"],
+        "title": "MovimientoCajaRequest"
+      },
+      "MovimientoCajaResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "caja_turno_id": { "type": "string", "format": "uuid", "title": "Caja Turno Id" },
+          "tipo": { "$ref": "#/components/schemas/TipoMovimientoCaja" },
+          "monto": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Monto"
+          },
+          "motivo": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Motivo" },
+          "usuario_id": { "type": "string", "format": "uuid", "title": "Usuario Id" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": ["id", "caja_turno_id", "tipo", "monto", "usuario_id", "created_at"],
+        "title": "MovimientoCajaResponse"
+      },
       "MovimientoMonederoResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -9539,6 +11496,10 @@
           "producto_unidad_id": {
             "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
             "title": "Producto Unidad Id"
+          },
+          "categoria_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Categoria Id"
           }
         },
         "additionalProperties": false,
@@ -9555,6 +11516,10 @@
           "producto_unidad_id": {
             "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
             "title": "Producto Unidad Id"
+          },
+          "categoria_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Categoria Id"
           }
         },
         "type": "object",
@@ -9624,6 +11589,207 @@
         "type": "object",
         "required": ["id", "monto", "metodo_pago"],
         "title": "PagoResponse"
+      },
+      "PedidoListItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "sucursal_id": { "type": "string", "format": "uuid", "title": "Sucursal Id" },
+          "cliente_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Cliente Id"
+          },
+          "tipo": { "$ref": "#/components/schemas/TipoPedido" },
+          "canal": { "$ref": "#/components/schemas/CanalPedido" },
+          "estado": { "$ref": "#/components/schemas/EstadoPedido" },
+          "estado_entrega": {
+            "anyOf": [{ "$ref": "#/components/schemas/EstadoEntrega" }, { "type": "null" }]
+          },
+          "telefono": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Telefono" },
+          "repartidor_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Repartidor Id"
+          },
+          "total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total"
+          },
+          "saldo_por_cobrar": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Saldo Por Cobrar"
+          },
+          "fecha_promesa": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Fecha Promesa"
+          },
+          "venta_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Venta Id"
+          },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sucursal_id",
+          "tipo",
+          "canal",
+          "estado",
+          "total",
+          "saldo_por_cobrar",
+          "created_at"
+        ],
+        "title": "PedidoListItem"
+      },
+      "PedidoPagoResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "monto": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Monto"
+          },
+          "metodo_pago": { "$ref": "#/components/schemas/MetodoPago" },
+          "referencia": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Referencia"
+          },
+          "reembolsado": { "type": "boolean", "title": "Reembolsado" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": ["id", "monto", "metodo_pago", "reembolsado", "created_at"],
+        "title": "PedidoPagoResponse"
+      },
+      "PedidoResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "sucursal_id": { "type": "string", "format": "uuid", "title": "Sucursal Id" },
+          "usuario_id": { "type": "string", "format": "uuid", "title": "Usuario Id" },
+          "cliente_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Cliente Id"
+          },
+          "tipo": { "$ref": "#/components/schemas/TipoPedido" },
+          "canal": { "$ref": "#/components/schemas/CanalPedido" },
+          "estado": { "$ref": "#/components/schemas/EstadoPedido" },
+          "estado_entrega": {
+            "anyOf": [{ "$ref": "#/components/schemas/EstadoEntrega" }, { "type": "null" }]
+          },
+          "telefono": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Telefono" },
+          "descuento_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Descuento Total"
+          },
+          "motivo_descuento": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Motivo Descuento"
+          },
+          "costo_envio": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Costo Envio"
+          },
+          "codigo_cupon": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Codigo Cupon"
+          },
+          "cliente_segmento": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Cliente Segmento"
+          },
+          "notas": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Notas" },
+          "fecha_promesa": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Fecha Promesa"
+          },
+          "direccion_texto": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Texto"
+          },
+          "referencia_direccion": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Referencia Direccion"
+          },
+          "repartidor_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Repartidor Id"
+          },
+          "entrega_fallo_motivo": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Entrega Fallo Motivo"
+          },
+          "despachado_en": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Despachado En"
+          },
+          "entregado_en": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Entregado En"
+          },
+          "venta_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Venta Id"
+          },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "subtotal": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Subtotal"
+          },
+          "total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total"
+          },
+          "total_promociones": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Promociones"
+          },
+          "total_anticipos": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Anticipos"
+          },
+          "saldo_por_cobrar": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Saldo Por Cobrar"
+          },
+          "lineas": {
+            "items": { "$ref": "#/components/schemas/DetallePedidoResponse" },
+            "type": "array",
+            "title": "Lineas"
+          },
+          "pagos": {
+            "items": { "$ref": "#/components/schemas/PedidoPagoResponse" },
+            "type": "array",
+            "title": "Pagos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sucursal_id",
+          "usuario_id",
+          "tipo",
+          "canal",
+          "estado",
+          "descuento_total",
+          "costo_envio",
+          "created_at",
+          "subtotal",
+          "total",
+          "total_promociones",
+          "total_anticipos",
+          "saldo_por_cobrar",
+          "lineas",
+          "pagos"
+        ],
+        "title": "PedidoResponse"
       },
       "PermisoResponse": {
         "properties": {
@@ -9927,6 +12093,23 @@
         ],
         "title": "ProductoResponse"
       },
+      "PromoAplicadaResponse": {
+        "properties": {
+          "promo_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Promo Id"
+          },
+          "etiqueta": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Etiqueta" },
+          "monto": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Monto"
+          }
+        },
+        "type": "object",
+        "required": ["monto"],
+        "title": "PromoAplicadaResponse"
+      },
       "PromocionResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -9934,9 +12117,35 @@
           "tipo": { "$ref": "#/components/schemas/TipoPromocion" },
           "activo": { "type": "boolean", "title": "Activo" },
           "prioridad": { "type": "integer", "title": "Prioridad" },
-          "sucursal_id": {
-            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
-            "title": "Sucursal Id"
+          "combinable": { "type": "boolean", "title": "Combinable" },
+          "tope_descuento": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Tope Descuento"
+          },
+          "monto_minimo_compra": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Monto Minimo Compra"
+          },
+          "metodo_pago_requerido": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Metodo Pago Requerido"
+          },
+          "cliente_segmento": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Cliente Segmento"
+          },
+          "requiere_cupon": { "type": "boolean", "title": "Requiere Cupon", "default": false },
+          "sucursales": {
+            "items": { "type": "string", "format": "uuid" },
+            "type": "array",
+            "title": "Sucursales",
+            "default": []
           },
           "vigente_desde": {
             "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
@@ -9945,6 +12154,18 @@
           "vigente_hasta": {
             "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
             "title": "Vigente Hasta"
+          },
+          "hora_desde": {
+            "anyOf": [{ "type": "string", "format": "time" }, { "type": "null" }],
+            "title": "Hora Desde"
+          },
+          "hora_hasta": {
+            "anyOf": [{ "type": "string", "format": "time" }, { "type": "null" }],
+            "title": "Hora Hasta"
+          },
+          "dias_semana": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Dias Semana"
           },
           "nxm_lleva": {
             "anyOf": [{ "type": "integer" }, { "type": "null" }],
@@ -9981,7 +12202,7 @@
           }
         },
         "type": "object",
-        "required": ["id", "nombre", "tipo", "activo", "prioridad", "created_at"],
+        "required": ["id", "nombre", "tipo", "activo", "prioridad", "combinable", "created_at"],
         "title": "PromocionResponse"
       },
       "ReemplazarRecetaRequest": {
@@ -10002,6 +12223,26 @@
         "type": "object",
         "required": ["refresh_token"],
         "title": "RefreshRequest"
+      },
+      "RegistrarAnticipoRequest": {
+        "properties": {
+          "monto": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Monto"
+          },
+          "metodo_pago": { "$ref": "#/components/schemas/MetodoPago" },
+          "referencia": {
+            "anyOf": [{ "type": "string", "maxLength": 120 }, { "type": "null" }],
+            "title": "Referencia"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["monto", "metodo_pago"],
+        "title": "RegistrarAnticipoRequest"
       },
       "ReporteVentasResponse": {
         "properties": {
@@ -10077,6 +12318,23 @@
         ],
         "title": "ResolucionCodigoResponse"
       },
+      "ResumenPedidosResponse": {
+        "properties": {
+          "por_estado": {
+            "additionalProperties": { "type": "integer" },
+            "type": "object",
+            "title": "Por Estado"
+          },
+          "por_estado_entrega": {
+            "additionalProperties": { "type": "integer" },
+            "type": "object",
+            "title": "Por Estado Entrega"
+          }
+        },
+        "type": "object",
+        "required": ["por_estado", "por_estado_entrega"],
+        "title": "ResumenPedidosResponse"
+      },
       "ResumenTurnoResponse": {
         "properties": {
           "turno": { "$ref": "#/components/schemas/CajaTurnoResponse" },
@@ -10091,10 +12349,42 @@
             "title": "Total Devoluciones Efectivo"
           },
           "cantidad_ventas": { "type": "integer", "title": "Cantidad Ventas" },
+          "total_ingresos": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Ingresos"
+          },
+          "total_retiros": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Retiros"
+          },
+          "total_gastos": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Gastos"
+          },
+          "movimientos_neto": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Movimientos Neto"
+          },
           "saldo_esperado": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Saldo Esperado"
+          },
+          "denominaciones_apertura": {
+            "items": { "$ref": "#/components/schemas/DenominacionResponse" },
+            "type": "array",
+            "title": "Denominaciones Apertura",
+            "default": []
+          },
+          "denominaciones_cierre": {
+            "items": { "$ref": "#/components/schemas/DenominacionResponse" },
+            "type": "array",
+            "title": "Denominaciones Cierre",
+            "default": []
           }
         },
         "type": "object",
@@ -10103,6 +12393,10 @@
           "total_efectivo",
           "total_devoluciones_efectivo",
           "cantidad_ventas",
+          "total_ingresos",
+          "total_retiros",
+          "total_gastos",
+          "movimientos_neto",
           "saldo_esperado"
         ],
         "title": "ResumenTurnoResponse"
@@ -10220,6 +12514,16 @@
         "enum": ["entrada", "salida", "ajuste", "merma", "transferencia"],
         "title": "TipoMovimiento"
       },
+      "TipoMovimientoCaja": {
+        "type": "string",
+        "enum": ["retiro", "ingreso", "gasto"],
+        "title": "TipoMovimientoCaja"
+      },
+      "TipoPedido": {
+        "type": "string",
+        "enum": ["mostrador", "domicilio", "recoger"],
+        "title": "TipoPedido"
+      },
       "TipoProducto": {
         "type": "string",
         "enum": ["simple", "fraccionable", "kit", "servicio"],
@@ -10285,6 +12589,50 @@
         "type": "object",
         "required": ["producto_id", "sucursal_origen_id", "sucursal_destino_id", "cantidad"],
         "title": "TransferenciaRequest"
+      },
+      "TurnoListItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "sucursal_id": { "type": "string", "format": "uuid", "title": "Sucursal Id" },
+          "caja_id": { "type": "string", "format": "uuid", "title": "Caja Id" },
+          "usuario_id": { "type": "string", "format": "uuid", "title": "Usuario Id" },
+          "estado": { "type": "string", "title": "Estado" },
+          "saldo_inicial": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Saldo Inicial"
+          },
+          "saldo_final_declarado": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Saldo Final Declarado"
+          },
+          "diferencia": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Diferencia"
+          },
+          "abierto_en": { "type": "string", "format": "date-time", "title": "Abierto En" },
+          "cerrado_en": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Cerrado En"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sucursal_id",
+          "caja_id",
+          "usuario_id",
+          "estado",
+          "saldo_inicial",
+          "abierto_en"
+        ],
+        "title": "TurnoListItem"
       },
       "UnidadEmbed": {
         "properties": {
@@ -10602,6 +12950,10 @@
             "title": "Monedero Usado",
             "default": "0"
           },
+          "motivo_descuento": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Motivo Descuento"
+          },
           "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
           "lineas": {
             "items": { "$ref": "#/components/schemas/LineaVentaResponse" },
@@ -10717,6 +13069,59 @@
           "detalle"
         ],
         "title": "VentasPorMetodoResponse"
+      },
+      "_CrearCuponRequest": {
+        "properties": {
+          "codigo": { "type": "string", "maxLength": 40, "minLength": 1, "title": "Codigo" },
+          "vigente_desde": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Vigente Desde"
+          },
+          "vigente_hasta": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Vigente Hasta"
+          },
+          "max_usos_total": {
+            "anyOf": [{ "type": "integer", "minimum": 1.0 }, { "type": "null" }],
+            "title": "Max Usos Total"
+          },
+          "max_usos_por_persona": {
+            "anyOf": [{ "type": "integer", "minimum": 1.0 }, { "type": "null" }],
+            "title": "Max Usos Por Persona"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["codigo"],
+        "title": "_CrearCuponRequest"
+      },
+      "_CuponResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "codigo": { "type": "string", "title": "Codigo" },
+          "promocion_id": { "type": "string", "format": "uuid", "title": "Promocion Id" },
+          "activo": { "type": "boolean", "title": "Activo" },
+          "vigente_desde": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Vigente Desde"
+          },
+          "vigente_hasta": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Vigente Hasta"
+          },
+          "max_usos_total": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Max Usos Total"
+          },
+          "max_usos_por_persona": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Max Usos Por Persona"
+          },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": ["id", "codigo", "promocion_id", "activo", "created_at"],
+        "title": "_CuponResponse"
       },
       "_LineaRecetaRequest": {
         "properties": {
