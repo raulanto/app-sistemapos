@@ -148,8 +148,12 @@ interface LineaCarrito {
         linear-gradient(#000 0 0) top / 100% calc(100% - var(--tooth)) no-repeat;
     }
     .pos-ticket-actions { animation: pos-actions-in .3s ease-out 1.35s both; }
+    .linea-detalle { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .22s ease; }
+    .linea-detalle.abierta { grid-template-rows: 1fr; }
+    .linea-detalle > div { overflow: hidden; min-height: 0; }
     @media (prefers-reduced-motion: reduce) {
       .pos-ticket, .pos-ticket-actions, .pos-slot { animation: none; }
+      .linea-detalle { transition: none; }
     }
   `,
   ],
@@ -187,6 +191,8 @@ export class PosComponent {
   readonly imgRoto = signal<Set<string>>(new Set());
 
   readonly carrito = signal<LineaCarrito[]>([]);
+  /** Línea con sus controles desplegados; el resto se muestra colapsado (acordeón). */
+  readonly expandedLinea = signal<string | null>(null);
   readonly descuentoTotal = signal(0);
   readonly pagos = signal<{ monto: number; metodo_pago: MetodoPago; monto_recibido?: number }[]>([]);
 
@@ -636,16 +642,19 @@ export class PosComponent {
   }
 
   agregar(p: ProductoResponse, u: UnidadResponse | null = null) {
+    if (this.ventaOk()) this.nuevaVenta(); // tocar un producto tras cobrar arranca la siguiente venta
     const key = `${p.id}:${u?.id ?? 'base'}`;
     const existe = this.carrito().find(l => l.key === key);
     if (existe) {
       this.setCantidad(key, existe.cantidad + 1);
-      return;
+    } else {
+      this.carrito.update(list => [
+        ...list,
+        { key, producto: p, unidad: u, cantidad: 1, precio_unitario: this.precioDe(p, u), descuento_linea: 0 },
+      ]);
     }
-    this.carrito.update(list => [
-      ...list,
-      { key, producto: p, unidad: u, cantidad: 1, precio_unitario: this.precioDe(p, u), descuento_linea: 0 },
-    ]);
+    // La última línea tocada queda desplegada; las anteriores se colapsan para una lista limpia.
+    this.expandedLinea.set(key);
   }
 
   escanear() {
@@ -707,6 +716,11 @@ export class PosComponent {
 
   quitar(key: string) {
     this.carrito.update(list => list.filter(l => l.key !== key));
+  }
+
+  /** Despliega/colapsa los controles de una línea (acordeón: sólo una abierta). */
+  toggleLinea(key: string) {
+    this.expandedLinea.update(k => (k === key ? null : key));
   }
 
   /** Vacía sólo el carrito (deja pagos/cliente/cupón como están). */
@@ -906,6 +920,9 @@ export class PosComponent {
         this.ventaOk.set(venta);
         this.limpiarVenta();
         this.idemKey = this.nuevoIdem();
+        // Refresca el catálogo (stock embebido) mientras corre la animación del ticket,
+        // así la siguiente venta arranca con existencias actualizadas.
+        this.cargarCatalogo();
       },
       error: err => {
         this.cobrando.set(false);
