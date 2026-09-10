@@ -17,6 +17,9 @@ import type { ZardDropdownSide } from '../../../shared/components/dropdown/dropd
 import { ZardDropdownImports } from '../../../shared/components/dropdown/dropdown.imports';
 import { ZardSidebarImports } from '../../../shared/components/sidebar/sidebar.imports';
 import { ZardSidebarService } from '../../../shared/components/sidebar/sidebar.service';
+import { ZardAlertDialogService } from '../../../shared/components/alert-dialog/alert-dialog.service';
+import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
+import { CajaService } from '../../../features/ventas/data-access/caja.service';
 import { AuthService } from '../../auth/api/auth.service';
 import { ThemeService } from '../../theme/theme.service';
 
@@ -118,6 +121,9 @@ export class NavUserComponent {
   private readonly sidebar = inject(ZardSidebarService);
   private authService = inject(AuthService);
   private themeService = inject(ThemeService);
+  private alertDialog = inject(ZardAlertDialogService);
+  private sonner = inject(ZardSonnerService);
+  private cajaService = inject(CajaService);
   
   protected readonly menuSide = computed<ZardDropdownSide>(() => (this.sidebar.isMobile() ? 'bottom' : 'right'));
 
@@ -136,6 +142,34 @@ export class NavUserComponent {
   }
 
   logout() {
-    this.authService.logoutRemote().subscribe();
+    this.alertDialog.confirm({
+      zTitle: 'Cerrar sesión',
+      zDescription: '¿Estás seguro de que deseas cerrar tu sesión en el sistema?',
+      zOkText: 'Cerrar sesión',
+      zCancelText: 'Cancelar',
+      zOkDestructive: true,
+      zOnOk: () => {
+        // No se permite cerrar sesión con un turno de caja abierto: hay que cerrarlo primero.
+        this.cajaService.actual().subscribe({
+          next: (turno) => {
+            if (turno) {
+              this.sonner.error('Tienes un turno de caja abierto. Ciérralo antes de cerrar sesión.');
+              return;
+            }
+            this.doLogout();
+          },
+          // Si no se pudo consultar el turno (permisos, red), no bloqueamos el cierre de sesión.
+          error: () => this.doLogout(),
+        });
+      }
+    });
+  }
+
+  private doLogout() {
+    this.authService.logoutRemote().subscribe({
+      error: (err) => {
+        this.sonner.error(err?.error?.error?.message ?? 'No se pudo cerrar sesión. Inténtalo de nuevo.');
+      },
+    });
   }
 }
