@@ -1,65 +1,94 @@
-<div class="p-6 w-full max-w-7xl mx-auto space-y-6">
-  <a routerLink="/pedidos" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-    <ng-icon name="lucideArrowLeft" class="size-4" /> Pedidos
-  </a>
-  <h1 class="text-2xl font-bold tracking-tight">{{ esEdicion() ? 'Editar pedido' : 'Nuevo pedido' }}</h1>
+<div class="mx-auto w-full max-w-7xl p-4 sm:p-6">
+  <div class="mb-6 space-y-1.5">
+    <a routerLink="/pedidos" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+      <ng-icon name="lucideArrowLeft" class="size-4" /> Pedidos
+    </a>
+    <div class="flex flex-wrap items-center gap-2.5">
+      <h1 class="text-2xl font-bold tracking-tight">{{ esEdicion() ? 'Editar pedido' : 'Nuevo pedido' }}</h1>
+      @if (esEdicion()) { <z-badge zType="secondary">Borrador</z-badge> }
+    </div>
+    <p class="text-sm text-muted-foreground">
+      Arma la orden desde el catálogo, revisa la cotización en vivo y guárdala como borrador o confírmala.
+    </p>
+  </div>
 
   @if (cargando()) {
     <z-skeleton class="h-64 w-full" />
   } @else {
     <div class="grid gap-6 lg:grid-cols-[1fr_390px] xl:grid-cols-[1fr_420px]">
       <!-- Columna izquierda: datos del pedido + catálogo -->
-      <div class="min-w-0 space-y-5">
-        <!-- Datos del pedido (sin recuadro) -->
-        <div class="space-y-4 border-b pb-5">
-          <div class="flex flex-wrap gap-x-6 gap-y-3">
-            <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-              Tipo
-              <z-select class="w-48" [ngModel]="tipo()" (ngModelChange)="tipo.set($event)">
-                @for (t of tipos; track t.value) { <z-select-item [zValue]="t.value">{{ t.label }}</z-select-item> }
-              </z-select>
-            </label>
-            <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-              Canal
-              <z-select class="w-40" [ngModel]="canal()" (ngModelChange)="canal.set($event)">
-                @for (c of canales; track c.value) { <z-select-item [zValue]="c.value">{{ c.label }}</z-select-item> }
-              </z-select>
-            </label>
-            <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-              Teléfono
-              <input z-input class="w-44" inputmode="tel" placeholder="Monedero / historial"
-                     [ngModel]="telefono()" (ngModelChange)="telefono.set($event)" />
-            </label>
-          </div>
-
-          @if (esEntrega()) {
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground sm:col-span-2">
-                Dirección {{ esDomicilio() ? '*' : '' }}
-                <input z-input [ngModel]="direccionTexto()" (ngModelChange)="direccionTexto.set($event)"
-                       placeholder="Calle, número, colonia" />
-                @if (faltaDireccion()) {
-                  <span class="text-[0.8rem] font-medium text-destructive">Obligatoria para envío a domicilio.</span>
-                }
+      <div class="min-w-0 space-y-6">
+        <!-- Datos del pedido -->
+        <section class="rounded-xl border bg-card">
+          <header class="flex items-center gap-2 border-b px-4 py-3">
+            <ng-icon name="lucideReceiptText" class="size-4 text-muted-foreground" />
+            <h2 class="text-sm font-semibold">Datos del pedido</h2>
+          </header>
+          <div class="space-y-4 p-4">
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+                Tipo
+                <z-select class="w-full" [ngModel]="tipo()" (ngModelChange)="tipo.set($event)">
+                  @for (t of tipos; track t.value) { <z-select-item [zValue]="t.value">{{ t.label }}</z-select-item> }
+                </z-select>
               </label>
               <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-                Referencia
-                <input z-input [ngModel]="referenciaDireccion()" (ngModelChange)="referenciaDireccion.set($event)"
-                       placeholder="Entre calles, portón…" />
+                Canal
+                <z-select class="w-full" [ngModel]="canal()" (ngModelChange)="canal.set($event)">
+                  @for (c of canales; track c.value) { <z-select-item [zValue]="c.value">{{ c.label }}</z-select-item> }
+                </z-select>
               </label>
               <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-                Fecha promesa
-                <input z-input type="datetime-local" [ngModel]="fechaPromesa()" (ngModelChange)="fechaPromesa.set($event)" />
+                Teléfono
+                <input z-input inputmode="tel" placeholder="Monedero / historial"
+                       [ngModel]="telefono()" (ngModelChange)="telefono.set($event)" />
               </label>
             </div>
-            <p class="text-[0.8rem] text-muted-foreground">
-              El envío es una línea de servicio del catálogo: agrégala desde «Buscar producto» y asígnale un responsable.
-            </p>
-          }
-        </div>
+
+            @if (esEntrega()) {
+              <div class="space-y-3 rounded-lg border bg-muted/30 p-3">
+                <div class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <ng-icon name="lucideMapPin" class="size-3.5" /> Entrega
+                </div>
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground sm:col-span-2">
+                    Dirección {{ esDomicilio() ? '*' : '' }}
+                    <input z-input [ngModel]="direccionTexto()" (ngModelChange)="direccionTexto.set($event)"
+                           placeholder="Calle, número, colonia" />
+                    @if (faltaDireccion()) {
+                      <span class="text-[0.8rem] font-medium text-destructive">Obligatoria para envío a domicilio.</span>
+                    }
+                  </label>
+                  <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+                    Referencia
+                    <input z-input [ngModel]="referenciaDireccion()" (ngModelChange)="referenciaDireccion.set($event)"
+                           placeholder="Entre calles, portón…" />
+                  </label>
+                  <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+                    Fecha promesa
+                    <input z-input type="datetime-local" [ngModel]="fechaPromesa()" (ngModelChange)="fechaPromesa.set($event)" />
+                  </label>
+                </div>
+                <p class="text-[0.8rem] text-muted-foreground">
+                  El envío es una línea de servicio del catálogo: agrégala desde «Buscar producto» y asígnale un responsable.
+                </p>
+              </div>
+            }
+          </div>
+        </section>
 
         <!-- Catálogo estilo tienda: buscar + cuadrícula/lista + filtro por categoría -->
-        <div class="flex flex-col overflow-hidden rounded-xl border bg-card">
+        <section class="flex flex-col overflow-hidden rounded-xl border bg-card">
+          <header class="flex items-center justify-between gap-2 border-b px-4 py-3">
+            <div class="flex items-center gap-2">
+              <ng-icon name="lucidePackage" class="size-4 text-muted-foreground" />
+              <h2 class="text-sm font-semibold">Catálogo</h2>
+            </div>
+            @if (!cargandoCatalogo()) {
+              <span class="tabular-nums text-xs text-muted-foreground">{{ productosFiltrados().length }} producto(s)</span>
+            }
+          </header>
+
           <div class="flex flex-col gap-2 border-b p-3 sm:flex-row">
             <div class="relative flex-1">
               <ng-icon name="lucideSearch" class="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -176,78 +205,96 @@
               }
             }
           </div>
-        </div>
+        </section>
 
       </div>
 
       <!-- Columna derecha: carrito + resumen en un solo recuadro -->
-      <div class="space-y-3 lg:sticky lg:top-4 lg:self-start">
-        <div class="divide-y overflow-hidden rounded-xl border bg-card">
+      <div class="space-y-4 lg:sticky lg:top-4 lg:self-start">
+        <section class="overflow-hidden rounded-xl border bg-card">
           <!-- Carrito -->
-          <div>
-            <div class="flex items-center justify-between px-3 py-2.5">
-              <span class="text-sm font-medium">Carrito</span>
-              <z-badge zType="secondary" class="tabular-nums">{{ carrito().length }}</z-badge>
+          <header class="flex items-center justify-between gap-2 border-b px-4 py-3">
+            <div class="flex items-center gap-2">
+              <ng-icon name="lucideShoppingCart" class="size-4 text-muted-foreground" />
+              <h2 class="text-sm font-semibold">Carrito</h2>
             </div>
-            @if (carrito().length === 0) {
-              <z-empty zIcon="lucideSearch" zTitle="Carrito vacío"
-                       zDescription="Toca un producto del catálogo para agregarlo." class="border-t py-10" />
-            } @else {
-              <div class="max-h-[44vh] divide-y overflow-y-auto border-t">
-                @for (l of carrito(); track l.key) {
-                  <div class="space-y-2 p-3">
-                    <div class="flex items-start gap-2">
-                      <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-1.5">
-                          <span class="truncate text-sm font-medium">{{ l.producto.nombre }}</span>
-                          @if (l.esServicio) { <z-badge zType="secondary" class="shrink-0 text-[10px]">Servicio</z-badge> }
-                        </div>
-                        <div class="text-xs text-muted-foreground">{{ l.unidad ? l.unidad.nombre : 'Unidad base' }}</div>
-                        @if (promoDeLinea(l); as promo) {
-                          <div class="text-xs text-primary">{{ promo.etiqueta }} · − {{ promo.descuento | currency }}</div>
-                        }
-                        @if (sinStock(l)) {
-                          <z-badge zType="destructive" class="mt-1 text-[10px]">Sin stock — se revisa al facturar</z-badge>
-                        }
+            <z-badge zType="secondary" class="tabular-nums">{{ carrito().length }}</z-badge>
+          </header>
+
+          @if (carrito().length === 0) {
+            <z-empty zIcon="lucideSearch" zTitle="Carrito vacío"
+                     zDescription="Toca un producto del catálogo para agregarlo." class="py-10" />
+          } @else {
+            <ul class="max-h-[42vh] divide-y overflow-y-auto">
+              @for (l of carrito(); track l.key) {
+                <li class="space-y-3 p-4">
+                  <div class="flex items-start gap-2">
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-1.5">
+                        <span class="truncate text-sm font-medium">{{ l.producto.nombre }}</span>
+                        @if (l.esServicio) { <z-badge zType="secondary" class="shrink-0 text-[10px]">Servicio</z-badge> }
                       </div>
-                      <span class="shrink-0 tabular-nums text-sm font-semibold">{{ lineaSubtotal(l) | currency }}</span>
-                      <button z-button zType="ghost" zSize="icon-sm" class="shrink-0 text-destructive" (click)="quitar(l.key)">
-                        <ng-icon name="lucideTrash2" class="size-4" />
-                      </button>
+                      <div class="text-xs text-muted-foreground">{{ l.unidad ? l.unidad.nombre : 'Unidad base' }}</div>
                     </div>
-                    <div class="flex items-center gap-1.5">
+                    <span class="shrink-0 tabular-nums text-sm font-semibold">{{ lineaSubtotal(l) | currency }}</span>
+                    <button z-button zType="ghost" zSize="icon-sm" class="-mr-1.5 shrink-0 text-muted-foreground hover:text-destructive" (click)="quitar(l.key)">
+                      <ng-icon name="lucideTrash2" class="size-4" />
+                    </button>
+                  </div>
+
+                  @if (promoDeLinea(l); as promo) {
+                    <div class="flex items-center gap-1.5 text-xs text-primary">
+                      <ng-icon name="lucideTag" class="size-3.5" /> {{ promo.etiqueta }} · − {{ promo.descuento | currency }}
+                    </div>
+                  }
+                  @if (sinStock(l)) {
+                    <z-badge zType="destructive" class="text-[10px]">Sin stock — se revisa al facturar</z-badge>
+                  }
+
+                  <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <div class="flex items-center gap-1">
                       <button z-button zType="outline" zSize="icon-sm" (click)="paso(l.key, -1)"><ng-icon name="lucideMinus" class="size-3" /></button>
-                      <input z-input type="number" min="0" step="0.001" class="w-12 px-1 text-center"
+                      <input z-input type="number" min="0" step="0.001" class="w-14 px-1 text-center"
                              [ngModel]="l.cantidad" (ngModelChange)="setCantidad(l.key, $event)" />
                       <button z-button zType="outline" zSize="icon-sm" (click)="paso(l.key, 1)"><ng-icon name="lucidePlus" class="size-3" /></button>
-                      <input z-input type="number" min="0" step="0.01" class="w-20" title="Precio unitario" placeholder="Precio"
-                             [ngModel]="l.precio_unitario" (ngModelChange)="setPrecio(l.key, $event)" />
-                      @if (canDescuentoManual()) {
-                        <input z-input type="number" min="0" step="0.01" class="w-16" title="Descuento de línea" placeholder="Desc."
-                               [ngModel]="l.descuento_linea" (ngModelChange)="setDescuentoLinea(l.key, $event)" />
-                      }
                     </div>
-                    @if (l.esServicio) {
-                      <div>
-                        <z-select class="w-full" [ngModel]="l.asignadoA" (ngModelChange)="setAsignado(l.key, $event)"
-                                  placeholder="Responsable del servicio…">
-                          @for (u of usuarios(); track u.id) {
-                            <z-select-item [zValue]="u.id">{{ u.nombre }}</z-select-item>
-                          }
-                        </z-select>
-                        @if (!l.asignadoA) {
-                          <p class="mt-1 text-[0.7rem] font-medium text-amber-600">Necesita responsable para confirmar el pedido.</p>
-                        }
-                      </div>
+                    <label class="flex items-center gap-1 text-[0.7rem] font-medium text-muted-foreground">
+                      Precio
+                      <input z-input type="number" min="0" step="0.01" class="w-20" title="Precio unitario"
+                             [ngModel]="l.precio_unitario" (ngModelChange)="setPrecio(l.key, $event)" />
+                    </label>
+                    @if (canDescuentoManual()) {
+                      <label class="flex items-center gap-1 text-[0.7rem] font-medium text-muted-foreground">
+                        Desc.
+                        <input z-input type="number" min="0" step="0.01" class="w-16" title="Descuento de línea"
+                               [ngModel]="l.descuento_linea" (ngModelChange)="setDescuentoLinea(l.key, $event)" />
+                      </label>
                     }
                   </div>
-                }
-              </div>
-            }
-          </div>
 
-          <!-- Descuento y cupón -->
-          <div class="space-y-3 p-3">
+                  @if (l.esServicio) {
+                    <div>
+                      <z-select class="w-full" [ngModel]="l.asignadoA" (ngModelChange)="setAsignado(l.key, $event)"
+                                placeholder="Responsable del servicio…">
+                        @for (u of usuarios(); track u.id) {
+                          <z-select-item [zValue]="u.id">{{ u.nombre }}</z-select-item>
+                        }
+                      </z-select>
+                      @if (!l.asignadoA) {
+                        <p class="mt-1 text-[0.7rem] font-medium text-amber-600">Necesita responsable para confirmar el pedido.</p>
+                      }
+                    </div>
+                  }
+                </li>
+              }
+            </ul>
+          }
+
+          <!-- Ajustes: descuento y cupón -->
+          <div class="space-y-3 border-t p-4">
+            <div class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <ng-icon name="lucideTag" class="size-3.5" /> Ajustes
+            </div>
             @if (canDescuentoManual()) {
               <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
                 Descuento total
@@ -268,23 +315,26 @@
           </div>
 
           <!-- Totales -->
-          <dl class="space-y-1.5 p-3 text-sm">
+          <dl class="space-y-2 border-t p-4 text-sm">
             <div class="flex justify-between"><dt class="text-muted-foreground">Mercancía</dt><dd class="tabular-nums">{{ totalMercancia() | currency }}</dd></div>
             @if (totalPromos() > 0) {
               <div class="flex justify-between text-primary"><dt>Promos</dt><dd class="tabular-nums">− {{ totalPromos() | currency }}</dd></div>
             }
-            <div class="flex justify-between border-t pt-1.5 text-base font-semibold">
-              <dt>Total {{ cotizando() ? '…' : '' }}</dt><dd class="tabular-nums">{{ total() | currency }}</dd>
+            <div class="flex items-baseline justify-between border-t pt-3">
+              <dt class="font-medium">Total</dt>
+              <dd class="tabular-nums text-2xl font-bold">
+                {{ total() | currency }}<span class="ml-1 text-sm font-normal text-muted-foreground">{{ cotizando() ? '…' : '' }}</span>
+              </dd>
             </div>
           </dl>
 
           <!-- Notas -->
-          <label class="flex flex-col gap-1 p-3 text-xs font-medium text-muted-foreground">
-            Notas
+          <label class="flex flex-col gap-1.5 border-t p-4 text-xs font-medium text-muted-foreground">
+            <span class="flex items-center gap-1.5"><ng-icon name="lucideStickyNote" class="size-3.5" /> Notas</span>
             <textarea z-textarea rows="2" [ngModel]="notas()" (ngModelChange)="notas.set($event)"
                       placeholder="Instrucciones, referencias…"></textarea>
           </label>
-        </div>
+        </section>
 
         <div class="space-y-2">
           @if (faltaResponsable()) {
