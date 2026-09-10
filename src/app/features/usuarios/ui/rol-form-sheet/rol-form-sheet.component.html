@@ -1,30 +1,42 @@
-<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
+<form class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
   <div class="grid grid-cols-1 gap-4">
-    <div z-field>
+    @let codigo = rolForm.codigo();
+    @let codigoInvalid = codigo.invalid() && codigo.touched();
+    <div z-field [attr.data-invalid]="codigoInvalid || null">
       <label z-field-label for="codigo">Código *</label>
-      <input z-input id="codigo" type="text" formControlName="codigo" maxlength="50" placeholder="Ej. gerente_sucursal" />
+      <input z-input id="codigo" type="text" maxlength="50" placeholder="Ej. gerente_sucursal"
+        [formField]="rolForm.codigo" [attr.aria-invalid]="codigoInvalid || null" />
       @if (isEditing) {
         <p z-field-description>El código no se puede modificar.</p>
-      } @else if (form.controls.codigo.invalid && form.controls.codigo.touched) {
-        <p class="text-[0.8rem] font-medium text-destructive">El código es obligatorio.</p>
+      } @else if (codigoInvalid) {
+        <z-field-error [zErrors]="codigo.errors()" />
       }
     </div>
   </div>
 
   <div class="grid grid-cols-1 gap-4">
-    <div z-field>
+    @let nombre = rolForm.nombre();
+    @let nombreInvalid = nombre.invalid() && nombre.touched();
+    <div z-field [attr.data-invalid]="nombreInvalid || null">
       <label z-field-label for="nombre">Nombre *</label>
-      <input z-input id="nombre" type="text" formControlName="nombre" maxlength="50" placeholder="Ej. Gerente de sucursal" />
-      @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
-        <p class="text-[0.8rem] font-medium text-destructive">El nombre es obligatorio.</p>
+      <input z-input id="nombre" type="text" maxlength="50" placeholder="Ej. Gerente de sucursal"
+        [formField]="rolForm.nombre" [attr.aria-invalid]="nombreInvalid || null" />
+      @if (nombreInvalid) {
+        <z-field-error [zErrors]="nombre.errors()" />
       }
     </div>
   </div>
 
   <div class="grid grid-cols-1 gap-4">
-    <div z-field>
+    @let descripcion = rolForm.descripcion();
+    @let descripcionInvalid = descripcion.invalid() && descripcion.touched();
+    <div z-field [attr.data-invalid]="descripcionInvalid || null">
       <label z-field-label for="descripcion">Descripción</label>
-      <input z-input id="descripcion" type="text" formControlName="descripcion" maxlength="255" placeholder="Para qué sirve este rol" />
+      <input z-input id="descripcion" type="text" maxlength="255" placeholder="Para qué sirve este rol"
+        [formField]="rolForm.descripcion" [attr.aria-invalid]="descripcionInvalid || null" />
+      @if (descripcionInvalid) {
+        <z-field-error [zErrors]="descripcion.errors()" />
+      }
     </div>
   </div>
 

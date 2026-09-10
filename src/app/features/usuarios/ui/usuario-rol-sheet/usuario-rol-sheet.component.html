@@ -1,19 +1,21 @@
-<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
+<form class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
   <p class="text-sm text-muted-foreground">
     Rol de <span class="font-medium text-foreground">{{ sheetData?.nombre }}</span>.
     El cambio aplica de inmediato a sus permisos.
   </p>
 
   <div class="grid grid-cols-1 gap-4">
-    <div z-field>
+    @let rolField = rolForm.rol_id();
+    @let rolInvalid = rolField.invalid() && rolField.touched();
+    <div z-field [attr.data-invalid]="rolInvalid || null">
       <label z-field-label>Rol *</label>
-      <z-select formControlName="rol_id" placeholder="Selecciona un rol">
+      <z-select [formField]="rolForm.rol_id" placeholder="Selecciona un rol" [zInvalid]="rolInvalid">
         @for (rol of roles(); track rol.id) {
           <z-select-item [zValue]="rol.id">{{ rol.nombre }}</z-select-item>
         }
       </z-select>
-      @if (form.controls.rol_id.invalid && form.controls.rol_id.touched) {
-        <p class="text-[0.8rem] font-medium text-destructive">Elige un rol.</p>
+      @if (rolInvalid) {
+        <z-field-error [zErrors]="rolField.errors()" />
       }
     </div>
   </div>

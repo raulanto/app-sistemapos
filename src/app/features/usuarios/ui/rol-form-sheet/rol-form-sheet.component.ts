@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { disabled, form, FormField, maxLength, required } from '@angular/forms/signals';
 import { Observable } from 'rxjs';
 
 import { RolAdminService } from '../../data-access/rol-admin.service';
@@ -16,24 +16,29 @@ export interface RolSheetData {
 @Component({
   selector: 'app-rol-form-sheet',
   standalone: true,
-  imports: [ReactiveFormsModule, ...ZardFieldImports, ZardInputComponent],
+  imports: [FormField, ...ZardFieldImports, ZardInputComponent],
   templateUrl: './rol-form-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   exportAs: 'rolFormSheet',
   host: { style: 'display: contents' },
 })
 export class RolFormSheetComponent implements OnInit {
-  private fb = inject(FormBuilder);
   private rolService = inject(RolAdminService);
 
   public sheetData = injectSheetData<RolSheetData | undefined>();
 
   isEditing = false;
 
-  form = this.fb.group({
-    codigo: ['', [Validators.required, Validators.maxLength(50)]],
-    nombre: ['', [Validators.required, Validators.maxLength(50)]],
-    descripcion: ['', [Validators.maxLength(255)]],
+  private readonly model = signal({ codigo: '', nombre: '', descripcion: '' });
+
+  protected readonly rolForm = form(this.model, path => {
+    required(path.codigo, { message: 'El código es obligatorio.' });
+    maxLength(path.codigo, 50, { message: 'Máximo 50 caracteres.' });
+    // El código es inmutable una vez creado el rol: deshabilitado no valida.
+    disabled(path.codigo, () => !!this.sheetData?.rol);
+    required(path.nombre, { message: 'El nombre es obligatorio.' });
+    maxLength(path.nombre, 50, { message: 'Máximo 50 caracteres.' });
+    maxLength(path.descripcion, 255, { message: 'Máximo 255 caracteres.' });
   });
 
   ngOnInit() {
@@ -41,34 +46,33 @@ export class RolFormSheetComponent implements OnInit {
     this.isEditing = !!rol;
     if (!rol) return;
 
-    this.form.patchValue({
+    this.model.set({
       codigo: rol.codigo ?? '',
       nombre: rol.nombre,
-      descripcion: rol.descripcion,
+      descripcion: rol.descripcion ?? '',
     });
-    // El código es inmutable una vez creado el rol.
-    this.form.controls.codigo.disable();
   }
 
   save(): Observable<RolResponse> | void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    const root = this.rolForm();
+    if (!root.valid()) {
+      root.markAsTouched();
       return;
     }
 
-    const data = this.form.getRawValue();
+    const data = this.model();
 
     if (this.isEditing && this.sheetData?.rol) {
       const payload: EditarRolRequest = {
-        nombre: data.nombre!,
+        nombre: data.nombre,
         descripcion: data.descripcion || '',
       };
       return this.rolService.actualizar(this.sheetData.rol.id, payload);
     }
 
     const payload: CrearRolRequest = {
-      codigo: data.codigo!,
-      nombre: data.nombre!,
+      codigo: data.codigo,
+      nombre: data.nombre,
       descripcion: data.descripcion || '',
     };
     return this.rolService.crear(payload);

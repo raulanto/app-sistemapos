@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { disabled, email, form, FormField, maxLength, minLength, required } from '@angular/forms/signals';
 import { Observable } from 'rxjs';
 
 import { UsuarioAdminService } from '../../data-access/usuario-admin.service';
@@ -24,7 +24,7 @@ export interface UsuarioSheetData {
 @Component({
   selector: 'app-usuario-form-sheet',
   standalone: true,
-  imports: [ReactiveFormsModule, ...ZardFieldImports, ZardInputComponent, ...ZardSelectImports],
+  imports: [FormField, ...ZardFieldImports, ZardInputComponent, ...ZardSelectImports],
   templateUrl: './usuario-form-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   exportAs: 'usuarioFormSheet',
@@ -32,7 +32,6 @@ export interface UsuarioSheetData {
   host: { style: 'display: contents' },
 })
 export class UsuarioFormSheetComponent implements OnInit {
-  private fb = inject(FormBuilder);
   private usuarioService = inject(UsuarioAdminService);
   private rolService = inject(RolAdminService);
   public sucursalService = inject(SucursalService);
@@ -43,12 +42,25 @@ export class UsuarioFormSheetComponent implements OnInit {
   isEditing = false;
   readonly roles = signal<RolResponse[]>([]);
 
-  form = this.fb.group({
-    nombre: ['', [Validators.required, Validators.maxLength(100)]],
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(8)]],
-    rol_id: ['', Validators.required],
-    sucursal_id: [''],
+  private readonly model = signal({
+    nombre: '',
+    email: '',
+    password: '',
+    rol_id: '',
+    sucursal_id: '',
+  });
+
+  protected readonly usuarioForm = form(this.model, path => {
+    required(path.nombre, { message: 'El nombre es obligatorio.' });
+    maxLength(path.nombre, 100, { message: 'Máximo 100 caracteres.' });
+    required(path.email, { message: 'Ingresa un correo válido.' });
+    email(path.email, { message: 'Ingresa un correo válido.' });
+    // En edición no se toca la contraseña ni el rol (endpoints propios): deshabilitados no validan.
+    required(path.password, { message: 'La contraseña debe tener al menos 8 caracteres.' });
+    minLength(path.password, 8, { message: 'La contraseña debe tener al menos 8 caracteres.' });
+    disabled(path.password, () => !!this.sheetData?.usuarioId);
+    required(path.rol_id, { message: 'Elige un rol.' });
+    disabled(path.rol_id, () => !!this.sheetData?.usuarioId);
   });
 
   ngOnInit() {
@@ -60,18 +72,14 @@ export class UsuarioFormSheetComponent implements OnInit {
     });
 
     if (this.isEditing) {
-      // En edición no se toca la contraseña ni el rol (endpoints propios).
-      this.form.controls.password.disable();
-      this.form.controls.password.clearValidators();
-      this.form.controls.rol_id.disable();
-      this.form.controls.rol_id.clearValidators();
-
       this.loading.set(true);
       this.usuarioService.obtenerPorId(this.sheetData!.usuarioId!).subscribe({
         next: usuario => {
-          this.form.patchValue({
+          this.model.set({
             nombre: usuario.nombre,
             email: usuario.email,
+            password: '',
+            rol_id: '',
             sucursal_id: usuario.sucursal_id ?? '',
           });
           this.loading.set(false);
@@ -85,28 +93,29 @@ export class UsuarioFormSheetComponent implements OnInit {
   }
 
   save(): Observable<UsuarioResponse> | void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    const root = this.usuarioForm();
+    if (!root.valid()) {
+      root.markAsTouched();
       return;
     }
 
-    const data = this.form.getRawValue();
+    const data = this.model();
     const sucursal_id = data.sucursal_id ? data.sucursal_id : null;
 
     if (this.isEditing && this.sheetData?.usuarioId) {
       const payload: EditarUsuarioRequest = {
-        nombre: data.nombre!,
-        email: data.email!,
+        nombre: data.nombre,
+        email: data.email,
         sucursal_id,
       };
       return this.usuarioService.actualizar(this.sheetData.usuarioId, payload);
     }
 
     const payload: CrearUsuarioRequest = {
-      nombre: data.nombre!,
-      email: data.email!,
-      password: data.password!,
-      rol_id: data.rol_id!,
+      nombre: data.nombre,
+      email: data.email,
+      password: data.password,
+      rol_id: data.rol_id,
       sucursal_id,
     };
     return this.usuarioService.crear(payload);
