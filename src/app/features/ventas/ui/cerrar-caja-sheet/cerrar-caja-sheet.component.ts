@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CurrencyPipe, NgClass } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { form, FormField, min, required, validate } from '@angular/forms/signals';
 import { Observable } from 'rxjs';
 
 import { CajaService } from '../../data-access/caja.service';
@@ -22,9 +22,9 @@ export interface CerrarCajaSheetData {
 @Component({
   selector: 'app-cerrar-caja-sheet',
   standalone: true,
-  imports: [ReactiveFormsModule, CurrencyPipe, NgClass, ...ZardFieldImports, ZardInputComponent],
+  imports: [FormField, CurrencyPipe, NgClass, ...ZardFieldImports, ZardInputComponent],
   template: `
-    <form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
+    <form class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
       @if (resumen(); as r) {
         <dl class="rounded-md border text-sm">
           <div class="flex justify-between border-b px-3 py-2">
@@ -68,9 +68,15 @@ export interface CerrarCajaSheetData {
         <div class="h-24 animate-pulse rounded-md bg-muted"></div>
       }
 
-      <div z-field>
+      @let saldo = cerrarForm.saldo_final_declarado();
+      @let saldoInvalid = saldo.invalid() && saldo.touched();
+      <div z-field [attr.data-invalid]="saldoInvalid || null">
         <label z-field-label for="saldo_final_declarado">Efectivo contado *</label>
-        <input z-input id="saldo_final_declarado" type="number" min="0" step="0.01" formControlName="saldo_final_declarado" placeholder="0.00" />
+        <input z-input id="saldo_final_declarado" type="number" step="0.01" placeholder="0.00"
+          [formField]="cerrarForm.saldo_final_declarado" [attr.aria-invalid]="saldoInvalid || null" />
+        @if (saldoInvalid) {
+          <z-field-error [zErrors]="saldo.errors()" />
+        }
       </div>
 
       @if (resumen()) {
@@ -88,13 +94,19 @@ export interface CerrarCajaSheetData {
       }
 
       @if (requiereNota()) {
-        <div z-field>
+        @let nota = cerrarForm.nota_cierre();
+        @let notaInvalid = nota.invalid() && nota.touched();
+        <div z-field [attr.data-invalid]="notaInvalid || null">
           <label z-field-label for="nota_cierre">Nota de cierre *</label>
-          <input z-input id="nota_cierre" type="text" formControlName="nota_cierre"
+          <input z-input id="nota_cierre" type="text" [formField]="cerrarForm.nota_cierre"
+                 [attr.aria-invalid]="notaInvalid || null"
                  placeholder="Ej. faltante de 50, se avisó a gerencia" />
           <p class="text-[0.8rem] text-amber-600">
             La diferencia supera {{ umbral | currency }}: el turno quedará pendiente de conciliar por un gerente.
           </p>
+          @if (notaInvalid) {
+            <z-field-error [zErrors]="nota.errors()" />
+          }
         </div>
       }
 
@@ -127,7 +139,6 @@ export interface CerrarCajaSheetData {
   host: { style: 'display: contents' },
 })
 export class CerrarCajaSheetComponent implements OnInit {
-  private fb = inject(FormBuilder);
   private cajaService = inject(CajaService);
   private ventaService = inject(VentaService);
   public sheetData = injectSheetData<CerrarCajaSheetData>();
@@ -136,18 +147,25 @@ export class CerrarCajaSheetComponent implements OnInit {
   readonly resumen = signal<ResumenTurnoResponse | null>(null);
   readonly corte = signal<CorteCajaResponse | null>(null);
 
-  form = this.fb.group({
-    saldo_final_declarado: [0, [Validators.required, Validators.min(0)]],
-    nota_cierre: [''],
-  });
+  private readonly model = signal({ saldo_final_declarado: 0, nota_cierre: '' });
 
   readonly diferencia = computed(() => {
     const r = this.resumen();
     if (!r) return 0;
-    return Number(this.form.controls.saldo_final_declarado.value ?? 0) - Number(r.saldo_esperado);
+    return Number(this.model().saldo_final_declarado ?? 0) - Number(r.saldo_esperado);
   });
 
   readonly requiereNota = computed(() => Math.abs(this.diferencia()) >= this.umbral);
+
+  protected readonly cerrarForm = form(this.model, path => {
+    required(path.saldo_final_declarado, { message: 'Ingresa el efectivo contado.' });
+    min(path.saldo_final_declarado, 0, { message: 'No puede ser negativo.' });
+    validate(path.nota_cierre, ({ value }) =>
+      this.requiereNota() && !(value() ?? '').trim()
+        ? { kind: 'notaRequerida', message: 'La diferencia obliga a dejar una nota de cierre.' }
+        : undefined,
+    );
+  });
 
   ngOnInit() {
     this.cajaService.resumen(this.sheetData.turnoId).subscribe({
@@ -162,13 +180,15 @@ export class CerrarCajaSheetComponent implements OnInit {
   }
 
   save(): Observable<CajaTurnoResponse> | void {
-    const nota = (this.form.getRawValue().nota_cierre ?? '').trim();
-    if (this.form.invalid || (this.requiereNota() && !nota)) {
-      this.form.markAllAsTouched();
+    const root = this.cerrarForm();
+    if (!root.valid()) {
+      root.markAsTouched();
       return;
     }
+    const d = this.model();
+    const nota = d.nota_cierre.trim();
     return this.cajaService.cerrar(this.sheetData.turnoId, {
-      saldo_final_declarado: Number(this.form.getRawValue().saldo_final_declarado),
+      saldo_final_declarado: Number(d.saldo_final_declarado),
       ...(nota ? { nota_cierre: nota } : {}),
     });
   }

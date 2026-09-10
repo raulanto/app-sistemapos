@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { form, FormField, min, required, validate } from '@angular/forms/signals';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideArrowDownLeft, lucideArrowUpRight, lucideReceipt, lucidePlus } from '@ng-icons/lucide';
 
@@ -30,7 +30,7 @@ export interface MovimientosCajaSheetData {
   imports: [
     CurrencyPipe,
     DatePipe,
-    ReactiveFormsModule,
+    FormField,
     NgIconComponent,
     ...ZardFieldImports,
     ZardInputComponent,
@@ -45,7 +45,6 @@ export interface MovimientosCajaSheetData {
   host: { style: 'display: contents' },
 })
 export class MovimientosCajaSheetComponent implements OnInit {
-  private fb = inject(FormBuilder);
   private cajaService = inject(CajaService);
   private sonner = inject(ZardSonnerService);
 
@@ -56,18 +55,28 @@ export class MovimientosCajaSheetComponent implements OnInit {
   readonly loading = signal(true);
   readonly guardando = signal(false);
 
-  form = this.fb.group({
-    tipo: ['retiro' as MovimientoCajaTipo, Validators.required],
-    monto: [0, [Validators.required, Validators.min(0.01)]],
-    motivo: [''],
+  private readonly model = signal({
+    tipo: 'retiro' as MovimientoCajaTipo,
+    monto: 0,
+    motivo: '',
   });
 
-  readonly tipoSel = signal<MovimientoCajaTipo>('retiro');
+  readonly tipoSel = computed(() => this.model().tipo);
   /** `retiro` y `gasto` exigen motivo. */
   readonly motivoRequerido = computed(() => this.tipoSel() !== 'ingreso');
 
+  protected readonly movForm = form(this.model, path => {
+    required(path.tipo, { message: 'Selecciona el tipo.' });
+    required(path.monto, { message: 'El monto es obligatorio.' });
+    min(path.monto, 0.01, { message: 'Debe ser mayor a 0.' });
+    validate(path.motivo, ({ value, valueOf }) =>
+      valueOf(path.tipo) !== 'ingreso' && !(value() ?? '').trim()
+        ? { kind: 'motivoRequerido', message: 'Retiro y gasto necesitan un motivo.' }
+        : undefined,
+    );
+  });
+
   ngOnInit() {
-    this.form.controls.tipo.valueChanges.subscribe(v => this.tipoSel.set((v as MovimientoCajaTipo) ?? 'retiro'));
     this.cargar();
   }
 
@@ -90,23 +99,24 @@ export class MovimientosCajaSheetComponent implements OnInit {
   }
 
   registrar() {
-    const d = this.form.getRawValue();
-    const motivo = (d.motivo ?? '').trim();
-    if (this.form.invalid || (this.motivoRequerido() && !motivo) || this.guardando()) {
-      this.form.markAllAsTouched();
+    const root = this.movForm();
+    if (!root.valid() || this.guardando()) {
+      root.markAsTouched();
       return;
     }
+    const d = this.model();
+    const motivo = d.motivo.trim();
     this.guardando.set(true);
     this.cajaService
       .registrarMovimiento(this.data.turnoId, {
-        tipo: d.tipo as MovimientoCajaTipo,
+        tipo: d.tipo,
         monto: Number(d.monto),
         ...(motivo ? { motivo } : {}),
       })
       .subscribe({
         next: () => {
           this.sonner.success('Movimiento registrado');
-          this.form.reset({ tipo: d.tipo as MovimientoCajaTipo, monto: 0, motivo: '' });
+          this.movForm().reset({ tipo: d.tipo, monto: 0, motivo: '' });
           this.guardando.set(false);
           this.cargar();
         },

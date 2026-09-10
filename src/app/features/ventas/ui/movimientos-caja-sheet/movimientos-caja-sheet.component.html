@@ -4,29 +4,38 @@
     queda en auditoría (no se edita ni se borra).
   </p>
 
-  <form [formGroup]="form" class="grid gap-3 rounded-md border p-3">
+  <form class="grid gap-3 rounded-md border p-3">
     <div class="grid grid-cols-2 gap-3">
       <div z-field>
         <label z-field-label>Tipo *</label>
-        <z-select formControlName="tipo" placeholder="Tipo">
+        <z-select [formField]="movForm.tipo" placeholder="Tipo">
           @for (t of tipos; track t.value) {
             <z-select-item [zValue]="t.value">{{ t.label }}</z-select-item>
           }
         </z-select>
       </div>
-      <div z-field>
+      @let monto = movForm.monto();
+      @let montoInvalid = monto.invalid() && monto.touched();
+      <div z-field [attr.data-invalid]="montoInvalid || null">
         <label z-field-label for="monto">Monto *</label>
-        <input z-input id="monto" type="number" min="0" step="0.01" formControlName="monto" placeholder="0.00" />
+        <input z-input id="monto" type="number" step="0.01" placeholder="0.00"
+          [formField]="movForm.monto" [attr.aria-invalid]="montoInvalid || null" />
+        @if (montoInvalid) {
+          <z-field-error [zErrors]="monto.errors()" />
+        }
       </div>
     </div>
     <p class="-mt-1 text-[0.8rem] text-muted-foreground">
       @for (t of tipos; track t.value) { @if (t.value === tipoSel()) { {{ t.hint }} } }
     </p>
-    <div z-field>
+    @let motivo = movForm.motivo();
+    @let motivoInvalid = motivo.invalid() && motivo.touched();
+    <div z-field [attr.data-invalid]="motivoInvalid || null">
       <label z-field-label for="motivo">Motivo {{ motivoRequerido() ? '*' : '(opcional)' }}</label>
-      <input z-input id="motivo" type="text" formControlName="motivo" placeholder="Ej. traslado a caja fuerte" />
-      @if (motivoRequerido() && form.controls.motivo.touched && !form.controls.motivo.value?.trim()) {
-        <p class="text-[0.8rem] font-medium text-destructive">Retiro y gasto necesitan un motivo.</p>
+      <input z-input id="motivo" type="text" placeholder="Ej. traslado a caja fuerte"
+        [formField]="movForm.motivo" [attr.aria-invalid]="motivoInvalid || null" />
+      @if (motivoInvalid) {
+        <z-field-error [zErrors]="motivo.errors()" />
       }
     </div>
     <button z-button zType="default" class="justify-self-start" [zLoading]="guardando()" (click)="registrar()">

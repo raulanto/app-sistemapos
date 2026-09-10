@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { form, FormField } from '@angular/forms/signals';
 import { Observable } from 'rxjs';
 
 import { CajaService } from '../../data-access/caja.service';
@@ -16,9 +16,9 @@ export interface ConciliarTurnoSheetData {
 @Component({
   selector: 'app-conciliar-turno-sheet',
   standalone: true,
-  imports: [ReactiveFormsModule, CurrencyPipe, ...ZardFieldImports, ZardInputComponent],
+  imports: [FormField, CurrencyPipe, ...ZardFieldImports, ZardInputComponent],
   template: `
-    <form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
+    <form class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
       <dl class="rounded-md border text-sm">
         <div class="flex justify-between border-b px-3 py-2">
           <dt class="text-muted-foreground">Efectivo declarado</dt>
@@ -39,7 +39,7 @@ export interface ConciliarTurnoSheetData {
 
       <div z-field>
         <label z-field-label for="nota">Nota de conciliación</label>
-        <input z-input id="nota" type="text" formControlName="nota" placeholder="Ej. autorizado, se descuenta de caja chica" />
+        <input z-input id="nota" type="text" placeholder="Ej. autorizado, se descuenta de caja chica" [formField]="conciliarForm.nota" />
       </div>
       <p class="text-[0.8rem] text-muted-foreground">El turno pasará a estado <strong>conciliado</strong>.</p>
     </form>
@@ -49,14 +49,14 @@ export interface ConciliarTurnoSheetData {
   host: { style: 'display: contents' },
 })
 export class ConciliarTurnoSheetComponent {
-  private fb = inject(FormBuilder);
   private cajaService = inject(CajaService);
   readonly sheetData = injectSheetData<ConciliarTurnoSheetData>();
 
-  form = this.fb.group({ nota: [''] });
+  private readonly model = signal({ nota: '' });
+  protected readonly conciliarForm = form(this.model);
 
   save(): Observable<CajaTurnoResponse> {
-    const nota = (this.form.getRawValue().nota ?? '').trim();
+    const nota = this.model().nota.trim();
     return this.cajaService.conciliar(this.sheetData.turno.id, nota ? { nota } : {});
   }
 }
