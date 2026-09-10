@@ -27,7 +27,7 @@ import { AuthService } from '@/core/auth/api/auth.service';
     <div class="bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div class="w-full max-w-sm">
         <div class="flex flex-col gap-6">
-          <form (ngSubmit)="onSubmit()">
+          <form novalidate (submit)="onSubmit($event)">
             <div z-field-group>
               <div class="flex flex-col items-center gap-2 text-center">
                 <a href="#" class="flex flex-col items-center gap-2 font-medium">
@@ -101,7 +101,9 @@ export class LoginComponent {
     required(path.password, { message: 'La contraseña es requerida.' });
   });
 
-  onSubmit() {
+  onSubmit(event: Event) {
+    event.preventDefault();
+
     const root = this.loginForm();
     if (!root.valid()) {
       root.markAsTouched();
