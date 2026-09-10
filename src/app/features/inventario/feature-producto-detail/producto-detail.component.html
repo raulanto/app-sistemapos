@@ -69,7 +69,8 @@
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2 lg:justify-end">
+      <div class="flex flex-col gap-3 lg:items-end">
+       <div class="flex flex-wrap items-center gap-2 lg:justify-end">
         @if (canEditar()) {
           <button z-button zType="outline" zSize="sm" (click)="openEditSheet()">
             <ng-icon name="lucideEdit" class="mr-2 size-4" />
@@ -104,6 +105,20 @@
             Movimiento
           </button>
         }
+       </div>
+
+       <div class="flex flex-wrap items-center gap-2 lg:justify-end">
+         <span class="inline-flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-1.5 text-sm">
+           <ng-icon name="lucideWallet" class="size-4 text-muted-foreground" />
+           <span class="text-muted-foreground">Inv. a costo</span>
+           <span class="font-semibold tabular-nums">{{ valorCostoTotal() | currency }}</span>
+         </span>
+         <span class="inline-flex items-center gap-2 rounded-lg bg-green-500/10 px-3 py-1.5 text-sm">
+           <ng-icon name="lucideTrendingUp" class="size-4 text-green-600 dark:text-green-400" />
+           <span class="text-muted-foreground">Inv. a venta</span>
+           <span class="font-semibold tabular-nums text-green-600 dark:text-green-400">{{ valorVentaTotal() | currency }}</span>
+         </span>
+       </div>
       </div>
      </div>
     </section>
@@ -174,9 +189,7 @@
     </div>
 
     <!-- CONTENIDO PRINCIPAL -->
-    <div class="grid gap-6 lg:grid-cols-3">
-      <div class="space-y-6 lg:col-span-2">
-        <z-tab-group class="w-full">
+    <z-tab-group class="w-full">
           <z-tab label="Existencias">
             <div class="space-y-3 pt-4">
               @if (desglose(); as dg) {
@@ -526,11 +539,9 @@
               </div>
             </div>
           </z-tab>
-        </z-tab-group>
-      </div>
 
-      <!-- LATERAL -->
-      <div class="space-y-6">
+          <z-tab label="Ficha técnica">
+            <div class="pt-4">
         <div z-card>
           <z-card-header>
             <z-card-title zTitle="Ficha técnica" class="text-base" />
@@ -646,44 +657,19 @@
             </dl>
           </z-card-content>
         </div>
-
-        <div z-card>
-          <z-card-header>
-            <z-card-title zTitle="Valor del inventario" class="text-base" />
-            <z-card-description [zDescription]="'Sobre ' + (totalStock() | number:'1.0-2') + ' ' + (prod.unidad_medida | lowercase) + 's'" />
-          </z-card-header>
-          <z-card-content class="space-y-3">
-            <div class="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2.5">
-              <span class="flex items-center gap-2 text-sm text-muted-foreground">
-                <ng-icon name="lucideWallet" class="size-4" />
-                A costo
-              </span>
-              <span class="text-lg font-semibold tabular-nums">{{ valorCostoTotal() | currency }}</span>
             </div>
-            <div class="flex items-center justify-between rounded-lg bg-green-500/10 px-3 py-2.5">
-              <span class="flex items-center gap-2 text-sm text-muted-foreground">
-                <ng-icon name="lucideTrendingUp" class="size-4" />
-                A venta
-              </span>
-              <span class="text-lg font-semibold tabular-nums text-green-600 dark:text-green-400">{{ valorVentaTotal() | currency }}</span>
-            </div>
-          </z-card-content>
-        </div>
-      </div>
-    </div>
+          </z-tab>
 
-    <!-- ANÁLISIS -->
-    <div z-card>
-      <z-card-header>
-        <div class="flex items-center gap-2">
-          <ng-icon name="lucideActivity" class="size-4 text-muted-foreground" />
-          <z-card-title zTitle="Análisis" class="text-base" />
-        </div>
-        <z-card-description zDescription="Indicadores del producto en el tiempo" />
-      </z-card-header>
-      <z-card-content>
-        <z-tab-group class="w-full">
-          <z-tab label="Balance">
+          <z-tab label="Análisis">
+            <div class="space-y-4 pt-4">
+              <div class="flex w-fit flex-wrap gap-1 rounded-lg bg-muted p-[3px] text-sm font-medium">
+                <button type="button" class="rounded-md px-3 py-1 transition" [class.bg-background]="grafica() === 'balance'" [class.shadow-sm]="grafica() === 'balance'" [class.text-foreground]="grafica() === 'balance'" [class.text-muted-foreground]="grafica() !== 'balance'" (click)="grafica.set('balance')">Balance</button>
+                <button type="button" class="rounded-md px-3 py-1 transition" [class.bg-background]="grafica() === 'costo'" [class.shadow-sm]="grafica() === 'costo'" [class.text-foreground]="grafica() === 'costo'" [class.text-muted-foreground]="grafica() !== 'costo'" (click)="grafica.set('costo')">Costo</button>
+                <button type="button" class="rounded-md px-3 py-1 transition" [class.bg-background]="grafica() === 'stock'" [class.shadow-sm]="grafica() === 'stock'" [class.text-foreground]="grafica() === 'stock'" [class.text-muted-foreground]="grafica() !== 'stock'" (click)="grafica.set('stock')">Stock</button>
+                <button type="button" class="rounded-md px-3 py-1 transition" [class.bg-background]="grafica() === 'tipos'" [class.shadow-sm]="grafica() === 'tipos'" [class.text-foreground]="grafica() === 'tipos'" [class.text-muted-foreground]="grafica() !== 'tipos'" (click)="grafica.set('tipos')">Tipos</button>
+              </div>
+              @switch (grafica()) {
+                @case ('balance') {
             <div class="pt-4">
               @if (chartData().length > 0) {
                 <z-chart class="block w-full" zType="bar" [zData]="chartData()" [zConfig]="chartConfig"
@@ -695,9 +681,8 @@
                 <z-empty zIcon="lucideActivity" zTitle="Sin datos" zDescription="Registra movimientos para ver entradas y salidas por fecha." class="py-10" />
               }
             </div>
-          </z-tab>
-
-          <z-tab label="Costo">
+                }
+                @case ('costo') {
             <div class="pt-4">
               @if (costoTrend().length > 1) {
                 <z-chart class="block w-full" zType="line" [zData]="costoTrend()" [zConfig]="costoConfig"
@@ -708,9 +693,8 @@
                 <z-empty zIcon="lucideTrendingUp" zTitle="Sin historial de costo" zDescription="Se necesitan al menos dos entradas con costo unitario." class="py-10" />
               }
             </div>
-          </z-tab>
-
-          <z-tab label="Stock">
+                }
+                @case ('stock') {
             <div class="pt-4">
               @if (stockPorSucursal().length > 0) {
                 <z-chart class="block w-full" zType="bar" [zData]="stockPorSucursal()" [zConfig]="stockConfig"
@@ -721,9 +705,8 @@
                 <z-empty zIcon="lucideBoxes" zTitle="Sin existencias" zDescription="Este producto no tiene stock registrado." class="py-10" />
               }
             </div>
-          </z-tab>
-
-          <z-tab label="Tipos">
+                }
+                @case ('tipos') {
             <div class="pt-4">
               @if (movimientosPorTipo().length > 0) {
                 <z-chart class="block w-full" zType="pie" [zData]="movimientosPorTipo()" [zSeries]="tipoSeries" zXAxisKey="tipo">
@@ -734,9 +717,10 @@
                 <z-empty zIcon="lucideHistory" zTitle="Sin movimientos" zDescription="Aún no hay movimientos registrados." class="py-10" />
               }
             </div>
+                }
+              }
+            </div>
           </z-tab>
         </z-tab-group>
-      </z-card-content>
-    </div>
   }
 </div>
