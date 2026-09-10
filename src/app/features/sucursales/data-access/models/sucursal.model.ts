@@ -1,3 +1,5 @@
+import { email, maxLength, required, schema } from '@angular/forms/signals';
+
 export type TipoSucursal = 'bodega_central' | 'tienda' | 'almacen' | 'cedis' | 'oficina';
 
 export const TIPOS_SUCURSAL: { value: TipoSucursal; label: string }[] = [
@@ -99,6 +101,65 @@ export const normalizarHora = (v: string | null | undefined): string | null => {
   const t = limpiar(v);
   return t && t.length === 5 ? `${t}:00` : t;
 };
+
+/** Valores del formulario de sucursal. Alta y edición comparten forma y reglas. */
+export interface SucursalFormValue {
+  nombre: string;
+  codigo: string;
+  tipo: TipoSucursal;
+  descripcion: string;
+  permite_ventas: boolean;
+  telefono: string;
+  email: string;
+  direccion: string;
+  colonia: string;
+  ciudad: string;
+  estado: string;
+  codigo_postal: string;
+  pais: string;
+  latitud: number | null;
+  longitud: number | null;
+  horario_apertura: string;
+  horario_cierre: string;
+}
+
+export const SUCURSAL_FORM_INICIAL: SucursalFormValue = {
+  nombre: '',
+  codigo: '',
+  tipo: 'tienda',
+  descripcion: '',
+  permite_ventas: true,
+  telefono: '',
+  email: '',
+  direccion: '',
+  colonia: '',
+  ciudad: '',
+  estado: '',
+  codigo_postal: '',
+  pais: 'México',
+  latitud: null,
+  longitud: null,
+  horario_apertura: '',
+  horario_cierre: '',
+};
+
+/** Reglas de validación compartidas por el sheet de edición y la vista de alta. */
+export const sucursalFormSchema = schema<SucursalFormValue>(path => {
+  required(path.nombre, { message: 'El nombre es obligatorio.' });
+  maxLength(path.nombre, 100, { message: 'Máximo 100 caracteres.' });
+  maxLength(path.codigo, 20, { message: 'Máximo 20 caracteres.' });
+  required(path.tipo, { message: 'Selecciona un tipo.' });
+  required(path.telefono, { message: 'El teléfono es obligatorio.' });
+  maxLength(path.telefono, 20, { message: 'Máximo 20 caracteres.' });
+  email(path.email, { message: 'Correo inválido.' });
+  required(path.direccion, { message: 'La dirección es obligatoria.' });
+  maxLength(path.direccion, 255, { message: 'Máximo 255 caracteres.' });
+  maxLength(path.colonia, 100, { message: 'Máximo 100 caracteres.' });
+  maxLength(path.ciudad, 100, { message: 'Máximo 100 caracteres.' });
+  maxLength(path.estado, 100, { message: 'Máximo 100 caracteres.' });
+  maxLength(path.codigo_postal, 10, { message: 'Máximo 10 caracteres.' });
+  maxLength(path.pais, 60, { message: 'Máximo 60 caracteres.' });
+});
 
 export interface SucursalQuery {
   /** Busca en nombre, código, dirección y teléfono. */

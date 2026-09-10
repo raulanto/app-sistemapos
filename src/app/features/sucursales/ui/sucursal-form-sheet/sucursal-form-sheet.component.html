@@ -1,21 +1,24 @@
-<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
+<form class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-    <div z-field class="sm:col-span-2">
+    @let nombre = sucForm.nombre();
+    @let nombreInvalid = nombre.invalid() && nombre.touched();
+    <div z-field class="sm:col-span-2" [attr.data-invalid]="nombreInvalid || null">
       <label z-field-label for="nombre">Nombre *</label>
-      <input z-input id="nombre" type="text" formControlName="nombre" maxlength="100" placeholder="Ej. Sucursal Centro" />
-      @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
-        <p class="text-[0.8rem] font-medium text-destructive">El nombre es obligatorio.</p>
+      <input z-input id="nombre" type="text" maxlength="100" placeholder="Ej. Sucursal Centro"
+        [formField]="sucForm.nombre" [attr.aria-invalid]="nombreInvalid || null" />
+      @if (nombreInvalid) {
+        <z-field-error [zErrors]="nombre.errors()" />
       }
     </div>
 
     <div z-field>
       <label z-field-label for="codigo">Código</label>
-      <input z-input id="codigo" type="text" formControlName="codigo" maxlength="20" placeholder="Ej. SUC-001" />
+      <input z-input id="codigo" type="text" maxlength="20" placeholder="Ej. SUC-001" [formField]="sucForm.codigo" />
     </div>
 
     <div z-field>
       <label z-field-label>Tipo *</label>
-      <z-select formControlName="tipo" placeholder="Selecciona un tipo">
+      <z-select [formField]="sucForm.tipo" placeholder="Selecciona un tipo">
         @for (t of tipos; track t.value) {
           <z-select-item [zValue]="t.value">{{ t.label }}</z-select-item>
         }
@@ -24,7 +27,7 @@
 
     <div z-field class="sm:col-span-2">
       <label z-field-label for="descripcion">Descripción</label>
-      <input z-input id="descripcion" type="text" formControlName="descripcion" placeholder="Opcional" />
+      <input z-input id="descripcion" type="text" placeholder="Opcional" [formField]="sucForm.descripcion" />
     </div>
   </div>
 
@@ -33,62 +36,71 @@
       <p class="text-sm font-medium">Permite ventas</p>
       <p class="text-[0.8rem] text-muted-foreground">Si está apagado, la sucursal no puede facturar.</p>
     </div>
-    <z-switch formControlName="permite_ventas" />
+    <z-switch [formField]="sucForm.permite_ventas" />
   </div>
 
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-    <div z-field>
+    @let telefono = sucForm.telefono();
+    @let telefonoInvalid = telefono.invalid() && telefono.touched();
+    <div z-field [attr.data-invalid]="telefonoInvalid || null">
       <label z-field-label for="telefono">Teléfono *</label>
-      <input z-input id="telefono" type="tel" formControlName="telefono" maxlength="20" placeholder="Ej. 55 1234 5678" />
-      @if (form.controls.telefono.invalid && form.controls.telefono.touched) {
-        <p class="text-[0.8rem] font-medium text-destructive">El teléfono es obligatorio.</p>
+      <input z-input id="telefono" type="tel" maxlength="20" placeholder="Ej. 55 1234 5678"
+        [formField]="sucForm.telefono" [attr.aria-invalid]="telefonoInvalid || null" />
+      @if (telefonoInvalid) {
+        <z-field-error [zErrors]="telefono.errors()" />
       }
     </div>
-    <div z-field>
+    @let email = sucForm.email();
+    @let emailInvalid = email.invalid() && email.touched();
+    <div z-field [attr.data-invalid]="emailInvalid || null">
       <label z-field-label for="email">Correo</label>
-      <input z-input id="email" type="email" formControlName="email" placeholder="sucursal@empresa.com" />
-      @if (form.controls.email.invalid && form.controls.email.touched) {
-        <p class="text-[0.8rem] font-medium text-destructive">Correo inválido.</p>
+      <input z-input id="email" type="email" placeholder="sucursal@empresa.com"
+        [formField]="sucForm.email" [attr.aria-invalid]="emailInvalid || null" />
+      @if (emailInvalid) {
+        <z-field-error [zErrors]="email.errors()" />
       }
     </div>
   </div>
 
-  <div z-field>
+  @let direccion = sucForm.direccion();
+  @let direccionInvalid = direccion.invalid() && direccion.touched();
+  <div z-field [attr.data-invalid]="direccionInvalid || null">
     <label z-field-label for="direccion">Dirección *</label>
-    <input z-input id="direccion" type="text" formControlName="direccion" maxlength="255" placeholder="Calle y número" />
-    @if (form.controls.direccion.invalid && form.controls.direccion.touched) {
-      <p class="text-[0.8rem] font-medium text-destructive">La dirección es obligatoria.</p>
+    <input z-input id="direccion" type="text" maxlength="255" placeholder="Calle y número"
+      [formField]="sucForm.direccion" [attr.aria-invalid]="direccionInvalid || null" />
+    @if (direccionInvalid) {
+      <z-field-error [zErrors]="direccion.errors()" />
     }
   </div>
 
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
     <div z-field>
       <label z-field-label for="colonia">Colonia</label>
-      <input z-input id="colonia" type="text" formControlName="colonia" maxlength="100" />
+      <input z-input id="colonia" type="text" maxlength="100" [formField]="sucForm.colonia" />
     </div>
     <div z-field>
       <label z-field-label for="ciudad">Ciudad</label>
-      <input z-input id="ciudad" type="text" formControlName="ciudad" maxlength="100" />
+      <input z-input id="ciudad" type="text" maxlength="100" [formField]="sucForm.ciudad" />
     </div>
     <div z-field>
       <label z-field-label for="estado">Estado</label>
-      <input z-input id="estado" type="text" formControlName="estado" maxlength="100" />
+      <input z-input id="estado" type="text" maxlength="100" [formField]="sucForm.estado" />
     </div>
     <div z-field>
       <label z-field-label for="codigo_postal">Código postal</label>
-      <input z-input id="codigo_postal" type="text" formControlName="codigo_postal" maxlength="10" />
+      <input z-input id="codigo_postal" type="text" maxlength="10" [formField]="sucForm.codigo_postal" />
     </div>
     <div z-field>
       <label z-field-label for="pais">País</label>
-      <input z-input id="pais" type="text" formControlName="pais" maxlength="60" />
+      <input z-input id="pais" type="text" maxlength="60" [formField]="sucForm.pais" />
     </div>
   </div>
 
   <div z-field>
     <label z-field-label>Ubicación en el mapa</label>
     <app-sucursal-mapa-picker
-      [lat]="form.controls.latitud.value"
-      [lon]="form.controls.longitud.value"
+      [lat]="model().latitud"
+      [lon]="model().longitud"
       (coordsChange)="onCoords($event)"
     />
   </div>
@@ -96,22 +108,22 @@
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
     <div z-field>
       <label z-field-label for="latitud">Latitud</label>
-      <input z-input id="latitud" type="number" step="any" formControlName="latitud" placeholder="Ej. 19.4326" />
+      <input z-input id="latitud" type="number" step="any" placeholder="Ej. 19.4326" [formField]="sucForm.latitud" />
     </div>
     <div z-field>
       <label z-field-label for="longitud">Longitud</label>
-      <input z-input id="longitud" type="number" step="any" formControlName="longitud" placeholder="Ej. -99.1332" />
+      <input z-input id="longitud" type="number" step="any" placeholder="Ej. -99.1332" [formField]="sucForm.longitud" />
     </div>
   </div>
 
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
     <div z-field>
       <label z-field-label for="horario_apertura">Apertura</label>
-      <input z-input id="horario_apertura" type="time" formControlName="horario_apertura" />
+      <input z-input id="horario_apertura" type="time" [formField]="sucForm.horario_apertura" />
     </div>
     <div z-field>
       <label z-field-label for="horario_cierre">Cierre</label>
-      <input z-input id="horario_cierre" type="time" formControlName="horario_cierre" />
+      <input z-input id="horario_cierre" type="time" [formField]="sucForm.horario_cierre" />
     </div>
   </div>
 </form>

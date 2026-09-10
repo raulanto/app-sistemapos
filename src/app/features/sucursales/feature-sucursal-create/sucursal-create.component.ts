@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { form, FormField } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft, lucideSave } from '@ng-icons/lucide';
@@ -8,7 +8,9 @@ import { SucursalAdminService } from '../data-access/sucursal-admin.service';
 import { SucursalService as SucursalGlobalService } from '@/core/sucursal/sucursal.service';
 import {
   CrearSucursalRequest,
-  TipoSucursal,
+  SucursalFormValue,
+  SUCURSAL_FORM_INICIAL,
+  sucursalFormSchema,
   TIPOS_SUCURSAL,
   limpiar,
   normalizarHora,
@@ -27,7 +29,7 @@ import { SucursalMapaPickerComponent, Coords } from '../ui/sucursal-mapa-picker/
   selector: 'app-sucursal-create',
   standalone: true,
   imports: [
-    ReactiveFormsModule,
+    FormField,
     RouterLink,
     NgIconComponent,
     ...ZardCardImports,
@@ -43,7 +45,6 @@ import { SucursalMapaPickerComponent, Coords } from '../ui/sucursal-mapa-picker/
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SucursalCreateComponent {
-  private fb = inject(FormBuilder);
   private service = inject(SucursalAdminService);
   private sucursalGlobal = inject(SucursalGlobalService);
   private sonner = inject(ZardSonnerService);
@@ -52,42 +53,26 @@ export class SucursalCreateComponent {
   readonly tipos = TIPOS_SUCURSAL;
   readonly guardando = signal(false);
 
-  form = this.fb.group({
-    nombre: ['', [Validators.required, Validators.maxLength(100)]],
-    codigo: ['', Validators.maxLength(20)],
-    tipo: ['tienda' as TipoSucursal, Validators.required],
-    descripcion: [''],
-    permite_ventas: [true],
-    telefono: ['', [Validators.required, Validators.maxLength(20)]],
-    email: ['', Validators.email],
-    direccion: ['', [Validators.required, Validators.maxLength(255)]],
-    colonia: ['', Validators.maxLength(100)],
-    ciudad: ['', Validators.maxLength(100)],
-    estado: ['', Validators.maxLength(100)],
-    codigo_postal: ['', Validators.maxLength(10)],
-    pais: ['México', Validators.maxLength(60)],
-    latitud: [null as number | null],
-    longitud: [null as number | null],
-    horario_apertura: [''],
-    horario_cierre: [''],
-  });
+  protected readonly model = signal<SucursalFormValue>({ ...SUCURSAL_FORM_INICIAL });
+  protected readonly sucForm = form(this.model, sucursalFormSchema);
 
   onCoords(c: Coords) {
-    this.form.patchValue({ latitud: c.lat, longitud: c.lon });
+    this.model.update(m => ({ ...m, latitud: c.lat, longitud: c.lon }));
   }
 
   guardar() {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    const root = this.sucForm();
+    if (!root.valid()) {
+      root.markAsTouched();
       this.sonner.error('Revisa los campos obligatorios');
       return;
     }
-    const d = this.form.getRawValue();
+    const d = this.model();
     const payload: CrearSucursalRequest = {
-      nombre: d.nombre!,
-      direccion: d.direccion!,
-      telefono: d.telefono!,
-      tipo: d.tipo!,
+      nombre: d.nombre,
+      direccion: d.direccion,
+      telefono: d.telefono,
+      tipo: d.tipo,
       permite_ventas: !!d.permite_ventas,
       codigo: limpiar(d.codigo),
       descripcion: limpiar(d.descripcion),

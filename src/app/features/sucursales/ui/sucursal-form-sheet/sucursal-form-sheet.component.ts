@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { form, FormField } from '@angular/forms/signals';
 import { Observable } from 'rxjs';
 
 import { SucursalAdminService } from '../../data-access/sucursal-admin.service';
@@ -8,7 +8,9 @@ import {
   CrearSucursalRequest,
   ActualizarSucursalRequest,
   SucursalResponse,
-  TipoSucursal,
+  SucursalFormValue,
+  SUCURSAL_FORM_INICIAL,
+  sucursalFormSchema,
   TIPOS_SUCURSAL,
   limpiar as clean,
   normalizarHora as time,
@@ -30,7 +32,7 @@ export interface SucursalSheetData {
   selector: 'app-sucursal-form-sheet',
   standalone: true,
   imports: [
-    ReactiveFormsModule,
+    FormField,
     ...ZardFieldImports,
     ZardInputComponent,
     ...ZardSelectImports,
@@ -45,7 +47,6 @@ export interface SucursalSheetData {
   host: { style: 'display: contents' },
 })
 export class SucursalFormSheetComponent implements OnInit {
-  private fb = inject(FormBuilder);
   private sucursalService = inject(SucursalAdminService);
 
   public sheetData = injectSheetData<SucursalSheetData | undefined>();
@@ -54,25 +55,8 @@ export class SucursalFormSheetComponent implements OnInit {
   loading = signal(false);
   isEditing = false;
 
-  form = this.fb.group({
-    nombre: ['', [Validators.required, Validators.maxLength(100)]],
-    codigo: ['', Validators.maxLength(20)],
-    tipo: ['tienda' as TipoSucursal, Validators.required],
-    descripcion: [''],
-    permite_ventas: [true],
-    telefono: ['', [Validators.required, Validators.maxLength(20)]],
-    email: ['', Validators.email],
-    direccion: ['', [Validators.required, Validators.maxLength(255)]],
-    colonia: ['', Validators.maxLength(100)],
-    ciudad: ['', Validators.maxLength(100)],
-    estado: ['', Validators.maxLength(100)],
-    codigo_postal: ['', Validators.maxLength(10)],
-    pais: ['México', Validators.maxLength(60)],
-    latitud: [null as number | null],
-    longitud: [null as number | null],
-    horario_apertura: [''],
-    horario_cierre: [''],
-  });
+  protected readonly model = signal<SucursalFormValue>({ ...SUCURSAL_FORM_INICIAL });
+  protected readonly sucForm = form(this.model, sucursalFormSchema);
 
   ngOnInit() {
     const preload = this.sheetData?.sucursal;
@@ -96,7 +80,7 @@ export class SucursalFormSheetComponent implements OnInit {
   }
 
   private patch(s: SucursalResponse) {
-    this.form.patchValue({
+    this.model.set({
       nombre: s.nombre,
       codigo: s.codigo ?? '',
       tipo: s.tipo,
@@ -122,26 +106,27 @@ export class SucursalFormSheetComponent implements OnInit {
   }
 
   onCoords(c: Coords) {
-    this.form.patchValue({ latitud: c.lat, longitud: c.lon });
+    this.model.update(m => ({ ...m, latitud: c.lat, longitud: c.lon }));
   }
 
   save(): Observable<SucursalResponse> | void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    const root = this.sucForm();
+    if (!root.valid()) {
+      root.markAsTouched();
       return;
     }
 
-    const d = this.form.getRawValue();
+    const d = this.model();
     const id = this.targetId();
 
     if (this.isEditing && id) {
       // Todos los campos van con su flag `cambiar_*`: el formulario está prellenado,
       // así que reenviarlos idénticos es un no-op y evita el dirty-diff.
       const payload: ActualizarSucursalRequest = {
-        nombre: d.nombre!,
-        direccion: d.direccion!,
-        telefono: d.telefono!,
-        tipo: d.tipo!,
+        nombre: d.nombre,
+        direccion: d.direccion,
+        telefono: d.telefono,
+        tipo: d.tipo,
         permite_ventas: !!d.permite_ventas,
         codigo: clean(d.codigo), cambiar_codigo: true,
         descripcion: clean(d.descripcion), cambiar_descripcion: true,
@@ -158,10 +143,10 @@ export class SucursalFormSheetComponent implements OnInit {
     }
 
     const payload: CrearSucursalRequest = {
-      nombre: d.nombre!,
-      direccion: d.direccion!,
-      telefono: d.telefono!,
-      tipo: d.tipo!,
+      nombre: d.nombre,
+      direccion: d.direccion,
+      telefono: d.telefono,
+      tipo: d.tipo,
       permite_ventas: !!d.permite_ventas,
       codigo: clean(d.codigo),
       descripcion: clean(d.descripcion),
