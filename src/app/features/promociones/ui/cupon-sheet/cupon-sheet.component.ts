@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { form, FormField, maxLength, required } from '@angular/forms/signals';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideTicket, lucideBan, lucidePlus } from '@ng-icons/lucide';
 
@@ -19,12 +19,20 @@ export interface CuponSheetData {
   promocion: PromocionResponse;
 }
 
+const CUPON_FORM_INICIAL = {
+  codigo: '',
+  vigente_desde: '',
+  vigente_hasta: '',
+  max_usos_total: null as number | null,
+  max_usos_por_persona: null as number | null,
+};
+
 @Component({
   selector: 'app-cupon-sheet',
   standalone: true,
   imports: [
     DatePipe,
-    ReactiveFormsModule,
+    FormField,
     NgIconComponent,
     ...ZardFieldImports,
     ZardInputComponent,
@@ -38,7 +46,6 @@ export interface CuponSheetData {
   host: { style: 'display: contents' },
 })
 export class CuponSheetComponent implements OnInit {
-  private fb = inject(FormBuilder);
   private promocionService = inject(PromocionService);
   private sonner = inject(ZardSonnerService);
 
@@ -48,12 +55,11 @@ export class CuponSheetComponent implements OnInit {
   readonly loading = signal(true);
   readonly guardando = signal(false);
 
-  form = this.fb.group({
-    codigo: ['', [Validators.required, Validators.maxLength(50)]],
-    vigente_desde: [''],
-    vigente_hasta: [''],
-    max_usos_total: [null as number | null],
-    max_usos_por_persona: [null as number | null],
+  private readonly model = signal({ ...CUPON_FORM_INICIAL });
+
+  protected readonly cuponForm = form(this.model, path => {
+    required(path.codigo, { message: 'El código es obligatorio.' });
+    maxLength(path.codigo, 50, { message: 'Máximo 50 caracteres.' });
   });
 
   ngOnInit() {
@@ -83,24 +89,25 @@ export class CuponSheetComponent implements OnInit {
   }
 
   crear() {
-    if (this.form.invalid || this.guardando()) {
-      this.form.markAllAsTouched();
+    const root = this.cuponForm();
+    if (!root.valid() || this.guardando()) {
+      root.markAsTouched();
       return;
     }
-    const d = this.form.getRawValue();
+    const d = this.model();
     this.guardando.set(true);
     this.promocionService
       .crearCupon(this.data.promocion.id, {
-        codigo: d.codigo!.trim(),
-        vigente_desde: this.toIso(d.vigente_desde!),
-        vigente_hasta: this.toIso(d.vigente_hasta!),
+        codigo: d.codigo.trim(),
+        vigente_desde: this.toIso(d.vigente_desde),
+        vigente_hasta: this.toIso(d.vigente_hasta),
         max_usos_total: this.num(d.max_usos_total),
         max_usos_por_persona: this.num(d.max_usos_por_persona),
       })
       .subscribe({
         next: () => {
           this.sonner.success('Cupón creado');
-          this.form.reset({ codigo: '', vigente_desde: '', vigente_hasta: '', max_usos_total: null, max_usos_por_persona: null });
+          this.cuponForm().reset({ ...CUPON_FORM_INICIAL });
           this.guardando.set(false);
           this.cargar();
         },

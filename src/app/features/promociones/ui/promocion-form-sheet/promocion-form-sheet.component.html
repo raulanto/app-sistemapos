@@ -1,16 +1,19 @@
-<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
-  <div z-field>
+<form class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
+  @let nombre = promForm.nombre();
+  @let nombreInvalid = nombre.invalid() && nombre.touched();
+  <div z-field [attr.data-invalid]="nombreInvalid || null">
     <label z-field-label for="nombre">Nombre *</label>
-    <input z-input id="nombre" type="text" formControlName="nombre" maxlength="100" placeholder="Ej. 2x1 Refresco Cola" />
-    @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
-      <p class="text-[0.8rem] font-medium text-destructive">El nombre es obligatorio y único.</p>
+    <input z-input id="nombre" type="text" maxlength="100" placeholder="Ej. 2x1 Refresco Cola"
+      [formField]="promForm.nombre" [attr.aria-invalid]="nombreInvalid || null" />
+    @if (nombreInvalid) {
+      <z-field-error [zErrors]="nombre.errors()" />
     }
   </div>
 
   <div class="grid grid-cols-2 gap-4">
     <div z-field>
       <label z-field-label>Tipo *</label>
-      <z-select formControlName="tipo" placeholder="Tipo de promoción">
+      <z-select [formField]="promForm.tipo" placeholder="Tipo de promoción">
         @for (t of tipos; track t.value) {
           <z-select-item [zValue]="t.value">{{ t.label }}</z-select-item>
         }
@@ -21,7 +24,7 @@
     </div>
     <div z-field>
       <label z-field-label for="prioridad">Prioridad</label>
-      <input z-input id="prioridad" type="number" min="0" step="1" formControlName="prioridad" />
+      <input z-input id="prioridad" type="number" step="1" [formField]="promForm.prioridad" />
       <p class="text-[0.8rem] text-muted-foreground">Menor número gana si varias aplican a una línea.</p>
     </div>
   </div>
@@ -31,7 +34,7 @@
       <p class="text-sm font-medium">Combinable</p>
       <p class="text-[0.8rem] text-muted-foreground">Se apila sobre el precio ya descontado junto a otras combinables. Por defecto la promo es exclusiva.</p>
     </div>
-    <z-switch formControlName="combinable" zId="combinable"></z-switch>
+    <z-switch [formField]="promForm.combinable" zId="combinable"></z-switch>
   </div>
 
   <!-- Campos por tipo -->
@@ -39,11 +42,11 @@
     <div class="grid grid-cols-2 gap-4 rounded-md border p-3">
       <div z-field>
         <label z-field-label for="nxm_lleva">Lleva *</label>
-        <input z-input id="nxm_lleva" type="number" min="1" step="1" formControlName="nxm_lleva" placeholder="2" />
+        <input z-input id="nxm_lleva" type="number" step="1" [formField]="promForm.nxm_lleva" placeholder="2" />
       </div>
       <div z-field>
         <label z-field-label for="nxm_paga">Paga *</label>
-        <input z-input id="nxm_paga" type="number" min="1" step="1" formControlName="nxm_paga" placeholder="1" />
+        <input z-input id="nxm_paga" type="number" step="1" [formField]="promForm.nxm_paga" placeholder="1" />
       </div>
       <p class="col-span-2 text-[0.8rem] text-muted-foreground">2x1 ⇒ lleva 2, paga 1. Regla: lleva &gt; paga &gt; 0.</p>
     </div>
@@ -51,22 +54,22 @@
     <div class="grid grid-cols-2 gap-4 rounded-md border p-3">
       <div z-field>
         <label z-field-label for="descuento_pct">Descuento % *</label>
-        <input z-input id="descuento_pct" type="number" min="0" max="100" step="0.01" formControlName="descuento_pct" placeholder="10" />
+        <input z-input id="descuento_pct" type="number" step="0.01" [formField]="promForm.descuento_pct" placeholder="10" />
       </div>
       <div z-field>
         <label z-field-label for="cantidad_minima_pct">Cantidad mínima</label>
-        <input z-input id="cantidad_minima_pct" type="number" min="0" step="any" formControlName="cantidad_minima" placeholder="Opcional" />
+        <input z-input id="cantidad_minima_pct" type="number" step="any" [formField]="promForm.cantidad_minima" placeholder="Opcional" />
       </div>
     </div>
   } @else {
     <div class="grid grid-cols-2 gap-4 rounded-md border p-3">
       <div z-field>
         <label z-field-label for="precio_fijo">Precio fijo *</label>
-        <input z-input id="precio_fijo" type="number" min="0" step="0.01" formControlName="precio_fijo" placeholder="340" />
+        <input z-input id="precio_fijo" type="number" step="0.01" [formField]="promForm.precio_fijo" placeholder="340" />
       </div>
       <div z-field>
         <label z-field-label for="cantidad_minima_pf">Cantidad mínima</label>
-        <input z-input id="cantidad_minima_pf" type="number" min="0" step="any" formControlName="cantidad_minima" placeholder="Opcional (mayoreo)" />
+        <input z-input id="cantidad_minima_pf" type="number" step="any" [formField]="promForm.cantidad_minima" placeholder="Opcional (mayoreo)" />
       </div>
       <p class="col-span-2 text-[0.8rem] text-muted-foreground">Solo aplica si es menor que el precio de la línea.</p>
     </div>
@@ -76,12 +79,12 @@
   <div class="grid grid-cols-2 gap-4">
     <div z-field>
       <label z-field-label for="tope_descuento">Tope de descuento ($)</label>
-      <input z-input id="tope_descuento" type="number" min="0" step="0.01" formControlName="tope_descuento" placeholder="Opcional" />
+      <input z-input id="tope_descuento" type="number" step="0.01" [formField]="promForm.tope_descuento" placeholder="Opcional" />
       <p class="text-[0.8rem] text-muted-foreground">Máximo que esta promo descuenta por línea.</p>
     </div>
     <div z-field>
       <label z-field-label for="monto_minimo_compra">Compra mínima ($)</label>
-      <input z-input id="monto_minimo_compra" type="number" min="0" step="0.01" formControlName="monto_minimo_compra" placeholder="Opcional" />
+      <input z-input id="monto_minimo_compra" type="number" step="0.01" [formField]="promForm.monto_minimo_compra" placeholder="Opcional" />
       <p class="text-[0.8rem] text-muted-foreground">La promo sólo aplica si el total bruto llega a este monto.</p>
     </div>
   </div>
@@ -91,7 +94,7 @@
     <div class="grid grid-cols-2 gap-4">
       <div z-field>
         <label z-field-label>Método de pago requerido</label>
-        <z-select formControlName="metodo_pago_requerido" placeholder="Cualquiera">
+        <z-select [formField]="promForm.metodo_pago_requerido" placeholder="Cualquiera">
           <z-select-item zValue="">Cualquiera</z-select-item>
           @for (m of metodosPago; track m.value) {
             <z-select-item [zValue]="m.value">{{ m.label }}</z-select-item>
@@ -100,7 +103,7 @@
       </div>
       <div z-field>
         <label z-field-label for="cliente_segmento">Segmento de cliente</label>
-        <input z-input id="cliente_segmento" type="text" formControlName="cliente_segmento" placeholder="Ej. vip, socio" />
+        <input z-input id="cliente_segmento" type="text" [formField]="promForm.cliente_segmento" placeholder="Ej. vip, socio" />
       </div>
     </div>
     <div class="flex items-center justify-between">
@@ -108,7 +111,7 @@
         <p class="text-sm font-medium">Requiere cupón</p>
         <p class="text-[0.8rem] text-muted-foreground">La promo no aplica salvo que la venta traiga un cupón válido. Los cupones se administran desde la lista.</p>
       </div>
-      <z-switch formControlName="requiere_cupon" zId="requiere_cupon"></z-switch>
+      <z-switch [formField]="promForm.requiere_cupon" zId="requiere_cupon"></z-switch>
     </div>
   </div>
 
@@ -129,11 +132,11 @@
   <div class="grid grid-cols-2 gap-4">
     <div z-field>
       <label z-field-label for="vigente_desde">Vigente desde</label>
-      <input z-input id="vigente_desde" type="datetime-local" formControlName="vigente_desde" />
+      <input z-input id="vigente_desde" type="datetime-local" [formField]="promForm.vigente_desde" />
     </div>
     <div z-field>
       <label z-field-label for="vigente_hasta">Vigente hasta</label>
-      <input z-input id="vigente_hasta" type="datetime-local" formControlName="vigente_hasta" />
+      <input z-input id="vigente_hasta" type="datetime-local" [formField]="promForm.vigente_hasta" />
     </div>
     <p class="col-span-2 -mt-2 text-[0.8rem] text-muted-foreground">Sin fechas, la promo aplica mientras esté activa.</p>
   </div>
@@ -143,11 +146,11 @@
     <div class="grid grid-cols-2 gap-4">
       <div z-field>
         <label z-field-label for="hora_desde">Hora desde</label>
-        <input z-input id="hora_desde" type="time" step="1" formControlName="hora_desde" />
+        <input z-input id="hora_desde" type="time" step="1" [formField]="promForm.hora_desde" />
       </div>
       <div z-field>
         <label z-field-label for="hora_hasta">Hora hasta</label>
-        <input z-input id="hora_hasta" type="time" step="1" formControlName="hora_hasta" />
+        <input z-input id="hora_hasta" type="time" step="1" [formField]="promForm.hora_hasta" />
       </div>
     </div>
     @if (horarioIncompleto()) {

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { form, FormField, maxLength, min, required } from '@angular/forms/signals';
 import { Observable } from 'rxjs';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideSearch, lucideX, lucidePlus } from '@ng-icons/lucide';
@@ -39,11 +39,53 @@ interface Objetivo {
   label: string;
 }
 
+interface PromocionFormValue {
+  nombre: string;
+  tipo: TipoPromocion;
+  prioridad: number;
+  combinable: boolean;
+  nxm_lleva: number | null;
+  nxm_paga: number | null;
+  descuento_pct: number | null;
+  precio_fijo: number | null;
+  cantidad_minima: number | null;
+  tope_descuento: number | null;
+  monto_minimo_compra: number | null;
+  metodo_pago_requerido: string;
+  cliente_segmento: string;
+  requiere_cupon: boolean;
+  vigente_desde: string;
+  vigente_hasta: string;
+  hora_desde: string;
+  hora_hasta: string;
+}
+
+const PROMOCION_FORM_INICIAL: PromocionFormValue = {
+  nombre: '',
+  tipo: 'nxm',
+  prioridad: 100,
+  combinable: false,
+  nxm_lleva: 2,
+  nxm_paga: 1,
+  descuento_pct: null,
+  precio_fijo: null,
+  cantidad_minima: null,
+  tope_descuento: null,
+  monto_minimo_compra: null,
+  metodo_pago_requerido: '',
+  cliente_segmento: '',
+  requiere_cupon: false,
+  vigente_desde: '',
+  vigente_hasta: '',
+  hora_desde: '',
+  hora_hasta: '',
+};
+
 @Component({
   selector: 'app-promocion-form-sheet',
   standalone: true,
   imports: [
-    ReactiveFormsModule,
+    FormField,
     NgIconComponent,
     ...ZardFieldImports,
     ZardInputComponent,
@@ -59,7 +101,6 @@ interface Objetivo {
   host: { style: 'display: contents' },
 })
 export class PromocionFormSheetComponent implements OnInit {
-  private fb = inject(FormBuilder);
   private promocionService = inject(PromocionService);
   private productoService = inject(ProductoService);
   private categoriaService = inject(CategoriaService);
@@ -86,28 +127,17 @@ export class PromocionFormSheetComponent implements OnInit {
   readonly sucursalesSel = signal<Set<string>>(new Set());
   private sucursalesDirty = false;
 
-  form = this.fb.group({
-    nombre: ['', [Validators.required, Validators.maxLength(100)]],
-    tipo: ['nxm' as TipoPromocion, Validators.required],
-    prioridad: [100, [Validators.required, Validators.min(0)]],
-    combinable: [false],
-    nxm_lleva: [2 as number | null],
-    nxm_paga: [1 as number | null],
-    descuento_pct: [null as number | null],
-    precio_fijo: [null as number | null],
-    cantidad_minima: [null as number | null],
-    tope_descuento: [null as number | null],
-    monto_minimo_compra: [null as number | null],
-    metodo_pago_requerido: [''],
-    cliente_segmento: [''],
-    requiere_cupon: [false],
-    vigente_desde: [''],
-    vigente_hasta: [''],
-    hora_desde: [''],
-    hora_hasta: [''],
+  private readonly model = signal<PromocionFormValue>({ ...PROMOCION_FORM_INICIAL });
+
+  protected readonly promForm = form(this.model, path => {
+    required(path.nombre, { message: 'El nombre es obligatorio y único.' });
+    maxLength(path.nombre, 100, { message: 'Máximo 100 caracteres.' });
+    required(path.tipo, { message: 'Selecciona el tipo de promoción.' });
+    required(path.prioridad, { message: 'La prioridad es obligatoria.' });
+    min(path.prioridad, 0, { message: 'No puede ser negativa.' });
   });
 
-  readonly tipoSel = signal<TipoPromocion>('nxm');
+  readonly tipoSel = computed(() => this.model().tipo);
 
   readonly productosFiltrados = computed(() => {
     const t = this.filtro().trim().toLowerCase();
@@ -119,8 +149,8 @@ export class PromocionFormSheetComponent implements OnInit {
 
   /** Sólo una de las dos horas cargada: hay que completar o vaciar ambas. */
   readonly horarioIncompleto = computed(() => {
-    const d = !!this.form.controls.hora_desde.value?.trim();
-    const h = !!this.form.controls.hora_hasta.value?.trim();
+    const d = !!this.model().hora_desde?.trim();
+    const h = !!this.model().hora_hasta?.trim();
     return d !== h;
   });
 
@@ -146,12 +176,11 @@ export class PromocionFormSheetComponent implements OnInit {
     this.isEditing = !!promo;
     if (!promo) return;
 
-    this.tipoSel.set(promo.tipo);
     this.diasBits.set(promo.dias_semana ?? 0);
     this.sucursalesSel.set(
       new Set((promo.sucursales ?? []).map((s: any) => (typeof s === 'string' ? s : s?.id)).filter(Boolean)),
     );
-    this.form.patchValue({
+    this.model.set({
       nombre: promo.nombre,
       tipo: promo.tipo,
       prioridad: promo.prioridad,
@@ -171,10 +200,6 @@ export class PromocionFormSheetComponent implements OnInit {
       hora_desde: (promo.hora_desde ?? '').slice(0, 5),
       hora_hasta: (promo.hora_hasta ?? '').slice(0, 5),
     });
-  }
-
-  constructor() {
-    this.form.controls.tipo.valueChanges.subscribe(v => this.tipoSel.set((v as TipoPromocion) ?? 'nxm'));
   }
 
   // --- Días de la semana (bitmask) ---
@@ -291,16 +316,18 @@ export class PromocionFormSheetComponent implements OnInit {
           : { producto_id: o.producto_id },
     );
 
-    if (this.form.invalid || objetivosReq.length === 0 || this.horarioIncompleto() || this.nxmMezclaObjetivos()) {
-      this.form.markAllAsTouched();
+    const root = this.promForm();
+    if (!root.valid() || objetivosReq.length === 0 || this.horarioIncompleto() || this.nxmMezclaObjetivos()) {
+      root.markAsTouched();
       return;
     }
 
-    const d = this.form.getRawValue();
-    const tipo = d.tipo as TipoPromocion;
+    const d = this.model();
+    const f = this.promForm;
+    const tipo = d.tipo;
 
     const comun = {
-      nombre: d.nombre!,
+      nombre: d.nombre,
       tipo,
       prioridad: Number(d.prioridad) || 100,
       combinable: !!d.combinable,
@@ -315,27 +342,26 @@ export class PromocionFormSheetComponent implements OnInit {
     const sucursales = [...this.sucursalesSel()];
 
     if (this.isEditing && this.sheetData?.promocion) {
-      const c = this.form.controls;
       const payload: ActualizarPromocionRequest = {
         ...comun,
         objetivos: objetivosReq,
         tope_descuento: this.num(d.tope_descuento),
         monto_minimo_compra: this.num(d.monto_minimo_compra),
-        cambiar_topes: c.tope_descuento.dirty || c.monto_minimo_compra.dirty,
+        cambiar_topes: f.tope_descuento().dirty() || f.monto_minimo_compra().dirty(),
         metodo_pago_requerido: (d.metodo_pago_requerido || null) as ActualizarPromocionRequest['metodo_pago_requerido'],
         cliente_segmento: d.cliente_segmento?.trim() || null,
         requiere_cupon: !!d.requiere_cupon,
-        cambiar_condiciones: c.metodo_pago_requerido.dirty || c.cliente_segmento.dirty || c.requiere_cupon.dirty,
+        cambiar_condiciones: f.metodo_pago_requerido().dirty() || f.cliente_segmento().dirty() || f.requiere_cupon().dirty(),
         sucursales,
         cambiar_sucursales: this.sucursalesDirty,
-        vigente_desde: this.toIso(d.vigente_desde!),
-        vigente_hasta: this.toIso(d.vigente_hasta!),
-        cambiar_vigencia: c.vigente_desde.dirty || c.vigente_hasta.dirty,
-        hora_desde: this.toHora(d.hora_desde!),
-        hora_hasta: this.toHora(d.hora_hasta!),
+        vigente_desde: this.toIso(d.vigente_desde),
+        vigente_hasta: this.toIso(d.vigente_hasta),
+        cambiar_vigencia: f.vigente_desde().dirty() || f.vigente_hasta().dirty(),
+        hora_desde: this.toHora(d.hora_desde),
+        hora_hasta: this.toHora(d.hora_hasta),
         dias_semana: dias,
-        cambiar_horario: c.hora_desde.dirty || c.hora_hasta.dirty || this.diasDirty,
-        cambiar_cantidad_minima: c.cantidad_minima.dirty,
+        cambiar_horario: f.hora_desde().dirty() || f.hora_hasta().dirty() || this.diasDirty,
+        cambiar_cantidad_minima: f.cantidad_minima().dirty(),
       };
       return this.promocionService.actualizar(this.sheetData.promocion.id, payload);
     }
@@ -349,10 +375,10 @@ export class PromocionFormSheetComponent implements OnInit {
       cliente_segmento: d.cliente_segmento?.trim() || null,
       requiere_cupon: !!d.requiere_cupon,
       sucursales,
-      vigente_desde: this.toIso(d.vigente_desde!),
-      vigente_hasta: this.toIso(d.vigente_hasta!),
-      hora_desde: this.toHora(d.hora_desde!),
-      hora_hasta: this.toHora(d.hora_hasta!),
+      vigente_desde: this.toIso(d.vigente_desde),
+      vigente_hasta: this.toIso(d.vigente_hasta),
+      hora_desde: this.toHora(d.hora_desde),
+      hora_hasta: this.toHora(d.hora_hasta),
       dias_semana: dias,
     };
     return this.promocionService.crear(payload);

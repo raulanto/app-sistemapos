@@ -4,32 +4,35 @@
     promoción sólo si la venta lo trae. El código se guarda en mayúsculas y es único en todo el sistema.
   </p>
 
-  <form [formGroup]="form" class="grid gap-3 rounded-md border p-3">
-    <div z-field>
+  <form class="grid gap-3 rounded-md border p-3">
+    @let codigo = cuponForm.codigo();
+    @let codigoInvalid = codigo.invalid() && codigo.touched();
+    <div z-field [attr.data-invalid]="codigoInvalid || null">
       <label z-field-label for="codigo">Código *</label>
-      <input z-input id="codigo" type="text" formControlName="codigo" maxlength="50" placeholder="VERANO25" class="uppercase" />
-      @if (form.controls.codigo.invalid && form.controls.codigo.touched) {
-        <p class="text-[0.8rem] font-medium text-destructive">El código es obligatorio.</p>
+      <input z-input id="codigo" type="text" maxlength="50" placeholder="VERANO25" class="uppercase"
+        [formField]="cuponForm.codigo" [attr.aria-invalid]="codigoInvalid || null" />
+      @if (codigoInvalid) {
+        <z-field-error [zErrors]="codigo.errors()" />
       }
     </div>
     <div class="grid grid-cols-2 gap-3">
       <div z-field>
         <label z-field-label for="c_desde">Vigente desde</label>
-        <input z-input id="c_desde" type="datetime-local" formControlName="vigente_desde" />
+        <input z-input id="c_desde" type="datetime-local" [formField]="cuponForm.vigente_desde" />
       </div>
       <div z-field>
         <label z-field-label for="c_hasta">Vigente hasta</label>
-        <input z-input id="c_hasta" type="datetime-local" formControlName="vigente_hasta" />
+        <input z-input id="c_hasta" type="datetime-local" [formField]="cuponForm.vigente_hasta" />
       </div>
     </div>
     <div class="grid grid-cols-2 gap-3">
       <div z-field>
         <label z-field-label for="max_total">Máx. usos total</label>
-        <input z-input id="max_total" type="number" min="1" step="1" formControlName="max_usos_total" placeholder="Sin límite" />
+        <input z-input id="max_total" type="number" step="1" [formField]="cuponForm.max_usos_total" placeholder="Sin límite" />
       </div>
       <div z-field>
         <label z-field-label for="max_persona">Máx. por persona</label>
-        <input z-input id="max_persona" type="number" min="1" step="1" formControlName="max_usos_por_persona" placeholder="Sin límite" />
+        <input z-input id="max_persona" type="number" step="1" [formField]="cuponForm.max_usos_por_persona" placeholder="Sin límite" />
       </div>
     </div>
     <button z-button zType="default" class="justify-self-start" [zLoading]="guardando()" (click)="crear()">
