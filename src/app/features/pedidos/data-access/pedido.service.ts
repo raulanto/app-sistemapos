@@ -7,6 +7,7 @@ import {
   ActualizarPedidoRequest,
   AnticipoRequest,
   ApiResponse,
+  AsignarServiciosRequest,
   CancelarPedidoRequest,
   CrearPedidoRequest,
   EntregaRequest,
@@ -79,6 +80,13 @@ export class PedidoService {
   /** Asigna repartidor y/o avanza `estado_entrega`. `motivo` obligatorio si `fallido`. */
   entrega(id: string, req: EntregaRequest): Observable<PedidoResponse> {
     return this.http.patch<ApiResponse<PedidoResponse>>(`${this.API_URL}/${id}/entrega`, req).pipe(map(r => r.data));
+  }
+
+  /** Fija/reasigna el responsable de líneas de servicio sin re-cotizar. Vale en `borrador` y `confirmado`. */
+  asignaciones(id: string, req: AsignarServiciosRequest): Observable<PedidoResponse> {
+    return this.http
+      .patch<ApiResponse<PedidoResponse>>(`${this.API_URL}/${id}/asignaciones`, req)
+      .pipe(map(r => r.data));
   }
 
   /** Registra un anticipo (prepago). Baja el `saldo_por_cobrar`. */

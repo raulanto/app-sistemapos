@@ -63,6 +63,28 @@ export function siguientesEstadosEntrega(actual: EstadoEntrega | null, tipo: Tip
   }
 }
 
+/**
+ * Traduce los mensajes crudos del backend de pedidos a algo accionable.
+ * El backend manda estos como `code: "BAD_REQUEST"` con el detalle sólo en `message`
+ * (y a veces filtra nombres de columnas), así que se detectan por texto.
+ */
+export function mensajePedidoError(raw: string | null | undefined, fallback: string): string {
+  const m = (raw ?? '').toLowerCase();
+  if (m.includes('serviciosinresponsable') || m.includes('sin responsable') || m.includes('asignado_a')) {
+    return 'Asigna un responsable a cada línea de servicio (envío, instalación…) antes de confirmar el pedido.';
+  }
+  if (m.includes('direccionenvio') || m.includes('direccion_texto') || m.includes('domicilio')) {
+    return 'El pedido a domicilio no tiene dirección. Edítalo y captúrala antes de continuar.';
+  }
+  if (m.includes('responsableinvalido')) {
+    return 'El responsable elegido no es un usuario activo, o esa línea no es un servicio.';
+  }
+  if (m.includes('stockinsuficiente')) {
+    return 'No hay stock suficiente para una de las líneas. El pedido sigue confirmado; reintenta cuando repongas.';
+  }
+  return raw || fallback;
+}
+
 export interface LineaPedidoRequest {
   producto_id: string;
   cantidad: number | string;
@@ -71,6 +93,11 @@ export interface LineaPedidoRequest {
   impuesto_tasa?: number | string;
   /** null = unidad base; con id se cotiza esa presentación. */
   producto_unidad_id?: string | null;
+  /**
+   * Responsable de una línea de servicio (envío, instalación…). Obligatorio para
+   * confirmar el pedido; se ignora en líneas que no son de tipo `servicio`.
+   */
+  asignado_a?: string | null;
 }
 
 export interface CrearPedidoRequest {
@@ -82,7 +109,6 @@ export interface CrearPedidoRequest {
   descuento_total?: number | string;
   /** Obligatorio si `descuento_total` > 0. */
   motivo_descuento?: string | null;
-  costo_envio?: number | string;
   codigo_cupon?: string | null;
   cliente_segmento?: string | null;
   notas?: string | null;
@@ -95,20 +121,30 @@ export interface CrearPedidoRequest {
   confirmar?: boolean;
 }
 
-/** PATCH parcial: sólo las claves presentes se aplican. Sólo sobre pedidos en `borrador`. */
+/**
+ * PATCH parcial: sólo las claves presentes se aplican. Sólo sobre pedidos en `borrador`.
+ * Se puede cambiar `tipo`/`canal`; al pasar a `domicilio` hay que mandar `direccion_texto`
+ * en el mismo request. El envío ya NO es `costo_envio`: es una línea de producto `servicio`.
+ */
 export interface ActualizarPedidoRequest {
   lineas?: LineaPedidoRequest[];
+  tipo?: TipoPedido | null;
+  canal?: CanalPedido | null;
   cliente_id?: string | null;
   telefono?: string | null;
   descuento_total?: number | string;
   motivo_descuento?: string | null;
-  costo_envio?: number | string;
   codigo_cupon?: string | null;
   cliente_segmento?: string | null;
   notas?: string | null;
   fecha_promesa?: string | null;
   direccion_texto?: string | null;
   referencia_direccion?: string | null;
+}
+
+/** `PATCH /pedidos/{id}/asignaciones` — fija el responsable de líneas de servicio sin re-cotizar. */
+export interface AsignarServiciosRequest {
+  asignaciones: { detalle_id: string; asignado_a: string }[];
 }
 
 export interface LineaPedidoResponse {
@@ -124,6 +160,10 @@ export interface LineaPedidoResponse {
   promo_etiqueta: string | null;
   promo_descuento: string;
   subtotal: string;
+  /** Línea de un producto tipo `servicio` (envío, instalación…). */
+  es_servicio: boolean;
+  /** Usuario responsable de la línea de servicio (null si aún sin asignar). */
+  asignado_a: string | null;
 }
 
 export interface PagoPedidoResponse {
@@ -147,7 +187,6 @@ export interface PedidoResponse {
   telefono: string | null;
   descuento_total: string;
   motivo_descuento: string | null;
-  costo_envio: string;
   codigo_cupon: string | null;
   cliente_segmento: string | null;
   notas: string | null;

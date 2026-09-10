@@ -20,8 +20,10 @@ import {
   ESTADOS_PEDIDO,
   EstadoEntrega,
   EstadoPedido,
+  mensajePedidoError,
   MetodoPago,
   PedidoResponse,
+  siguientesEstadosEntrega,
   TIPOS_PEDIDO,
 } from '../data-access/pedidos.models';
 import { CajaService } from '../../ventas/data-access/caja.service';
@@ -44,6 +46,7 @@ import { FacturarSheetComponent } from '../ui/facturar-sheet/facturar-sheet.comp
 import { AnticipoSheetComponent } from '../ui/anticipo-sheet/anticipo-sheet.component';
 import { CancelarPedidoSheetComponent } from '../ui/cancelar-pedido-sheet/cancelar-pedido-sheet.component';
 import { EntregaSheetComponent } from '../ui/entrega-sheet/entrega-sheet.component';
+import { PedidoEntregaTimelineComponent } from '../ui/pedido-entrega-timeline/pedido-entrega-timeline.component';
 
 @Component({
   selector: 'app-pedido-detail',
@@ -60,6 +63,7 @@ import { EntregaSheetComponent } from '../ui/entrega-sheet/entrega-sheet.compone
     ZardEmptyComponent,
     ZardSkeletonComponent,
     ZardSeparatorComponent,
+    PedidoEntregaTimelineComponent,
   ],
   viewProviders: [
     provideIcons({
@@ -108,6 +112,21 @@ export class PedidoDetailComponent {
     const p = this.pedido();
     return !!p && p.tipo !== 'mostrador';
   });
+  readonly esDomicilio = computed(() => this.pedido()?.tipo === 'domicilio');
+  readonly entregado = computed(() => this.pedido()?.estado_entrega === 'entregado');
+  /** Domicilio: no se confirma ni se factura hasta que la entrega esté completada. */
+  readonly bloqueadoPorEntrega = computed(() => this.esDomicilio() && !this.entregado());
+
+  /** Transiciones de entrega disponibles ahora (vacío si no se puede tocar la entrega). */
+  readonly siguientesEntrega = computed(() => {
+    const p = this.pedido();
+    if (!p || !this.canRepartir() || p.estado === 'cancelado' || p.estado === 'facturado') return [];
+    return siguientesEstadosEntrega(p.estado_entrega, p.tipo);
+  });
+  /** Responsable de la primera línea de servicio (envío): sugerencia para el repartidor del pedido. */
+  readonly responsableServicio = computed(
+    () => (this.pedido()?.lineas ?? []).find(l => l.es_servicio && l.asignado_a)?.asignado_a ?? null,
+  );
   readonly totalAnticipos = computed(() => Number(this.pedido()?.total_anticipos ?? 0));
   readonly ahorroPromo = computed(() =>
     (this.pedido()?.lineas ?? []).reduce((s, l) => s + (Number(l.promo_descuento) || 0), 0),
@@ -181,7 +200,16 @@ export class PedidoDetailComponent {
 
   private errMsg(err: unknown, fallback: string): string {
     const e = err as { error?: { error?: { message?: string; code?: string } } };
-    return e?.error?.error?.message ?? fallback;
+    return mensajePedidoError(e?.error?.error?.message, fallback);
+  }
+
+  /** Un pedido a domicilio sin dirección hace que el backend rechace confirmar/facturar. */
+  private faltaDireccionDomicilio(p: PedidoResponse): boolean {
+    if (p.tipo === 'domicilio' && !p.direccion_texto?.trim()) {
+      this.sonner.error('Este pedido a domicilio no tiene dirección. Edítalo y captúrala antes de continuar.');
+      return true;
+    }
+    return false;
   }
 
   editar() {
@@ -189,7 +217,13 @@ export class PedidoDetailComponent {
   }
 
   confirmar() {
-    if (this.working()) return;
+    const p = this.pedido();
+    if (this.working() || !p) return;
+    if (this.faltaDireccionDomicilio(p)) return;
+    if (this.bloqueadoPorEntrega()) {
+      this.sonner.error('Marca la entrega como «Entregado» antes de confirmar el pedido a domicilio.');
+      return;
+    }
     this.working.set(true);
     this.pedidoService.confirmar(this.id).subscribe({
       next: p => {
@@ -248,6 +282,27 @@ export class PedidoDetailComponent {
     });
   }
 
+  /** Avance rápido desde la línea de tiempo. `fallido` necesita motivo → abre el sheet. */
+  avanzarEntrega(estado: EstadoEntrega) {
+    if (this.working()) return;
+    if (estado === 'fallido') {
+      this.gestionarEntrega();
+      return;
+    }
+    this.working.set(true);
+    this.pedidoService.entrega(this.id, { estado_entrega: estado }).subscribe({
+      next: p => {
+        this.pedido.set(p);
+        this.working.set(false);
+        this.sonner.success(`Entrega: ${this.labelEntrega(estado)}`);
+      },
+      error: err => {
+        this.working.set(false);
+        this.sonner.error(this.errMsg(err, 'No se pudo actualizar la entrega'));
+      },
+    });
+  }
+
   gestionarEntrega() {
     const p = this.pedido();
     if (!p) return;
@@ -255,7 +310,13 @@ export class PedidoDetailComponent {
       zTitle: 'Gestionar entrega',
       zDescription: `Folio ${p.id.slice(0, 8)}`,
       zContent: EntregaSheetComponent,
-      zData: { pedidoId: p.id, tipo: p.tipo, estadoEntrega: p.estado_entrega, repartidorId: p.repartidor_id },
+      zData: {
+        pedidoId: p.id,
+        tipo: p.tipo,
+        estadoEntrega: p.estado_entrega,
+        repartidorId: p.repartidor_id,
+        sugerenciaRepartidor: this.responsableServicio(),
+      },
       zOkText: 'Guardar',
       zCancelText: 'Cancelar',
       zOnOk: (i: any) => this.persistir(i, 'Entrega actualizada', 'No se pudo actualizar la entrega'),
@@ -265,6 +326,11 @@ export class PedidoDetailComponent {
   facturar() {
     const p = this.pedido();
     if (!p) return;
+    if (this.faltaDireccionDomicilio(p)) return;
+    if (this.bloqueadoPorEntrega()) {
+      this.sonner.error('Marca la entrega como «Entregado» antes de facturar el pedido a domicilio.');
+      return;
+    }
     this.cajaService.actual().subscribe({
       next: turno => {
         if (!turno) {

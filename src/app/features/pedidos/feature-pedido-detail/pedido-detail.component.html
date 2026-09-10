@@ -33,7 +33,9 @@
             </button>
           }
           @if (canConfirmar()) {
-            <button z-button zType="default" zSize="sm" [zLoading]="working()" (click)="confirmar()">
+            <button z-button zType="default" zSize="sm" [zLoading]="working()" [zDisabled]="bloqueadoPorEntrega()"
+                    [title]="bloqueadoPorEntrega() ? 'Disponible al marcar la entrega como Entregado' : ''"
+                    (click)="confirmar()">
               <ng-icon name="lucideCircleCheck" class="mr-2 size-4" /> Confirmar
             </button>
           }
@@ -45,7 +47,9 @@
             </button>
           }
           @if (canFacturar()) {
-            <button z-button zType="default" zSize="sm" (click)="facturar()">
+            <button z-button zType="default" zSize="sm" [zDisabled]="bloqueadoPorEntrega()"
+                    [title]="bloqueadoPorEntrega() ? 'Disponible al marcar la entrega como Entregado' : ''"
+                    (click)="facturar()">
               <ng-icon name="lucideReceiptText" class="mr-2 size-4" /> Facturar
             </button>
           }
@@ -73,6 +77,35 @@
       </div>
     </div>
 
+    <!-- Línea de tiempo de la entrega -->
+    @if (esEntrega() && p.estado !== 'cancelado') {
+      <div z-card class="p-4">
+        <div class="mb-3 flex items-center justify-between gap-2">
+          <span class="text-sm font-medium">Entrega</span>
+          @if (canRepartir() && p.estado !== 'facturado') {
+            <button z-button zType="outline" zSize="sm" [zLoading]="working()" (click)="gestionarEntrega()">
+              <ng-icon name="lucideTruck" class="mr-2 size-4" /> Gestionar
+            </button>
+          }
+        </div>
+        <div class="overflow-x-auto">
+          <app-pedido-entrega-timeline
+            [tipo]="p.tipo"
+            [estado]="p.estado_entrega"
+            [siguientes]="siguientesEntrega()"
+            [avanzando]="working()"
+            (avanzar)="avanzarEntrega($event)"
+            class="block min-w-72" />
+        </div>
+        @if (bloqueadoPorEntrega()) {
+          <p class="mt-3 text-xs text-muted-foreground">
+            Confirmar y facturar se habilitan cuando la entrega llega a
+            <span class="font-medium text-foreground">Entregado</span>.
+          </p>
+        }
+      </div>
+    }
+
     <div class="grid gap-6 lg:grid-cols-3">
       <!-- Líneas -->
       <div z-card class="lg:col-span-2">
@@ -93,9 +126,17 @@
                 @for (l of p.lineas; track l.id) {
                   <tr z-table-row>
                     <td z-table-cell>
-                      <div class="font-medium">{{ nombreProducto(l.producto_id) }}</div>
+                      <div class="flex items-center gap-1.5">
+                        <span class="font-medium">{{ nombreProducto(l.producto_id) }}</span>
+                        @if (l.es_servicio) { <z-badge zType="secondary" class="text-[10px]">Servicio</z-badge> }
+                      </div>
                       @if (l.producto_unidad_id) {
                         <div class="text-xs text-muted-foreground">Presentación</div>
+                      }
+                      @if (l.es_servicio) {
+                        <div class="text-xs" [class.text-muted-foreground]="l.asignado_a" [class.text-amber-600]="!l.asignado_a">
+                          Responsable: {{ l.asignado_a ? nombreRepartidor(l.asignado_a) : 'sin asignar' }}
+                        </div>
                       }
                       @if (l.promo_etiqueta) {
                         <div class="text-xs text-primary">{{ l.promo_etiqueta }} · − {{ l.promo_descuento | currency }}</div>
@@ -130,9 +171,6 @@
               @if (+p.descuento_total > 0) {
                 <div class="flex justify-between"><dt class="text-muted-foreground">Descuento total</dt><dd class="tabular-nums">− {{ p.descuento_total | currency }}</dd></div>
               }
-              @if (+p.costo_envio > 0) {
-                <div class="flex justify-between"><dt class="text-muted-foreground">Envío</dt><dd class="tabular-nums">{{ p.costo_envio | currency }}</dd></div>
-              }
               <z-separator />
               <div class="flex justify-between text-base font-semibold"><dt>Total</dt><dd class="tabular-nums">{{ p.total | currency }}</dd></div>
               @if (+p.total_anticipos > 0) {
@@ -148,14 +186,7 @@
         @if (esEntrega()) {
           <div z-card>
             <z-card-header>
-              <z-card-title zTitle="Entrega" class="text-base" />
-              @if (canRepartir() && p.estado !== 'cancelado') {
-                <div z-card-action>
-                  <button z-button zType="outline" zSize="sm" (click)="gestionarEntrega()">
-                    <ng-icon name="lucideTruck" class="mr-2 size-4" /> Gestionar
-                  </button>
-                </div>
-              }
+              <z-card-title zTitle="Detalle de entrega" class="text-base" />
             </z-card-header>
             <z-card-content>
               <dl class="space-y-2 text-sm">

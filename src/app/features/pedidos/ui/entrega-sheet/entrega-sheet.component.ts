@@ -24,6 +24,8 @@ export interface EntregaSheetData {
   tipo: TipoPedido;
   estadoEntrega: EstadoEntrega | null;
   repartidorId: string | null;
+  /** Responsable de la línea de servicio de envío: precarga el repartidor si el pedido aún no tiene uno. */
+  sugerenciaRepartidor?: string | null;
 }
 
 @Component({
@@ -40,6 +42,9 @@ export interface EntregaSheetData {
             <z-select-item [zValue]="u.id">{{ u.nombre }}</z-select-item>
           }
         </z-select>
+        @if (precargadoDeServicio()) {
+          <p class="text-[0.8rem] text-muted-foreground">Sugerido desde el responsable del servicio; se guarda al confirmar.</p>
+        }
       </div>
 
       <div z-field>
@@ -85,12 +90,18 @@ export class EntregaSheetComponent {
   readonly repartidores = signal<UsuarioResponse[]>([]);
   readonly destino = signal<EstadoEntrega | null>(null);
 
+  /** El pedido no tiene repartidor propio: se precarga con el responsable del servicio de envío. */
+  private readonly sugerido = !this.sheetData.repartidorId && (this.sheetData.sugerenciaRepartidor ?? '') !== '';
+
   private readonly model = signal({
-    repartidorId: this.sheetData.repartidorId ?? '',
+    repartidorId: this.sheetData.repartidorId ?? this.sheetData.sugerenciaRepartidor ?? '',
     motivo: '',
   });
   protected readonly entregaForm = form(this.model);
 
+  readonly precargadoDeServicio = computed(
+    () => this.sugerido && this.model().repartidorId === this.sheetData.sugerenciaRepartidor,
+  );
   readonly siguientes = computed(() => siguientesEstadosEntrega(this.sheetData.estadoEntrega, this.sheetData.tipo));
   /** No hay nada que guardar: ni cambió el repartidor ni se eligió un estado. */
   readonly nada = computed(

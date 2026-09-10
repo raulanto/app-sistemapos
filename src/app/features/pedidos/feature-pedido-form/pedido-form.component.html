@@ -15,7 +15,7 @@
           <div class="flex flex-wrap gap-x-6 gap-y-3">
             <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
               Tipo
-              <z-select class="w-48" [ngModel]="tipo()" (ngModelChange)="tipo.set($event)" [zDisabled]="esEdicion()">
+              <z-select class="w-48" [ngModel]="tipo()" (ngModelChange)="tipo.set($event)">
                 @for (t of tipos; track t.value) { <z-select-item [zValue]="t.value">{{ t.label }}</z-select-item> }
               </z-select>
             </label>
@@ -51,12 +51,10 @@
                 Fecha promesa
                 <input z-input type="datetime-local" [ngModel]="fechaPromesa()" (ngModelChange)="fechaPromesa.set($event)" />
               </label>
-              <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-                Costo de envío
-                <input z-input type="number" min="0" step="0.01" [ngModel]="costoEnvio()"
-                       (ngModelChange)="costoEnvio.set(+$event || 0)" placeholder="0.00" />
-              </label>
             </div>
+            <p class="text-[0.8rem] text-muted-foreground">
+              El envío es una línea de servicio del catálogo: agrégala desde «Buscar producto» y asígnale un responsable.
+            </p>
           }
         </div>
 
@@ -200,7 +198,10 @@
                   <div class="space-y-2 p-3">
                     <div class="flex items-start gap-2">
                       <div class="min-w-0 flex-1">
-                        <div class="truncate text-sm font-medium">{{ l.producto.nombre }}</div>
+                        <div class="flex items-center gap-1.5">
+                          <span class="truncate text-sm font-medium">{{ l.producto.nombre }}</span>
+                          @if (l.esServicio) { <z-badge zType="secondary" class="shrink-0 text-[10px]">Servicio</z-badge> }
+                        </div>
                         <div class="text-xs text-muted-foreground">{{ l.unidad ? l.unidad.nombre : 'Unidad base' }}</div>
                         @if (promoDeLinea(l); as promo) {
                           <div class="text-xs text-primary">{{ promo.etiqueta }} · − {{ promo.descuento | currency }}</div>
@@ -226,6 +227,19 @@
                                [ngModel]="l.descuento_linea" (ngModelChange)="setDescuentoLinea(l.key, $event)" />
                       }
                     </div>
+                    @if (l.esServicio) {
+                      <div>
+                        <z-select class="w-full" [ngModel]="l.asignadoA" (ngModelChange)="setAsignado(l.key, $event)"
+                                  placeholder="Responsable del servicio…">
+                          @for (u of usuarios(); track u.id) {
+                            <z-select-item [zValue]="u.id">{{ u.nombre }}</z-select-item>
+                          }
+                        </z-select>
+                        @if (!l.asignadoA) {
+                          <p class="mt-1 text-[0.7rem] font-medium text-amber-600">Necesita responsable para confirmar el pedido.</p>
+                        }
+                      </div>
+                    }
                   </div>
                 }
               </div>
@@ -259,9 +273,6 @@
             @if (totalPromos() > 0) {
               <div class="flex justify-between text-primary"><dt>Promos</dt><dd class="tabular-nums">− {{ totalPromos() | currency }}</dd></div>
             }
-            @if (esEntrega() && costoEnvio() > 0) {
-              <div class="flex justify-between"><dt class="text-muted-foreground">Envío</dt><dd class="tabular-nums">{{ costoEnvio() | currency }}</dd></div>
-            }
             <div class="flex justify-between border-t pt-1.5 text-base font-semibold">
               <dt>Total {{ cotizando() ? '…' : '' }}</dt><dd class="tabular-nums">{{ total() | currency }}</dd>
             </div>
@@ -276,12 +287,17 @@
         </div>
 
         <div class="space-y-2">
+          @if (faltaResponsable()) {
+            <p class="rounded-md bg-amber-500/10 px-3 py-2 text-[0.8rem] font-medium text-amber-600">
+              {{ serviciosSinResponsable() }} línea(s) de servicio sin responsable. Asígnalo para poder confirmar.
+            </p>
+          }
           @if (esEdicion()) {
             <button z-button class="w-full" [disabled]="!puedeGuardar()" [zLoading]="guardando()" (click)="guardar()">
               Guardar cambios
             </button>
           } @else {
-            <button z-button zType="default" class="w-full" [disabled]="!puedeGuardar()" [zLoading]="guardando()" (click)="guardar(true)">
+            <button z-button zType="default" class="w-full" [disabled]="!puedeGuardar() || faltaResponsable()" [zLoading]="guardando()" (click)="guardar(true)">
               Guardar y confirmar
             </button>
             <button z-button zType="outline" class="w-full" [disabled]="!puedeGuardar()" [zLoading]="guardando()" (click)="guardar(false)">
