@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { form, FormField } from '@angular/forms/signals';
 import { Observable } from 'rxjs';
 
 import { PedidoService } from '../../data-access/pedido.service';
@@ -19,9 +19,9 @@ export interface CancelarPedidoSheetData {
 @Component({
   selector: 'app-cancelar-pedido-sheet',
   standalone: true,
-  imports: [CurrencyPipe, ReactiveFormsModule, ...ZardFieldImports, ZardTextareaComponent],
+  imports: [CurrencyPipe, FormField, ...ZardFieldImports, ZardTextareaComponent],
   template: `
-    <form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
+    <form class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
       <div class="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-foreground">
         Cancelar el pedido <span class="font-mono font-medium">{{ sheetData.folio }}</span> lo deja en estado
         <span class="font-medium">cancelado</span>. No se puede deshacer.
@@ -36,7 +36,7 @@ export interface CancelarPedidoSheetData {
 
       <div z-field>
         <label z-field-label for="motivo">Motivo</label>
-        <textarea z-textarea id="motivo" formControlName="motivo" rows="3" placeholder="Ej. el cliente se arrepintió"></textarea>
+        <textarea z-textarea id="motivo" rows="3" placeholder="Ej. el cliente se arrepintió" [formField]="cancelarForm.motivo"></textarea>
       </div>
     </form>
   `,
@@ -45,15 +45,15 @@ export interface CancelarPedidoSheetData {
   host: { style: 'display: contents' },
 })
 export class CancelarPedidoSheetComponent {
-  private fb = inject(FormBuilder);
   private pedidoService = inject(PedidoService);
   readonly sheetData = injectSheetData<CancelarPedidoSheetData>();
 
-  form = this.fb.group({ motivo: [''] });
+  private readonly model = signal({ motivo: '' });
+  protected readonly cancelarForm = form(this.model);
 
   save(): Observable<PedidoResponse> {
     return this.pedidoService.cancelar(this.sheetData.pedidoId, {
-      motivo: this.form.getRawValue().motivo?.trim() || null,
+      motivo: this.model().motivo.trim() || null,
     });
   }
 }

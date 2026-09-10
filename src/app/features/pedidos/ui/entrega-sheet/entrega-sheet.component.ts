@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { form, FormField } from '@angular/forms/signals';
 import { Observable } from 'rxjs';
 
 import { PedidoService } from '../../data-access/pedido.service';
@@ -29,12 +29,12 @@ export interface EntregaSheetData {
 @Component({
   selector: 'app-entrega-sheet',
   standalone: true,
-  imports: [FormsModule, ...ZardFieldImports, ...ZardSelectImports, ZardTextareaComponent, ZardButtonComponent],
+  imports: [FormField, ...ZardFieldImports, ...ZardSelectImports, ZardTextareaComponent, ZardButtonComponent],
   template: `
     <div class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
       <div z-field>
         <label z-field-label>Repartidor</label>
-        <z-select [ngModel]="repartidorId()" (ngModelChange)="repartidorId.set($event)" placeholder="Sin asignar">
+        <z-select [formField]="entregaForm.repartidorId" placeholder="Sin asignar">
           <z-select-item zValue="">Sin asignar</z-select-item>
           @for (u of repartidores(); track u.id) {
             <z-select-item [zValue]="u.id">{{ u.nombre }}</z-select-item>
@@ -63,7 +63,7 @@ export interface EntregaSheetData {
       @if (destino() === 'fallido') {
         <div z-field>
           <label z-field-label for="motivo">Motivo del fallo *</label>
-          <textarea z-textarea id="motivo" rows="2" [ngModel]="motivo()" (ngModelChange)="motivo.set($event)"
+          <textarea z-textarea id="motivo" rows="2" [formField]="entregaForm.motivo"
                     placeholder="Ej. nadie en el domicilio"></textarea>
         </div>
       }
@@ -83,14 +83,18 @@ export class EntregaSheetComponent {
   readonly sheetData = injectSheetData<EntregaSheetData>();
 
   readonly repartidores = signal<UsuarioResponse[]>([]);
-  readonly repartidorId = signal<string>(this.sheetData.repartidorId ?? '');
   readonly destino = signal<EstadoEntrega | null>(null);
-  readonly motivo = signal('');
+
+  private readonly model = signal({
+    repartidorId: this.sheetData.repartidorId ?? '',
+    motivo: '',
+  });
+  protected readonly entregaForm = form(this.model);
 
   readonly siguientes = computed(() => siguientesEstadosEntrega(this.sheetData.estadoEntrega, this.sheetData.tipo));
   /** No hay nada que guardar: ni cambió el repartidor ni se eligió un estado. */
   readonly nada = computed(
-    () => !this.destino() && (this.repartidorId() || '') === (this.sheetData.repartidorId || ''),
+    () => !this.destino() && (this.model().repartidorId || '') === (this.sheetData.repartidorId || ''),
   );
 
   constructor() {
@@ -110,15 +114,16 @@ export class EntregaSheetComponent {
 
   save(): Observable<PedidoResponse> | void {
     const destino = this.destino();
-    if (destino === 'fallido' && !this.motivo().trim()) return;
+    const { repartidorId, motivo } = this.model();
+    if (destino === 'fallido' && !motivo.trim()) return;
     if (this.nada()) return;
 
     const req: EntregaRequest = {};
     if (destino) req.estado_entrega = destino;
-    if ((this.repartidorId() || '') !== (this.sheetData.repartidorId || '')) {
-      req.repartidor_id = this.repartidorId() || null;
+    if ((repartidorId || '') !== (this.sheetData.repartidorId || '')) {
+      req.repartidor_id = repartidorId || null;
     }
-    if (destino === 'fallido') req.motivo = this.motivo().trim();
+    if (destino === 'fallido') req.motivo = motivo.trim();
     return this.pedidoService.entrega(this.sheetData.pedidoId, req);
   }
 }
