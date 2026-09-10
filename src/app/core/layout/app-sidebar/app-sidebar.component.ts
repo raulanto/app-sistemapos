@@ -1,5 +1,19 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
+import {
+  BoxesIcon,
+  ChartColumnIcon,
+  ClipboardListIcon,
+  LandmarkIcon,
+  LayoutDashboardIcon,
+  SearchIcon,
+  SettingsIcon,
+  ShieldCheckIcon,
+  ShoppingCartIcon,
+  UserCogIcon,
+  UserRoundIcon,
+} from 'ng-animated-icons';
+
 import { ZardSidebarImports } from '../../../shared/components/sidebar/sidebar.imports';
 import { NavMainComponent, type Sidebar07NavItem } from './nav-main.component';
 import { NavSecondaryComponent } from './nav-secondary.component';
@@ -43,12 +57,12 @@ export class AppSidebarComponent {
     {
       title: 'Buscar',
       url: '/buscar',
-      icon: 'lucideSearch',
+      icon: SearchIcon,
     },
     {
       title: 'Configuración',
       url: '/config',
-      icon: 'lucideSettings',
+      icon: SettingsIcon,
     },
   ];
 
@@ -56,13 +70,13 @@ export class AppSidebarComponent {
     {
       title: 'Dashboard',
       url: '/',
-      icon: 'lucideLayoutDashboard',
+      icon: LayoutDashboardIcon,
       isActive: true,
     },
     {
       title: 'Ventas',
       url: '/ventas',
-      icon: 'lucideShoppingCart',
+      icon: ShoppingCartIcon,
       items: [
         { title: 'Punto de venta', url: '/ventas' },
         { title: 'Historial', url: '/ventas/historial' },
@@ -74,7 +88,7 @@ export class AppSidebarComponent {
     {
       title: 'Pedidos',
       url: '/pedidos',
-      icon: 'lucideClipboardList',
+      icon: ClipboardListIcon,
       items: [
         { title: 'Tablero', url: '/pedidos' },
         { title: 'Nuevo pedido', url: '/pedidos/nuevo' },
@@ -83,7 +97,7 @@ export class AppSidebarComponent {
     {
       title: 'Inventario',
       url: '/inventario',
-      icon: 'lucidePackage',
+      icon: BoxesIcon,
       items: [
         { title: 'Productos', url: '/inventario/productos' },
         { title: 'Nuevo Producto', url: '/inventario/productos/nuevo' },
@@ -93,12 +107,12 @@ export class AppSidebarComponent {
     {
       title: 'Sucursales',
       url: '/sucursales',
-      icon: 'lucideStore',
+      icon: LandmarkIcon,
     },
     {
       title: 'Clientes',
       url: '/clientes',
-      icon: 'lucideUsers',
+      icon: UserRoundIcon,
       items: [
         { title: 'Clientes', url: '/clientes' },
         { title: 'Monedero', url: '/clientes/monedero' },
@@ -107,7 +121,7 @@ export class AppSidebarComponent {
     {
       title: 'Usuarios',
       url: '/usuarios',
-      icon: 'lucideUsers',
+      icon: UserCogIcon,
       items: [
         { title: 'Usuarios', url: '/usuarios' },
         { title: 'Roles y permisos', url: '/usuarios/roles' },
@@ -116,12 +130,12 @@ export class AppSidebarComponent {
     {
       title: 'Reportes',
       url: '/reportes',
-      icon: 'lucideBarChart3',
+      icon: ChartColumnIcon,
     },
     {
       title: 'Auditoría',
       url: '/auditoria',
-      icon: 'lucideShieldCheck',
+      icon: ShieldCheckIcon,
     },
   ];
 }

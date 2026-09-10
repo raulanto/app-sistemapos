@@ -1,25 +1,22 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleHelp, lucideSearch, lucideSettings } from '@ng-icons/lucide';
+import { NgComponentOutlet } from '@angular/common';
 
 import { ZardSidebarImports } from '../../../shared/components/sidebar/sidebar.imports';
 
-import type { Sidebar07NavItem } from './nav-main.component';
+import { NavHoverDirective, type Sidebar07NavItem } from './nav-main.component';
 
 @Component({
   selector: 'lib-sidebar-07-nav-secondary',
   standalone: true,
-  imports: [...ZardSidebarImports, NgIcon],
-  viewProviders: [provideIcons({ lucideCircleHelp, lucideSearch, lucideSettings })],
+  imports: [...ZardSidebarImports, NgComponentOutlet, NavHoverDirective],
   template: `
     <div z-sidebar-group [class]="class()">
       <div z-sidebar-group-content>
         <ul z-sidebar-menu>
           @for (item of items(); track item.title) {
             <li z-sidebar-menu-item>
-              <a z-sidebar-menu-button [href]="item.url">
-                <ng-icon [name]="item.icon" /> 
+              <a z-sidebar-menu-button class="transition-colors" navHover #hov="navHover" [href]="item.url">
+                <ng-container [ngComponentOutlet]="item.icon" [ngComponentOutletInputs]="{ size: 16, animate: hov.hovered() }" />
                 <span>{{ item.title }}</span>
               </a>
             </li>
