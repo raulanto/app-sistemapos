@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { form, FormField, max, maxLength, min, required } from '@angular/forms/signals';
 import { Observable } from 'rxjs';
 
 import { UnidadMedidaService } from '../../data-access/unidad-medida.service';
@@ -16,7 +16,7 @@ import { ZardSelectImports } from '../../../../shared/components/select/select.i
 @Component({
   selector: 'app-unidad-medida-form-sheet',
   standalone: true,
-  imports: [ReactiveFormsModule, ...ZardFieldImports, ZardInputComponent, ...ZardSelectImports],
+  imports: [FormField, ...ZardFieldImports, ZardInputComponent, ...ZardSelectImports],
   templateUrl: './unidad-medida-form-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   exportAs: 'unidadMedidaFormSheet',
@@ -25,27 +25,38 @@ import { ZardSelectImports } from '../../../../shared/components/select/select.i
   host: { style: 'display: contents' },
 })
 export class UnidadMedidaFormSheetComponent {
-  private fb = inject(FormBuilder);
   private unidadMedidaService = inject(UnidadMedidaService);
 
-  form = this.fb.group({
-    codigo: ['', [Validators.required, Validators.maxLength(20)]],
-    nombre: ['', [Validators.required, Validators.maxLength(60)]],
-    tipo_magnitud: ['conteo' as TipoMagnitud, Validators.required],
-    decimales: [0, [Validators.required, Validators.min(0), Validators.max(6)]],
+  private readonly model = signal({
+    codigo: '',
+    nombre: '',
+    tipo_magnitud: 'conteo' as TipoMagnitud,
+    decimales: 0,
+  });
+
+  protected readonly umForm = form(this.model, path => {
+    required(path.codigo, { message: 'Obligatorio (1–20 caracteres).' });
+    maxLength(path.codigo, 20, { message: 'Máximo 20 caracteres.' });
+    required(path.nombre, { message: 'El nombre es obligatorio.' });
+    maxLength(path.nombre, 60, { message: 'Máximo 60 caracteres.' });
+    required(path.tipo_magnitud, { message: 'Selecciona el tipo.' });
+    required(path.decimales, { message: 'Obligatorio.' });
+    min(path.decimales, 0, { message: 'Mínimo 0.' });
+    max(path.decimales, 6, { message: 'Máximo 6.' });
   });
 
   save(): Observable<UnidadMedidaResponse> | void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    const root = this.umForm();
+    if (!root.valid()) {
+      root.markAsTouched();
       return;
     }
 
-    const data = this.form.getRawValue();
+    const data = this.model();
     const payload: CrearUnidadMedidaRequest = {
-      codigo: data.codigo!,
-      nombre: data.nombre!,
-      tipo_magnitud: data.tipo_magnitud!,
+      codigo: data.codigo,
+      nombre: data.nombre,
+      tipo_magnitud: data.tipo_magnitud,
       decimales: data.decimales ?? 0,
     };
     return this.unidadMedidaService.crear(payload);

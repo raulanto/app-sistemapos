@@ -1,25 +1,53 @@
-<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
+<form class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
   <div class="grid grid-cols-2 gap-4">
-    <div z-field>
+    @let codigo = umForm.codigo();
+    @let codigoInvalid = codigo.invalid() && codigo.touched();
+    <div z-field [attr.data-invalid]="codigoInvalid || null">
       <label z-field-label>Código *</label>
-      <input z-input formControlName="codigo" maxlength="20" placeholder="Ej. kg, l, pza" />
-      @if (form.controls.codigo.invalid && form.controls.codigo.touched) {
-        <p class="text-[0.8rem] font-medium text-destructive">Obligatorio (1–20 caracteres).</p>
+      <input
+        z-input
+        maxlength="20"
+        placeholder="Ej. kg, l, pza"
+        [formField]="umForm.codigo"
+        [attr.aria-invalid]="codigoInvalid || null"
+      />
+      @if (codigoInvalid) {
+        <z-field-error [zErrors]="codigo.errors()" />
       }
     </div>
-    <div z-field>
+
+    @let decimales = umForm.decimales();
+    @let decimalesInvalid = decimales.invalid() && decimales.touched();
+    <div z-field [attr.data-invalid]="decimalesInvalid || null">
       <label z-field-label>Decimales *</label>
-      <input z-input type="number" formControlName="decimales" min="0" max="6" step="1" />
+      <input
+        z-input
+        type="number"
+        step="1"
+        [formField]="umForm.decimales"
+        [attr.aria-invalid]="decimalesInvalid || null"
+      />
       <p class="text-[0.8rem] text-muted-foreground">Precisión para redondear el stock (0–6).</p>
+      @if (decimalesInvalid) {
+        <z-field-error [zErrors]="decimales.errors()" />
+      }
     </div>
   </div>
 
   <div class="grid grid-cols-1 gap-4">
-    <div z-field>
+    @let nombre = umForm.nombre();
+    @let nombreInvalid = nombre.invalid() && nombre.touched();
+    <div z-field [attr.data-invalid]="nombreInvalid || null">
       <label z-field-label>Nombre *</label>
-      <input z-input formControlName="nombre" maxlength="60" placeholder="Ej. Kilogramo, Litro, Pieza" />
-      @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
-        <p class="text-[0.8rem] font-medium text-destructive">El nombre es obligatorio.</p>
+      <input
+        z-input
+        maxlength="60"
+        placeholder="Ej. Kilogramo, Litro, Pieza"
+        [formField]="umForm.nombre"
+        [attr.aria-invalid]="nombreInvalid || null"
+      />
+      @if (nombreInvalid) {
+        <z-field-error [zErrors]="nombre.errors()" />
       }
     </div>
   </div>
@@ -27,7 +55,7 @@
   <div class="grid grid-cols-1 gap-4">
     <div z-field>
       <label z-field-label>Tipo de magnitud *</label>
-      <z-select formControlName="tipo_magnitud" placeholder="Selecciona el tipo">
+      <z-select [formField]="umForm.tipo_magnitud" placeholder="Selecciona el tipo">
         <z-select-item zValue="conteo">Conteo (piezas, unidades)</z-select-item>
         <z-select-item zValue="masa">Masa (kg, g)</z-select-item>
         <z-select-item zValue="volumen">Volumen (l, ml)</z-select-item>

@@ -1,15 +1,25 @@
-<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
-  <div z-field>
+<form class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
+  @let nombre = categoriaForm.nombre();
+  @let nombreInvalid = nombre.invalid() && nombre.touched();
+  <div z-field [attr.data-invalid]="nombreInvalid || null">
     <label z-field-label for="nombre">Nombre *</label>
-    <input z-input id="nombre" type="text" formControlName="nombre" maxlength="100" placeholder="Ej. Bebidas" />
-    @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
-      <p class="text-[0.8rem] font-medium text-destructive">El nombre es obligatorio.</p>
+    <input
+      z-input
+      id="nombre"
+      type="text"
+      maxlength="100"
+      placeholder="Ej. Bebidas"
+      [formField]="categoriaForm.nombre"
+      [attr.aria-invalid]="nombreInvalid || null"
+    />
+    @if (nombreInvalid) {
+      <z-field-error [zErrors]="nombre.errors()" />
     }
   </div>
 
   <div z-field>
     <label z-field-label>Categoría padre</label>
-    <z-select formControlName="categoria_padre_id" placeholder="Ninguna (categoría raíz)">
+    <z-select [formField]="categoriaForm.categoria_padre_id" placeholder="Ninguna (categoría raíz)">
       <z-select-item zValue="">Ninguna (categoría raíz)</z-select-item>
       @for (cat of categorias(); track cat.id) {
         <z-select-item [zValue]="cat.id">{{ cat.nombre }}</z-select-item>

@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { form, FormField, min, required, validateTree } from '@angular/forms/signals';
 import { Observable } from 'rxjs';
 
 import { MovimientoService } from '../../data-access/movimiento.service';
@@ -16,20 +16,11 @@ export interface TransferenciaSheetData {
   productoId: string;
 }
 
-function differentBranchValidator(control: AbstractControl): ValidationErrors | null {
-  const origin = control.get('sucursal_origen_id')?.value;
-  const destination = control.get('sucursal_destino_id')?.value;
-  if (origin && destination && origin === destination) {
-    return { sameBranch: true };
-  }
-  return null;
-}
-
 @Component({
   selector: 'app-transferencia-form-sheet',
   standalone: true,
   imports: [
-    ReactiveFormsModule,
+    FormField,
     ...ZardFieldImports,
     ZardInputComponent,
     ...ZardSelectImports,
@@ -43,43 +34,62 @@ function differentBranchValidator(control: AbstractControl): ValidationErrors | 
   host: { style: 'display: contents' }
 })
 export class TransferenciaFormSheetComponent implements OnInit {
-  private fb = inject(FormBuilder);
   private movimientoService = inject(MovimientoService);
   public sucursalService = inject(SucursalService);
-  
+
   public sheetData = injectSheetData<TransferenciaSheetData>();
 
-  form = this.fb.group({
-    sucursal_origen_id: ['', Validators.required],
-    sucursal_destino_id: ['', Validators.required],
-    cantidad: [0, [Validators.required, Validators.min(0.01)]],
-    motivo: ['']
-  }, { validators: differentBranchValidator });
+  private readonly model = signal({
+    sucursal_origen_id: '',
+    sucursal_destino_id: '',
+    cantidad: 0,
+    motivo: '',
+  });
+
+  protected readonly transferenciaForm = form(this.model, path => {
+    required(path.sucursal_origen_id, { message: 'Requerido' });
+    required(path.sucursal_destino_id, { message: 'Requerido' });
+    required(path.cantidad, { message: 'Requerido' });
+    min(path.cantidad, 0.01, { message: 'Debe ser mayor a 0' });
+
+    validateTree(path, ({ value, fieldTreeOf }) => {
+      const { sucursal_origen_id, sucursal_destino_id } = value();
+      if (sucursal_origen_id && sucursal_destino_id && sucursal_origen_id === sucursal_destino_id) {
+        return {
+          kind: 'sameBranch',
+          message: 'La sucursal de origen y destino no pueden ser la misma.',
+          fieldTree: fieldTreeOf(path.sucursal_destino_id),
+        };
+      }
+      return undefined;
+    });
+  });
 
   ngOnInit() {
     const currentSucursalId = this.sucursalService.selectedSucursalId();
     if (currentSucursalId) {
-      this.form.patchValue({ sucursal_origen_id: currentSucursalId });
+      this.model.update(m => ({ ...m, sucursal_origen_id: currentSucursalId }));
     } else {
       const sucursales = this.sucursalService.sucursales();
       if (sucursales.length > 0) {
-        this.form.patchValue({ sucursal_origen_id: sucursales[0].id });
+        this.model.update(m => ({ ...m, sucursal_origen_id: sucursales[0].id }));
       }
     }
   }
 
   save(): Observable<any> | void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    const root = this.transferenciaForm();
+    if (!root.valid()) {
+      root.markAsTouched();
       return;
     }
-    
-    const data = this.form.value;
+
+    const data = this.model();
     const payload: TransferenciaRequest = {
       producto_id: this.sheetData.productoId,
-      sucursal_origen_id: data.sucursal_origen_id!,
-      sucursal_destino_id: data.sucursal_destino_id!,
-      cantidad: data.cantidad!,
+      sucursal_origen_id: data.sucursal_origen_id,
+      sucursal_destino_id: data.sucursal_destino_id,
+      cantidad: data.cantidad,
       motivo: data.motivo || null
     };
 

@@ -1,19 +1,40 @@
-<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
+<form class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
   <div class="grid grid-cols-1 gap-4">
-    <div z-field>
+    @let producto = componenteForm.producto_componente_id();
+    @let productoInvalid = producto.invalid() && producto.touched();
+    <div z-field [attr.data-invalid]="productoInvalid || null">
       <label z-field-label>Producto (Componente) *</label>
-      <z-select formControlName="producto_componente_id" placeholder="Selecciona un producto">
+      <z-select
+        [formField]="componenteForm.producto_componente_id"
+        placeholder="Selecciona un producto"
+        [zInvalid]="productoInvalid"
+      >
         @for (prod of productos(); track prod.id) {
           <z-select-item [zValue]="prod.id">{{ prod.sku }} - {{ prod.nombre }}</z-select-item>
         }
       </z-select>
+      @if (productoInvalid) {
+        <z-field-error [zErrors]="producto.errors()" />
+      }
     </div>
   </div>
 
   <div class="grid grid-cols-1 gap-4">
-    <div z-field>
+    @let cantidad = componenteForm.cantidad();
+    @let cantidadInvalid = cantidad.invalid() && cantidad.touched();
+    <div z-field [attr.data-invalid]="cantidadInvalid || null">
       <label z-field-label>Cantidad *</label>
-      <input z-input type="number" formControlName="cantidad" placeholder="0.00" min="0" step="0.01">
+      <input
+        z-input
+        type="number"
+        placeholder="0.00"
+        step="0.01"
+        [formField]="componenteForm.cantidad"
+        [attr.aria-invalid]="cantidadInvalid || null"
+      >
+      @if (cantidadInvalid) {
+        <z-field-error [zErrors]="cantidad.errors()" />
+      }
     </div>
   </div>
 </form>

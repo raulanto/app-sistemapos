@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { disabled, form, FormField, min, required } from '@angular/forms/signals';
 import { Observable } from 'rxjs';
 
 import { ProductoService } from '../../data-access/producto.service';
@@ -19,7 +19,7 @@ export interface ComponenteSheetData {
   selector: 'app-componente-form-sheet',
   standalone: true,
   imports: [
-    ReactiveFormsModule,
+    FormField,
     ...ZardFieldImports,
     ZardInputComponent,
     ...ZardSelectImports
@@ -32,28 +32,31 @@ export interface ComponenteSheetData {
   host: { style: 'display: contents' }
 })
 export class ComponenteFormSheetComponent implements OnInit {
-  private fb = inject(FormBuilder);
   private productoService = inject(ProductoService);
-  
+
   public sheetData = injectSheetData<ComponenteSheetData>();
 
   productos = signal<ProductoResponse[]>([]);
-  
+
   isEditing = false;
 
-  form = this.fb.group({
-    producto_componente_id: ['', Validators.required],
-    cantidad: [0, [Validators.required, Validators.min(0.01)]]
+  private readonly model = signal({ producto_componente_id: '', cantidad: 0 });
+
+  protected readonly componenteForm = form(this.model, path => {
+    required(path.producto_componente_id, { message: 'Selecciona un producto.' });
+    // Al editar no se puede cambiar el producto del componente.
+    disabled(path.producto_componente_id, () => !!this.sheetData?.componente);
+    required(path.cantidad, { message: 'La cantidad es obligatoria.' });
+    min(path.cantidad, 0.01, { message: 'Debe ser mayor a 0.' });
   });
 
   ngOnInit() {
     this.isEditing = !!this.sheetData?.componente;
-    
+
     if (this.isEditing) {
-      this.form.get('producto_componente_id')?.disable(); // Prevent changing product when editing
-      this.form.patchValue({
-        producto_componente_id: this.sheetData!.componente!.producto_componente_id,
-        cantidad: Number(this.sheetData!.componente!.cantidad)
+      this.model.set({
+        producto_componente_id: this.sheetData.componente!.producto_componente_id,
+        cantidad: Number(this.sheetData.componente!.cantidad)
       });
     }
 
@@ -71,24 +74,25 @@ export class ComponenteFormSheetComponent implements OnInit {
   }
 
   save(): Observable<ComponenteResponse> | void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    const root = this.componenteForm();
+    if (!root.valid()) {
+      root.markAsTouched();
       return;
     }
-    
-    const data = this.form.getRawValue();
-    
+
+    const data = this.model();
+
     if (this.isEditing) {
       const payload: ActualizarComponenteRequest = {
-        cantidad: data.cantidad!
+        cantidad: data.cantidad
       };
-      return this.productoService.actualizarComponente(this.sheetData!.kitId, this.sheetData!.componente!.producto_componente_id, payload);
+      return this.productoService.actualizarComponente(this.sheetData.kitId, this.sheetData.componente!.producto_componente_id, payload);
     } else {
       const payload: AgregarComponenteRequest = {
-        producto_componente_id: data.producto_componente_id!,
-        cantidad: data.cantidad!
+        producto_componente_id: data.producto_componente_id,
+        cantidad: data.cantidad
       };
-      return this.productoService.agregarComponente(this.sheetData!.kitId, payload);
+      return this.productoService.agregarComponente(this.sheetData.kitId, payload);
     }
   }
 }

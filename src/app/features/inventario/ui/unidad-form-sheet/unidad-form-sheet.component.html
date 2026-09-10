@@ -1,28 +1,37 @@
-<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
+<form class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
   <div class="grid grid-cols-1 gap-4">
-    <div z-field>
+    @let nombre = unidadForm.nombre();
+    @let nombreInvalid = nombre.invalid() && nombre.touched();
+    <div z-field [attr.data-invalid]="nombreInvalid || null">
       <label z-field-label>Nombre de la presentación *</label>
-      <input z-input formControlName="nombre" placeholder="Ej. Lata 355ml, Reja x24" />
-      @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
-        <p class="text-[0.8rem] font-medium text-destructive">El nombre es obligatorio (máx. 50).</p>
+      <input z-input placeholder="Ej. Lata 355ml, Reja x24"
+        [formField]="unidadForm.nombre" [attr.aria-invalid]="nombreInvalid || null" />
+      @if (nombreInvalid) {
+        <z-field-error [zErrors]="nombre.errors()" />
       }
     </div>
   </div>
 
   <div class="grid grid-cols-2 gap-4">
-    <div z-field>
+    @let unidadMedida = unidadForm.unidad_medida();
+    @let unidadMedidaInvalid = unidadMedida.invalid() && unidadMedida.touched();
+    <div z-field [attr.data-invalid]="unidadMedidaInvalid || null">
       <label z-field-label>Unidad de medida *</label>
-      <input z-input formControlName="unidad_medida" maxlength="20" placeholder="Ej. pieza, litro" />
-      @if (form.controls.unidad_medida.invalid && form.controls.unidad_medida.touched) {
-        <p class="text-[0.8rem] font-medium text-destructive">Obligatoria (1–20 caracteres).</p>
+      <input z-input maxlength="20" placeholder="Ej. pieza, litro"
+        [formField]="unidadForm.unidad_medida" [attr.aria-invalid]="unidadMedidaInvalid || null" />
+      @if (unidadMedidaInvalid) {
+        <z-field-error [zErrors]="unidadMedida.errors()" />
       }
     </div>
 
-    <div z-field>
+    @let precioVenta = unidadForm.precio_venta();
+    @let precioVentaInvalid = precioVenta.invalid() && precioVenta.touched();
+    <div z-field [attr.data-invalid]="precioVentaInvalid || null">
       <label z-field-label>Precio de venta *</label>
-      <input z-input type="number" formControlName="precio_venta" min="0" step="0.01" />
-      @if (form.controls.precio_venta.invalid && form.controls.precio_venta.touched) {
-        <p class="text-[0.8rem] font-medium text-destructive">El precio de venta es obligatorio.</p>
+      <input z-input type="number" step="0.01"
+        [formField]="unidadForm.precio_venta" [attr.aria-invalid]="precioVentaInvalid || null" />
+      @if (precioVentaInvalid) {
+        <z-field-error [zErrors]="precioVenta.errors()" />
       }
     </div>
   </div>
@@ -30,7 +39,7 @@
   <div class="grid grid-cols-1 gap-4">
     <div z-field>
       <label z-field-label>Equivalencia con la unidad base ({{ unidadBase() }}) *</label>
-      <z-select formControlName="modo" placeholder="Selecciona el tipo de equivalencia">
+      <z-select [formField]="unidadForm.modo" placeholder="Selecciona el tipo de equivalencia">
         <z-select-item zValue="unidades_por_base">Más pequeña que la base (varias por {{ unidadBase() }})</z-select-item>
         <z-select-item zValue="factor">Más grande que la base (contiene varias {{ unidadBase() }})</z-select-item>
       </z-select>
@@ -38,48 +47,54 @@
   </div>
 
   @if (modo() === 'unidades_por_base') {
+    @let upb = unidadForm.unidades_por_base();
+    @let upbInvalid = upb.invalid() && upb.touched();
     <div class="grid grid-cols-1 gap-4">
-      <div z-field>
+      <div z-field [attr.data-invalid]="upbInvalid || null">
         <label z-field-label>Unidades por {{ unidadBase() }} *</label>
-        <input z-input type="number" formControlName="unidades_por_base" min="0" step="any" placeholder="Ej. 6" />
+        <input z-input type="number" step="any" placeholder="Ej. 6"
+          [formField]="unidadForm.unidades_por_base" [attr.aria-invalid]="upbInvalid || null" />
         <p class="text-[0.8rem] text-muted-foreground">
           ¿Cuántas de esta presentación entran en 1 {{ unidadBase() }}? Ej. una reja de 6 latas → 6.
         </p>
+        @if (upbInvalid) {
+          <z-field-error [zErrors]="upb.errors()" />
+        }
       </div>
     </div>
   } @else {
+    @let factor = unidadForm.factor();
+    @let factorInvalid = factor.invalid() && factor.touched();
     <div class="grid grid-cols-1 gap-4">
-      <div z-field>
+      <div z-field [attr.data-invalid]="factorInvalid || null">
         <label z-field-label>Unidades base ({{ unidadBase() }}) por presentación *</label>
-        <input z-input type="number" formControlName="factor" min="0" step="any" placeholder="Ej. 24" />
+        <input z-input type="number" step="any" placeholder="Ej. 24"
+          [formField]="unidadForm.factor" [attr.aria-invalid]="factorInvalid || null" />
         <p class="text-[0.8rem] text-muted-foreground">
           ¿Cuántas {{ unidadBase() }} contiene 1 de esta presentación? Ej. "Reja x24" → 24.
         </p>
+        @if (factorInvalid) {
+          <z-field-error [zErrors]="factor.errors()" />
+        }
       </div>
     </div>
-  }
-
-  @if (form.hasError('equivalencia') && form.touched) {
-    <p class="text-[0.8rem] font-medium text-destructive -mt-3">
-      Indica un valor mayor a 0 para la equivalencia.
-    </p>
   }
 
   <div class="grid grid-cols-1 gap-4">
     <div z-field>
       <label z-field-label>Código de barras (opcional)</label>
-      <input z-input formControlName="codigo_barras" placeholder="Código de barras de esta presentación" />
+      <input z-input placeholder="Código de barras de esta presentación" [formField]="unidadForm.codigo_barras" />
     </div>
   </div>
 
   <div class="grid grid-cols-2 gap-4">
     <div z-field>
       <label z-field-label>Monedero % (opcional)</label>
-      <input z-input type="number" formControlName="monedero_pct" min="0" max="100" step="0.01" placeholder="Hereda del producto" />
+      <input z-input type="number" step="0.01" placeholder="Hereda del producto" [formField]="unidadForm.monedero_pct" />
     </div>
     <div z-field>
       <label z-field-label>Monedero monto fijo (opcional)</label>
-      <input z-input type="number" formControlName="monedero_monto" min="0" step="0.01" placeholder="Hereda del producto" />
+      <input z-input type="number" step="0.01" placeholder="Hereda del producto" [formField]="unidadForm.monedero_monto" />
     </div>
   </div>
   <p class="text-[0.8rem] text-muted-foreground -mt-3">
