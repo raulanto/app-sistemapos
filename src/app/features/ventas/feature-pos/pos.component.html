@@ -16,249 +16,264 @@
     <app-pos-turno-vacio [canOperarCaja]="canOperarCaja()" (abrirCaja)="abrirCaja()" />
   } @else {
     <!-- POS -->
-    <div class="grid flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[1fr_400px]">
-      <app-pos-catalogo
-        [sucursalId]="catalogoSucursalId()"
-        [refrescarTick]="catalogoRefrescarTick()"
-        (agregar)="agregar($event.producto, $event.unidad)"
-      />
+    <div class="flex flex-1 flex-col overflow-hidden">
+      <!-- Catálogo + carrito: mismo alto, uno al lado del otro -->
+      <div class="grid flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[1fr_560px]">
+        <app-pos-catalogo
+          [sucursalId]="catalogoSucursalId()"
+          [refrescarTick]="catalogoRefrescarTick()"
+          (agregar)="agregar($event.producto, $event.unidad)"
+        />
 
-      <!-- Carrito + cobro -->
-      <div class="flex flex-col overflow-hidden bg-muted/20">
-        @if (ventaOk(); as v) {
-          <app-pos-ticket
-            [venta]="v"
-            (imprimir)="imprimirTicket($event)"
-            (nuevaVenta)="nuevaVenta()"
-          />
-        } @else {
-          <app-pos-carrito
-            [lineas]="lineasVista()"
-            [expandedLinea]="expandedLinea()"
-            [canDescuentoManual]="canDescuentoManual()"
-            (quitar)="quitar($event)"
-            (setCantidad)="setCantidad($event.key, $event.cantidad)"
-            (pasoCantidad)="pasoCantidad($event.key, $event.delta)"
-            (setPrecio)="setPrecio($event.key, $event.precio)"
-            (setDescuentoLinea)="setDescuentoLinea($event.key, $event.descuento)"
-            (toggleLinea)="toggleLinea($event)"
-            (vaciarCarrito)="vaciarCarrito()"
-          />
+        <div class="flex flex-col overflow-hidden bg-muted/20">
+          @if (ventaOk(); as v) {
+            <app-pos-ticket
+              [venta]="v"
+              (imprimir)="imprimirTicket($event)"
+              (nuevaVenta)="nuevaVenta()"
+            />
+          } @else {
+            <app-pos-carrito
+              [lineas]="lineasVista()"
+              [expandedLinea]="expandedLinea()"
+              [canDescuentoManual]="canDescuentoManual()"
+              (quitar)="quitar($event)"
+              (setCantidad)="setCantidad($event.key, $event.cantidad)"
+              (pasoCantidad)="pasoCantidad($event.key, $event.delta)"
+              (setPrecio)="setPrecio($event.key, $event.precio)"
+              (setDescuentoLinea)="setDescuentoLinea($event.key, $event.descuento)"
+              (toggleLinea)="toggleLinea($event)"
+              (vaciarCarrito)="vaciarCarrito()"
+            />
+          }
+        </div>
+      </div>
 
-          <!-- Totales + pagos -->
-          <div class="space-y-3 border-t bg-card p-3">
-            <div class="flex items-center justify-between text-sm text-muted-foreground">
-              <span>Subtotal</span
-              ><span class="tabular-nums">{{ subtotalLineas() | currency }}</span>
-            </div>
-            @if (canDescuentoManual()) {
-              <div class="flex items-center justify-between text-sm">
-                <span class="text-muted-foreground">Descuento total</span>
-                <input
-                  z-input
-                  class="w-28 text-right"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  [ngModel]="descuentoTotal()"
-                  (ngModelChange)="setDescuentoTotal($event)"
-                />
+      <!-- Cobro: barra completa debajo, para que quepan más opciones a la vista -->
+      @if (!ventaOk()) {
+        <div class="max-h-[45vh] shrink-0 space-y-3 overflow-y-auto border-t bg-card p-3">
+          <div class="grid grid-cols-1 gap-3 lg:grid-cols-3">
+            <!-- Resumen -->
+            <div class="space-y-1.5 rounded-md border p-2">
+              <div class="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Subtotal</span
+                ><span class="tabular-nums">{{ subtotalLineas() | currency }}</span>
               </div>
-              @if (descuentoTotal() > descTotalAplicado() + 0.001) {
-                <p class="-mt-1 text-right text-[0.7rem] text-amber-600">
-                  Ajustado a {{ descTotalAplicado() | currency }} (no puede pasar del subtotal).
-                </p>
-              }
-              @if (hayDescuentoManual()) {
-                <div>
+              @if (canDescuentoManual()) {
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-muted-foreground">Descuento total</span>
                   <input
                     z-input
-                    class="h-8 text-sm"
-                    [class.border-destructive]="faltaMotivo()"
-                    placeholder="Motivo del descuento *"
-                    [ngModel]="motivoDescuento()"
-                    (ngModelChange)="motivoDescuento.set($event)"
+                    class="w-28 text-right"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    [ngModel]="descuentoTotal()"
+                    (ngModelChange)="setDescuentoTotal($event)"
                   />
-                  @if (faltaMotivo()) {
-                    <p class="mt-1 text-[0.7rem] font-medium text-destructive">
-                      El descuento manual necesita un motivo.
-                    </p>
-                  }
                 </div>
-              }
-            }
-            @if (totalPromociones() > 0) {
-              <div class="flex items-center justify-between text-sm text-primary">
-                <span>Promociones</span
-                ><span class="tabular-nums">− {{ totalPromociones() | currency }}</span>
-              </div>
-            }
-            <div class="flex items-center justify-between text-lg font-bold">
-              <span class="flex items-center gap-1.5">
-                Total
-                @if (cotizando()) {
-                  <span class="text-[0.7rem] font-normal text-muted-foreground">calculando…</span>
+                @if (descuentoTotal() > descTotalAplicado() + 0.001) {
+                  <p class="-mt-1 text-right text-[0.7rem] text-amber-600">
+                    Ajustado a {{ descTotalAplicado() | currency }} (no puede pasar del subtotal).
+                  </p>
                 }
-              </span>
-              <span class="tabular-nums">{{ total() | currency }}</span>
-            </div>
-
-            <!-- Teléfono / monedero -->
-            <div class="rounded-md border p-2">
-              <div class="relative">
-                <ng-icon
-                  name="lucidePhone"
-                  class="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
-                />
-                <input
-                  z-input
-                  class="h-8 pl-8 text-sm"
-                  inputmode="tel"
-                  placeholder="Teléfono (monedero, opcional)"
-                  [ngModel]="telefono()"
-                  (ngModelChange)="telefono.set($event)"
-                />
-              </div>
-              @if (telefono().trim()) {
-                <div class="mt-1.5 flex items-center justify-between text-xs">
-                  <span class="text-muted-foreground">
-                    @if (consultandoMonedero()) {
-                      Consultando saldo…
-                    } @else if (!telefonoValido()) {
-                      Teléfono incompleto
-                    } @else {
-                      Saldo:
-                      <span class="font-medium text-foreground tabular-nums">{{
-                        monederoDisponible() | currency
-                      }}</span>
+                @if (hayDescuentoManual()) {
+                  <div>
+                    <input
+                      z-input
+                      class="h-8 text-sm"
+                      [class.border-destructive]="faltaMotivo()"
+                      placeholder="Motivo del descuento *"
+                      [ngModel]="motivoDescuento()"
+                      (ngModelChange)="motivoDescuento.set($event)"
+                    />
+                    @if (faltaMotivo()) {
+                      <p class="mt-1 text-[0.7rem] font-medium text-destructive">
+                        El descuento manual necesita un motivo.
+                      </p>
                     }
-                  </span>
-                  @if (monederoAGenerar() > 0) {
-                    <span class="text-primary">genera {{ monederoAGenerar() | currency }}</span>
-                  }
+                  </div>
+                }
+              }
+              @if (totalPromociones() > 0) {
+                <div class="flex items-center justify-between text-sm text-primary">
+                  <span>Promociones</span
+                  ><span class="tabular-nums">− {{ totalPromociones() | currency }}</span>
                 </div>
               }
+              <div class="flex items-center justify-between border-t pt-1.5">
+                <span class="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                  Total
+                  @if (cotizando()) {
+                    <span class="text-[0.7rem] font-normal">calculando…</span>
+                  }
+                </span>
+                <span class="text-2xl font-bold tracking-tight tabular-nums">{{ total() | currency }}</span>
+              </div>
             </div>
 
-            <!-- Cupón -->
-            <div class="rounded-md border p-2">
-              <div class="flex gap-2">
-                <div class="relative flex-1">
+            <!-- Cliente: teléfono, cupón, crédito -->
+            <div class="space-y-3">
+              <!-- Teléfono / monedero -->
+              <div class="rounded-md border p-2">
+                <div class="relative">
                   <ng-icon
-                    name="lucideTicket"
+                    name="lucidePhone"
                     class="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
                   />
                   <input
                     z-input
-                    class="h-8 pl-8 text-sm uppercase"
-                    placeholder="Cupón (opcional)"
-                    [ngModel]="codigoCupon()"
-                    (ngModelChange)="codigoCupon.set($event); cuponEstado.set('idle')"
-                    (keyup.enter)="validarCupon()"
+                    class="h-8 pl-8 text-sm"
+                    inputmode="tel"
+                    placeholder="Teléfono (monedero, opcional)"
+                    [ngModel]="telefono()"
+                    (ngModelChange)="telefono.set($event)"
                   />
                 </div>
-                @if (cuponEstado() === 'ok') {
-                  <button z-button zType="ghost" zSize="sm" (click)="quitarCupon()">
-                    <ng-icon name="lucideX" class="size-4" />
-                  </button>
-                } @else {
-                  <button
-                    z-button
-                    zType="outline"
-                    zSize="sm"
-                    [zDisabled]="!codigoCupon().trim() || cuponEstado() === 'validando'"
-                    (click)="validarCupon()"
-                  >
-                    Aplicar
-                  </button>
+                @if (telefono().trim()) {
+                  <div class="mt-1.5 flex items-center justify-between text-xs">
+                    <span class="text-muted-foreground">
+                      @if (consultandoMonedero()) {
+                        Consultando saldo…
+                      } @else if (!telefonoValido()) {
+                        Teléfono incompleto
+                      } @else {
+                        Saldo:
+                        <span class="font-medium text-foreground tabular-nums">{{
+                          monederoDisponible() | currency
+                        }}</span>
+                      }
+                    </span>
+                    @if (monederoAGenerar() > 0) {
+                      <span class="text-primary">genera {{ monederoAGenerar() | currency }}</span>
+                    }
+                  </div>
                 }
               </div>
-              @if (cuponEstado() === 'validando') {
-                <p class="mt-1.5 text-xs text-muted-foreground">Validando cupón…</p>
-              } @else if (cuponEstado() === 'ok') {
-                <p class="mt-1.5 flex items-center gap-1 text-xs text-green-600">
-                  <ng-icon name="lucideCircleCheck" class="size-3.5" /> {{ cuponMsg() }}
-                </p>
-              } @else if (cuponEstado() === 'error') {
-                <p class="mt-1.5 text-xs font-medium text-destructive">{{ cuponMsg() }}</p>
-              }
-            </div>
 
-            <app-pos-pagos
-              [pagos]="pagos()"
-              [monederoDisponible]="monederoDisponible()"
-              (agregarPago)="agregarPago($event)"
-              (setMontoPago)="setMontoPago($event.i, $event.monto)"
-              (setRecibido)="setRecibido($event.i, $event.v)"
-              (quitarPago)="quitarPago($event)"
-              (pagoExacto)="pagoExacto()"
-            />
-
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-muted-foreground">{{
-                saldoPendiente() > 0 ? 'Falta / a crédito' : 'Sobrepago'
-              }}</span>
-              <span class="tabular-nums font-medium" [class.text-amber-600]="saldoPendiente() > 0">
-                {{ (saldoPendiente() > 0 ? saldoPendiente() : -saldoPendiente()) | currency }}
-              </span>
-            </div>
-            @if (cambioTotal() > 0) {
-              <div class="flex items-center justify-between text-sm font-medium text-green-600">
-                <span>Cambio a devolver</span
-                ><span class="tabular-nums">{{ cambioTotal() | currency }}</span>
+              <!-- Cupón -->
+              <div class="rounded-md border p-2">
+                <div class="flex gap-2">
+                  <div class="relative flex-1">
+                    <ng-icon
+                      name="lucideTicket"
+                      class="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <input
+                      z-input
+                      class="h-8 pl-8 text-sm uppercase"
+                      placeholder="Cupón (opcional)"
+                      [ngModel]="codigoCupon()"
+                      (ngModelChange)="codigoCupon.set($event); cuponEstado.set('idle')"
+                      (keyup.enter)="validarCupon()"
+                    />
+                  </div>
+                  @if (cuponEstado() === 'ok') {
+                    <button z-button zType="ghost" zSize="sm" (click)="quitarCupon()">
+                      <ng-icon name="lucideX" class="size-4" />
+                    </button>
+                  } @else {
+                    <button
+                      z-button
+                      zType="outline"
+                      zSize="sm"
+                      [zDisabled]="!codigoCupon().trim() || cuponEstado() === 'validando'"
+                      (click)="validarCupon()"
+                    >
+                      Aplicar
+                    </button>
+                  }
+                </div>
+                @if (cuponEstado() === 'validando') {
+                  <p class="mt-1.5 text-xs text-muted-foreground">Validando cupón…</p>
+                } @else if (cuponEstado() === 'ok') {
+                  <p class="mt-1.5 flex items-center gap-1 text-xs text-green-600">
+                    <ng-icon name="lucideCircleCheck" class="size-3.5" /> {{ cuponMsg() }}
+                  </p>
+                } @else if (cuponEstado() === 'error') {
+                  <p class="mt-1.5 text-xs font-medium text-destructive">{{ cuponMsg() }}</p>
+                }
               </div>
-            }
 
-            @if (requiereCliente()) {
-              <app-pos-cliente-credito
-                [cliente]="cliente()"
-                [clienteBusqueda]="clienteBusqueda()"
-                [clientesEncontrados]="clientesEncontrados()"
-                (busquedaChange)="clienteBusqueda.set($event); buscarClientes()"
-                (elegirCliente)="elegirCliente($event)"
-                (quitarCliente)="quitarCliente()"
-              />
-            }
-
-            @if (hayLineaInvalida()) {
-              <p class="text-[0.8rem] font-medium text-destructive">
-                Hay líneas con cantidad 0. Ajústalas para poder cobrar.
-              </p>
-            }
-            @if (hayLineaSinStock()) {
-              <p class="text-[0.8rem] font-medium text-destructive">
-                Hay líneas sin stock suficiente. Ajusta las cantidades.
-              </p>
-            }
-            @if (faltaTelefonoMonedero()) {
-              <p class="text-[0.8rem] font-medium text-destructive">
-                Captura el teléfono para pagar con monedero.
-              </p>
-            }
-            @if (excesoMonedero()) {
-              <p class="text-[0.8rem] font-medium text-destructive">
-                El pago con monedero supera el saldo disponible.
-              </p>
-            }
-            <button
-              z-button
-              zType="default"
-              class="w-full"
-              [zLoading]="cobrando()"
-              [zDisabled]="!puedeCobrar() || cobrando()"
-              (click)="cobrar()"
-            >
-              <ng-icon name="lucideReceiptText" class="mr-2 size-4" />
-              Cobrar {{ aCobrar() | currency }}
-              @if (hayPagoMonedero()) {
-                <span class="ml-1 text-xs font-normal opacity-80"
-                  >(monedero − {{ monederoUsado() | currency }})</span
-                >
+              @if (requiereCliente()) {
+                <app-pos-cliente-credito
+                  [cliente]="cliente()"
+                  [clienteBusqueda]="clienteBusqueda()"
+                  [clientesEncontrados]="clientesEncontrados()"
+                  (busquedaChange)="clienteBusqueda.set($event); buscarClientes()"
+                  (elegirCliente)="elegirCliente($event)"
+                  (quitarCliente)="quitarCliente()"
+                />
               }
-            </button>
+            </div>
+
+            <!-- Pago -->
+            <div class="space-y-2">
+              <app-pos-pagos
+                [pagos]="pagos()"
+                [monederoDisponible]="monederoDisponible()"
+                (agregarPago)="agregarPago($event)"
+                (setMontoPago)="setMontoPago($event.i, $event.monto)"
+                (setRecibido)="setRecibido($event.i, $event.v)"
+                (quitarPago)="quitarPago($event)"
+                (pagoExacto)="pagoExacto()"
+              />
+
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-muted-foreground">{{
+                  saldoPendiente() > 0 ? 'Falta / a crédito' : 'Sobrepago'
+                }}</span>
+                <span class="tabular-nums font-medium" [class.text-amber-600]="saldoPendiente() > 0">
+                  {{ (saldoPendiente() > 0 ? saldoPendiente() : -saldoPendiente()) | currency }}
+                </span>
+              </div>
+              @if (cambioTotal() > 0) {
+                <div class="flex items-center justify-between text-sm font-medium text-green-600">
+                  <span>Cambio a devolver</span
+                  ><span class="tabular-nums">{{ cambioTotal() | currency }}</span>
+                </div>
+              }
+            </div>
           </div>
-        }
-      </div>
+
+          @if (hayLineaInvalida()) {
+            <p class="text-[0.8rem] font-medium text-destructive">
+              Hay líneas con cantidad 0. Ajústalas para poder cobrar.
+            </p>
+          }
+          @if (hayLineaSinStock()) {
+            <p class="text-[0.8rem] font-medium text-destructive">
+              Hay líneas sin stock suficiente. Ajusta las cantidades.
+            </p>
+          }
+          @if (faltaTelefonoMonedero()) {
+            <p class="text-[0.8rem] font-medium text-destructive">
+              Captura el teléfono para pagar con monedero.
+            </p>
+          }
+          @if (excesoMonedero()) {
+            <p class="text-[0.8rem] font-medium text-destructive">
+              El pago con monedero supera el saldo disponible.
+            </p>
+          }
+          <button
+            z-button
+            zType="default"
+            class="h-12 w-full text-base font-semibold"
+            [zLoading]="cobrando()"
+            [zDisabled]="!puedeCobrar() || cobrando()"
+            (click)="cobrar()"
+          >
+            <ng-icon name="lucideReceiptText" class="mr-2 size-5" />
+            Cobrar {{ aCobrar() | currency }}
+            @if (hayPagoMonedero()) {
+              <span class="ml-1 text-xs font-normal opacity-80"
+                >(monedero − {{ monederoUsado() | currency }})</span
+              >
+            }
+          </button>
+        </div>
+      }
     </div>
   }
 </div>
