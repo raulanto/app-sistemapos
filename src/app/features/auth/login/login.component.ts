@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { form, FormField, email, required } from '@angular/forms/signals';
 import { Router } from '@angular/router';
 
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -14,7 +14,7 @@ import { AuthService } from '@/core/auth/api/auth.service';
 @Component({
   selector: 'app-login',
   imports: [
-    ReactiveFormsModule,
+    FormField,
     NgIcon,
     ZardButtonComponent,
     ZardInputComponent,
@@ -27,7 +27,7 @@ import { AuthService } from '@/core/auth/api/auth.service';
     <div class="bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div class="w-full max-w-sm">
         <div class="flex flex-col gap-6">
-          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+          <form novalidate (submit)="onSubmit($event)">
             <div z-field-group>
               <div class="flex flex-col items-center gap-2 text-center">
                 <a href="#" class="flex flex-col items-center gap-2 font-medium">
@@ -46,32 +46,38 @@ import { AuthService } from '@/core/auth/api/auth.service';
                 <z-alert zType="destructive" zTitle="Error" [zDescription]="errorMessage() || ''" />
               }
 
-              <div z-field>
+              @let emailField = loginForm.email();
+              @let emailInvalid = emailField.invalid() && emailField.touched();
+              <div z-field [attr.data-invalid]="emailInvalid || null">
                 <label z-field-label for="email">Correo electrónico</label>
-                <input z-input id="email" type="email" placeholder="ejemplo@empresa.com" formControlName="email" required />
-                @if (loginForm.controls.email.invalid && loginForm.controls.email.touched) {
-                  <z-field-error>Por favor ingresa un correo válido.</z-field-error>
+                <input z-input id="email" type="email" placeholder="ejemplo@empresa.com"
+                  [formField]="loginForm.email" [attr.aria-invalid]="emailInvalid || null" />
+                @if (emailInvalid) {
+                  <z-field-error [zErrors]="emailField.errors()" />
                 }
               </div>
 
-              <div z-field>
+              @let passwordField = loginForm.password();
+              @let passwordInvalid = passwordField.invalid() && passwordField.touched();
+              <div z-field [attr.data-invalid]="passwordInvalid || null">
                 <div class="flex items-center">
                   <label z-field-label for="password">Contraseña</label>
                 </div>
-                <input z-input id="password" type="password" placeholder="Tu contraseña" formControlName="password" required />
-                @if (loginForm.controls.password.invalid && loginForm.controls.password.touched) {
-                  <z-field-error>La contraseña es requerida.</z-field-error>
+                <input z-input id="password" type="password" placeholder="Tu contraseña"
+                  [formField]="loginForm.password" [attr.aria-invalid]="passwordInvalid || null" />
+                @if (passwordInvalid) {
+                  <z-field-error [zErrors]="passwordField.errors()" />
                 }
               </div>
 
               <div z-field>
-                <button z-button type="submit" class="w-full" [zLoading]="isLoading()" [zDisabled]="loginForm.invalid || isLoading()">
+                <button z-button type="submit" class="w-full" [zLoading]="isLoading()" [zDisabled]="loginForm().invalid() || isLoading()">
                   Iniciar Sesión
                 </button>
               </div>
             </div>
           </form>
-          
+
           <p z-field-description class="px-6 text-center">
             Al continuar, aceptas nuestros <a href="#" class="underline underline-offset-4 hover:text-primary">Términos de Servicio</a> y <a href="#" class="underline underline-offset-4 hover:text-primary">Políticas de Privacidad</a>.
           </p>
@@ -81,30 +87,33 @@ import { AuthService } from '@/core/auth/api/auth.service';
   `
 })
 export class LoginComponent {
-  private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
 
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
 
-  loginForm = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required]
+  private readonly model = signal({ email: '', password: '' });
+
+  protected readonly loginForm = form(this.model, path => {
+    required(path.email, { message: 'Por favor ingresa un correo válido.' });
+    email(path.email, { message: 'Por favor ingresa un correo válido.' });
+    required(path.password, { message: 'La contraseña es requerida.' });
   });
 
-  onSubmit() {
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
+  onSubmit(event: Event) {
+    event.preventDefault();
+
+    const root = this.loginForm();
+    if (!root.valid()) {
+      root.markAsTouched();
       return;
     }
 
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    const credentials = this.loginForm.getRawValue();
-
-    this.authService.login(credentials).subscribe({
+    this.authService.login(this.model()).subscribe({
       next: () => {
         this.router.navigate(['/']);
       },

@@ -1,4 +1,4 @@
-import { siguientesEstadosEntrega } from './models/pedido.model';
+import { mensajePedidoError, siguientesEstadosEntrega } from './models/pedido.model';
 
 describe('siguientesEstadosEntrega', () => {
   it('domicilio: pendiente → en_preparacion → en_reparto → entregado', () => {
@@ -19,5 +19,20 @@ describe('siguientesEstadosEntrega', () => {
 
   it('mostrador / estado nulo no ofrece transiciones', () => {
     expect(siguientesEstadosEntrega(null, 'mostrador')).toEqual([]);
+  });
+});
+
+describe('mensajePedidoError', () => {
+  it('traduce el servicio sin responsable', () => {
+    expect(mensajePedidoError('ServicioSinResponsable', 'fallback')).toContain('responsable');
+  });
+
+  it('traduce el error de dirección de domicilio', () => {
+    expect(mensajePedidoError('Un pedido a domicilio necesita `direccion_texto`.', 'fallback')).toContain('dirección');
+  });
+
+  it('deja pasar mensajes desconocidos y cae al fallback si viene vacío', () => {
+    expect(mensajePedidoError('Cupón vencido', 'fallback')).toBe('Cupón vencido');
+    expect(mensajePedidoError(null, 'fallback')).toBe('fallback');
   });
 });

@@ -9,7 +9,7 @@
     </div>
   </div>
 
-  <form class="space-y-6" (ngSubmit)="guardar()">
+  <form class="space-y-6" novalidate (submit)="guardar($event)">
     <div z-card>
       <z-card-header><z-card-title zTitle="Datos generales" class="text-base" /></z-card-header>
       <z-card-content class="grid grid-cols-1 gap-4 sm:grid-cols-2">

@@ -6,7 +6,7 @@ import { Router, RouterLink } from '@angular/router';
 import { Observable, forkJoin, of } from 'rxjs';
 import { map, switchMap, retry } from 'rxjs/operators';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideSave, lucidePlus, lucideTrash, lucidePackage, lucideLayers, lucideStar, lucideUpload } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideSave, lucidePlus, lucideTrash, lucidePackage, lucideLayers, lucideStar, lucideUpload, lucideChevronDown } from '@ng-icons/lucide';
 
 import { ProductoService } from '../data-access/producto.service';
 import { CategoriaService } from '../data-access/categoria.service';
@@ -55,7 +55,7 @@ function equivalenciaUnidadValidator(control: AbstractControl): ValidationErrors
   ],
   templateUrl: './producto-create.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ lucideArrowLeft, lucideSave, lucidePlus, lucideTrash, lucidePackage, lucideLayers, lucideStar, lucideUpload })]
+  viewProviders: [provideIcons({ lucideArrowLeft, lucideSave, lucidePlus, lucideTrash, lucidePackage, lucideLayers, lucideStar, lucideUpload, lucideChevronDown })]
 })
 export class ProductoCreateComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -178,6 +178,37 @@ export class ProductoCreateComponent implements OnInit {
 
   get unidadesArray() {
     return this.form.get('unidades') as FormArray;
+  }
+
+  // --- Secciones opcionales plegables ---
+  /** Ids de <details> que el usuario ha abierto; las obligatorias nunca se pliegan. */
+  private readonly seccionesAbiertas = signal<Set<string>>(new Set());
+
+  readonly errInventario = computed(() => {
+    this.formEvents();
+    return this.intentoEnvio() && this.existenciasArray.controls.some(c => c.invalid);
+  });
+  readonly errPresentaciones = computed(() => {
+    this.formEvents();
+    return this.intentoEnvio() && this.unidadesArray.controls.some(c => c.invalid);
+  });
+
+  /** Una sección se muestra abierta si el usuario la abrió o si tiene errores tras intentar guardar. */
+  seccionAbierta(id: string): boolean {
+    if (id === 'inventario' && this.errInventario()) return true;
+    if (id === 'presentaciones' && this.errPresentaciones()) return true;
+    return this.seccionesAbiertas().has(id);
+  }
+
+  /** Sincroniza el estado real del <details> (clic en el resumen) con la señal. */
+  syncSeccion(id: string, ev: Event) {
+    const abierto = (ev.target as HTMLDetailsElement).open;
+    this.seccionesAbiertas.update(s => {
+      const n = new Set(s);
+      if (abierto) n.add(id);
+      else n.delete(id);
+      return n;
+    });
   }
 
   onImagenesSeleccionadas(ev: Event) {

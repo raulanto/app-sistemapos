@@ -11,10 +11,15 @@ import {
   lucideLayers,
   lucideLayoutGrid,
   lucideList,
+  lucideMapPin,
   lucideMinus,
   lucidePackage,
   lucidePlus,
+  lucideReceiptText,
   lucideSearch,
+  lucideShoppingCart,
+  lucideStickyNote,
+  lucideTag,
   lucideTrash2,
   lucideX,
 } from '@ng-icons/lucide';
@@ -26,6 +31,7 @@ import {
   CanalPedido,
   CrearPedidoRequest,
   LineaPedidoRequest,
+  mensajePedidoError,
   PedidoResponse,
   TIPOS_PEDIDO,
   TipoPedido,
@@ -39,6 +45,7 @@ import {
 } from '../../inventario/data-access/inventario.models';
 import { VentaService } from '../../ventas/data-access/venta.service';
 import { CotizacionVentaResponse } from '../../ventas/data-access/ventas.models';
+import { UsuarioAdminService } from '../../usuarios/data-access/usuario-admin.service';
 import { AuthService } from '@/core/auth/api/auth.service';
 import { PERMISOS } from '@/core/auth/permissions';
 
@@ -58,6 +65,9 @@ interface LineaCarrito {
   cantidad: number;
   precio_unitario: number;
   descuento_linea: number;
+  /** Producto de tipo `servicio` (envío, instalación…): necesita responsable para confirmar. */
+  esServicio: boolean;
+  asignadoA: string | null;
 }
 
 @Component({
@@ -83,10 +93,15 @@ interface LineaCarrito {
       lucideLayers,
       lucideLayoutGrid,
       lucideList,
+      lucideMapPin,
       lucideMinus,
       lucidePackage,
       lucidePlus,
+      lucideReceiptText,
       lucideSearch,
+      lucideShoppingCart,
+      lucideStickyNote,
+      lucideTag,
       lucideTrash2,
       lucideX,
     }),
@@ -101,6 +116,7 @@ export class PedidoFormComponent {
   private productoService = inject(ProductoService);
   private categoriaService = inject(CategoriaService);
   private ventaService = inject(VentaService);
+  private usuarioService = inject(UsuarioAdminService);
   private sonner = inject(ZardSonnerService);
   private authService = inject(AuthService);
 
@@ -123,7 +139,6 @@ export class PedidoFormComponent {
   readonly codigoCupon = signal('');
   readonly descuentoTotal = signal(0);
   readonly motivoDescuento = signal('');
-  readonly costoEnvio = signal(0);
   readonly direccionTexto = signal('');
   readonly referenciaDireccion = signal('');
   readonly fechaPromesa = signal('');
@@ -141,8 +156,13 @@ export class PedidoFormComponent {
   readonly carrito = signal<LineaCarrito[]>([]);
   readonly cotizacion = signal<CotizacionVentaResponse | null>(null);
   readonly cotizando = signal(false);
+  /** Usuarios activos para asignar como responsable de una línea de servicio. */
+  readonly usuarios = signal<{ id: string; nombre: string }[]>([]);
 
   private idemKey = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`;
+
+  /** Pedido tal como llegó del backend (edición): base para mandar sólo lo que cambió en el PATCH. */
+  private original: PedidoResponse | null = null;
 
   readonly esDomicilio = computed(() => this.tipo() === 'domicilio');
   readonly esEntrega = computed(() => this.tipo() !== 'mostrador');
@@ -165,7 +185,8 @@ export class PedidoFormComponent {
     const base = c ? Number(c.total) || 0 : this.subtotalLocal();
     return this.round(base - Math.min(Math.max(0, this.descuentoTotal()), base));
   });
-  readonly total = computed(() => this.round(this.totalMercancia() + (this.esEntrega() ? Math.max(0, this.costoEnvio()) : 0)));
+  /** El envío ya es una línea de servicio más — no hay costo aparte. */
+  readonly total = computed(() => this.totalMercancia());
 
   readonly hayDescuentoManual = computed(
     () => this.descuentoTotal() > 0.009 || this.carrito().some(l => l.descuento_linea > 0.009),
@@ -173,6 +194,9 @@ export class PedidoFormComponent {
   readonly faltaMotivo = computed(() => this.hayDescuentoManual() && !this.motivoDescuento().trim());
   readonly hayLineaInvalida = computed(() => this.carrito().some(l => !(l.cantidad > 0)));
   readonly faltaDireccion = computed(() => this.esDomicilio() && !this.direccionTexto().trim());
+  /** Líneas de servicio sin responsable: bloquea «Guardar y confirmar» (400 ServicioSinResponsable). */
+  readonly faltaResponsable = computed(() => this.carrito().some(l => l.esServicio && !l.asignadoA));
+  readonly serviciosSinResponsable = computed(() => this.carrito().filter(l => l.esServicio && !l.asignadoA).length);
 
   readonly puedeGuardar = computed(
     () =>
@@ -246,6 +270,11 @@ export class PedidoFormComponent {
   constructor() {
     if (this.esEdicion()) this.cargarPedido();
     this.cargarCatalogo();
+
+    this.usuarioService.listar({ sort: 'nombre:asc' }).subscribe({
+      next: res => this.usuarios.set(res.data.filter(u => u.activo).map(u => ({ id: u.id, nombre: u.nombre }))),
+      error: () => {},
+    });
 
     // Cotización en vivo (mayoreo + promos + hay_stock por línea).
     toObservable(this.fingerprint)
@@ -354,6 +383,7 @@ export class PedidoFormComponent {
 
   /** Rellena el formulario desde un pedido existente (edición). Cada línea trae su producto por id. */
   private hidratar(p: PedidoResponse) {
+    this.original = p;
     this.tipo.set(p.tipo);
     this.canal.set(p.canal);
     this.telefono.set(p.telefono ?? '');
@@ -361,7 +391,6 @@ export class PedidoFormComponent {
     this.codigoCupon.set(p.codigo_cupon ?? '');
     this.descuentoTotal.set(Number(p.descuento_total) || 0);
     this.motivoDescuento.set(p.motivo_descuento ?? '');
-    this.costoEnvio.set(Number(p.costo_envio) || 0);
     this.direccionTexto.set(p.direccion_texto ?? '');
     this.referenciaDireccion.set(p.referencia_direccion ?? '');
     this.fechaPromesa.set(p.fecha_promesa ? p.fecha_promesa.slice(0, 16) : '');
@@ -397,6 +426,8 @@ export class PedidoFormComponent {
               cantidad: Number(l.cantidad) || 0,
               precio_unitario: Number(l.precio_unitario) || 0,
               descuento_linea: Number(l.descuento_linea) || 0,
+              esServicio: l.es_servicio ?? producto.tipo === 'servicio',
+              asignadoA: l.asignado_a ?? null,
             } as LineaCarrito;
           })
           .filter((l): l is LineaCarrito => !!l);
@@ -439,8 +470,21 @@ export class PedidoFormComponent {
     }
     this.carrito.update(list => [
       ...list,
-      { key, producto: p, unidad: u, cantidad: 1, precio_unitario: this.precioDe(p, u), descuento_linea: 0 },
+      {
+        key,
+        producto: p,
+        unidad: u,
+        cantidad: 1,
+        precio_unitario: this.precioDe(p, u),
+        descuento_linea: 0,
+        esServicio: p.tipo === 'servicio',
+        asignadoA: null,
+      },
     ]);
+  }
+
+  setAsignado(key: string, usuarioId: string | null) {
+    this.carrito.update(list => list.map(l => (l.key === key ? { ...l, asignadoA: usuarioId || null } : l)));
   }
 
   setCantidad(key: string, cantidad: number) {
@@ -492,10 +536,14 @@ export class PedidoFormComponent {
 
   // --- Guardar ---
   private construirLineas(): LineaPedidoRequest[] {
-    return this.carrito().map(l => this.aLineaRequest(l));
+    return this.carrito().map(l => ({
+      ...this.aLineaRequest(l),
+      // El responsable sólo cuenta en líneas de servicio; el backend lo ignora en el resto.
+      ...(l.esServicio ? { asignado_a: l.asignadoA || null } : {}),
+    }));
   }
 
-  /** Campos comunes a crear y a editar. `tipo` y `canal` sólo se mandan al crear. */
+  /** Payload de creación: todo el pedido. `tipo` y `canal` se añaden en `guardar()`. */
   private baseRequest() {
     const domicilio = this.esDomicilio();
     return {
@@ -503,13 +551,54 @@ export class PedidoFormComponent {
       telefono: this.telefono().trim() || null,
       descuento_total: this.round(Math.max(0, this.descuentoTotal())),
       motivo_descuento: this.motivoDescuento().trim() || null,
-      costo_envio: this.esEntrega() ? this.round(Math.max(0, this.costoEnvio())) : 0,
       codigo_cupon: this.codigoCupon().trim() || null,
       notas: this.notas().trim() || null,
       fecha_promesa: this.fechaPromesa() ? new Date(this.fechaPromesa()).toISOString() : null,
-      direccion_texto: domicilio ? this.direccionTexto().trim() : null,
+      direccion_texto: domicilio ? this.direccionTexto().trim() || null : null,
       referencia_direccion: domicilio ? this.referenciaDireccion().trim() || null : null,
     };
+  }
+
+  /**
+   * PATCH parcial (edición): `lineas` siempre (es el objetivo de la edición) y de los
+   * escalares sólo los que cambiaron. Se puede cambiar `tipo`/`canal`; al pasar a
+   * `domicilio` el diff manda también `direccion_texto` en el mismo request.
+   */
+  private cambiosPedido(): ActualizarPedidoRequest {
+    const o = this.original;
+    const domicilio = this.esDomicilio();
+    const req: ActualizarPedidoRequest = { lineas: this.construirLineas() };
+
+    if (this.tipo() !== o?.tipo) req.tipo = this.tipo();
+    if (this.canal() !== o?.canal) req.canal = this.canal();
+
+    const telefono = this.telefono().trim() || null;
+    if (telefono !== (o?.telefono ?? null)) req.telefono = telefono;
+
+    const descuento = this.round(Math.max(0, this.descuentoTotal()));
+    if (descuento !== Number(o?.descuento_total ?? 0)) req.descuento_total = descuento;
+
+    const motivo = this.motivoDescuento().trim() || null;
+    if (motivo !== (o?.motivo_descuento ?? null)) req.motivo_descuento = motivo;
+
+    const cupon = this.codigoCupon().trim() || null;
+    if (cupon !== (o?.codigo_cupon ?? null)) req.codigo_cupon = cupon;
+
+    const notas = this.notas().trim() || null;
+    if (notas !== (o?.notas ?? null)) req.notas = notas;
+
+    const dir = domicilio ? this.direccionTexto().trim() || null : null;
+    if (dir !== (o?.direccion_texto ?? null)) req.direccion_texto = dir;
+
+    const refDir = domicilio ? this.referenciaDireccion().trim() || null : null;
+    if (refDir !== (o?.referencia_direccion ?? null)) req.referencia_direccion = refDir;
+
+    const fechaVieja = o?.fecha_promesa ? o.fecha_promesa.slice(0, 16) : '';
+    if (this.fechaPromesa() !== fechaVieja) {
+      req.fecha_promesa = this.fechaPromesa() ? new Date(this.fechaPromesa()).toISOString() : null;
+    }
+
+    return req;
   }
 
   guardar(confirmar = false) {
@@ -519,11 +608,14 @@ export class PedidoFormComponent {
       else if (this.hayLineaInvalida()) this.sonner.error('Hay líneas con cantidad 0.');
       return;
     }
+    if (confirmar && this.faltaResponsable()) {
+      this.sonner.error('Asigna un responsable a cada línea de servicio antes de confirmar.');
+      return;
+    }
     this.guardando.set(true);
 
     if (this.esEdicion()) {
-      const req: ActualizarPedidoRequest = this.baseRequest();
-      this.pedidoService.actualizar(this.pedidoId()!, req).subscribe({
+      this.pedidoService.actualizar(this.pedidoId()!, this.cambiosPedido()).subscribe({
         next: p => this.alGuardar(p, 'Pedido actualizado'),
         error: err => this.errorGuardar(err),
       });
@@ -549,7 +641,12 @@ export class PedidoFormComponent {
     if (code === 'DireccionEnvioRequerida') this.sonner.error('La dirección es obligatoria para envío a domicilio.');
     else if (code === 'MotivoDescuentoRequerido') this.sonner.error('Captura el motivo del descuento manual.');
     else if (code === 'PedidoSinLineas') this.sonner.error('El pedido no tiene líneas.');
-    else if (code === 'PedidoNoEditable') this.sonner.error('El pedido ya no está en borrador.');
-    else this.sonner.error(e?.error?.error?.message ?? 'No se pudo guardar el pedido');
+    else if (code === 'PedidoNoEditable') this.sonner.error('El pedido ya no está en borrador. Usa «Reabrir» para editarlo.');
+    else if (code === 'ServicioSinResponsable')
+      this.sonner.error('Asigna un responsable a cada línea de servicio antes de confirmar.');
+    else if (code === 'ResponsableInvalido')
+      this.sonner.error('El responsable elegido no es un usuario activo, o esa línea no es un servicio.');
+    else if (code === 'TransicionPedidoInvalida') this.sonner.error('Ese cambio de estado no está permitido ahora.');
+    else this.sonner.error(mensajePedidoError(e?.error?.error?.message, 'No se pudo guardar el pedido'));
   }
 }

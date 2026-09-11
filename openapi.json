@@ -6020,6 +6020,49 @@
         }
       }
     },
+    "/api/v1/pedidos/{pedido_id}/asignaciones": {
+      "patch": {
+        "tags": ["pedidos"],
+        "summary": "Asignar Servicios",
+        "description": "Fija/reasigna el responsable de líneas de servicio sin re-cotizar. Vale en\nborrador y confirmado.",
+        "operationId": "asignar_servicios_api_v1_pedidos__pedido_id__asignaciones_patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Pedido Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AsignarServiciosRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_PedidoResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/pedidos/{pedido_id}/facturar": {
       "post": {
         "tags": ["pedidos"],
@@ -7470,6 +7513,10 @@
             ],
             "title": "Lineas"
           },
+          "tipo": { "anyOf": [{ "$ref": "#/components/schemas/TipoPedido" }, { "type": "null" }] },
+          "canal": {
+            "anyOf": [{ "$ref": "#/components/schemas/CanalPedido" }, { "type": "null" }]
+          },
           "cliente_id": {
             "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
             "title": "Cliente Id"
@@ -7489,14 +7536,6 @@
           "motivo_descuento": {
             "anyOf": [{ "type": "string", "maxLength": 255 }, { "type": "null" }],
             "title": "Motivo Descuento"
-          },
-          "costo_envio": {
-            "anyOf": [
-              { "type": "number", "minimum": 0.0 },
-              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
-              { "type": "null" }
-            ],
-            "title": "Costo Envio"
           },
           "codigo_cupon": {
             "anyOf": [{ "type": "string", "maxLength": 40 }, { "type": "null" }],
@@ -9106,6 +9145,16 @@
         "required": ["producto_id", "sucursal_id", "tipo", "referencia_tipo"],
         "title": "AplicarMovimientoRequest"
       },
+      "AsignacionServicioItem": {
+        "properties": {
+          "detalle_id": { "type": "string", "format": "uuid", "title": "Detalle Id" },
+          "asignado_a": { "type": "string", "format": "uuid", "title": "Asignado A" }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["detalle_id", "asignado_a"],
+        "title": "AsignacionServicioItem"
+      },
       "AsignarPermisosRequest": {
         "properties": {
           "permiso_ids": {
@@ -9118,6 +9167,20 @@
         "type": "object",
         "required": ["permiso_ids"],
         "title": "AsignarPermisosRequest"
+      },
+      "AsignarServiciosRequest": {
+        "properties": {
+          "asignaciones": {
+            "items": { "$ref": "#/components/schemas/AsignacionServicioItem" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Asignaciones"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["asignaciones"],
+        "title": "AsignarServiciosRequest"
       },
       "Body_login_oauth2_api_v1_usuarios_token_post": {
         "properties": {
@@ -9952,14 +10015,6 @@
             "anyOf": [{ "type": "string", "maxLength": 255 }, { "type": "null" }],
             "title": "Motivo Descuento"
           },
-          "costo_envio": {
-            "anyOf": [
-              { "type": "number", "minimum": 0.0 },
-              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
-            ],
-            "title": "Costo Envio",
-            "default": "0"
-          },
           "codigo_cupon": {
             "anyOf": [{ "type": "string", "maxLength": 40 }, { "type": "null" }],
             "title": "Codigo Cupon"
@@ -10590,6 +10645,11 @@
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Subtotal"
+          },
+          "es_servicio": { "type": "boolean", "title": "Es Servicio" },
+          "asignado_a": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Asignado A"
           }
         },
         "type": "object",
@@ -10601,7 +10661,8 @@
           "descuento_linea",
           "impuesto_tasa",
           "promo_descuento",
-          "subtotal"
+          "subtotal",
+          "es_servicio"
         ],
         "title": "DetallePedidoResponse"
       },
@@ -11030,6 +11091,10 @@
           "producto_unidad_id": {
             "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
             "title": "Producto Unidad Id"
+          },
+          "asignado_a": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Asignado A"
           }
         },
         "additionalProperties": false,
@@ -11687,11 +11752,6 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Motivo Descuento"
           },
-          "costo_envio": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Costo Envio"
-          },
           "codigo_cupon": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Codigo Cupon"
@@ -11779,7 +11839,6 @@
           "canal",
           "estado",
           "descuento_total",
-          "costo_envio",
           "created_at",
           "subtotal",
           "total",

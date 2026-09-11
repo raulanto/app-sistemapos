@@ -1,6 +1,38 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, inject } from '@angular/core';
 
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideSearch } from '@ng-icons/lucide';
+
+import {
+  BoxesIcon,
+  ChartColumnIcon,
+  CirclePlusIcon,
+  ClipboardListIcon,
+  ClockIcon,
+  FolderKanbanIcon,
+  HandCoinsIcon,
+  HistoryIcon,
+  KanbanIcon,
+  KeyRoundIcon,
+  LandmarkIcon,
+  LayersIcon,
+  LayoutDashboardIcon,
+  MonitorCheckIcon,
+  ScanTextIcon,
+  SearchIcon,
+  SettingsIcon,
+  ShieldCheckIcon,
+  ShoppingCartIcon,
+  TagIcon,
+  UserCogIcon,
+  UserPenIcon,
+  UserRoundCheckIcon,
+  UserRoundIcon,
+} from 'ng-animated-icons';
+
+import { ZardKbdImports } from '../../../shared/components/kbd/kbd.imports';
 import { ZardSidebarImports } from '../../../shared/components/sidebar/sidebar.imports';
+import { CommandPaletteService } from '../command-palette/command-palette.service';
 import { NavMainComponent, type Sidebar07NavItem } from './nav-main.component';
 import { NavSecondaryComponent } from './nav-secondary.component';
 import { NavUserComponent } from './nav-user.component';
@@ -11,15 +43,28 @@ import { TeamSwitcherComponent } from './team-switcher.component';
   standalone: true,
   imports: [
     ...ZardSidebarImports,
+    ...ZardKbdImports,
     TeamSwitcherComponent,
     NavMainComponent,
     NavSecondaryComponent,
     NavUserComponent,
+    NgIcon,
   ],
+  viewProviders: [provideIcons({ lucideSearch })],
   template: `
     <z-sidebar zCollapsible="icon">
       <div z-sidebar-header>
         <lib-sidebar-07-team-switcher />
+
+        <ul z-sidebar-menu>
+          <li z-sidebar-menu-item>
+            <button z-sidebar-menu-button type="button" (click)="commandPalette.open()" zTooltip="Buscar">
+              <ng-icon name="lucideSearch" />
+              <span>Buscar...</span>
+              <z-kbd class="ml-auto">Ctrl K</z-kbd>
+            </button>
+          </li>
+        </ul>
       </div>
 
       <z-sidebar-content>
@@ -38,17 +83,26 @@ import { TeamSwitcherComponent } from './team-switcher.component';
   host: { class: 'contents' },
 })
 export class AppSidebarComponent {
+  protected readonly commandPalette = inject(CommandPaletteService);
+
+  @HostListener('document:keydown', ['$event'])
+  protected onKeydown(event: KeyboardEvent) {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      this.commandPalette.open();
+    }
+  }
 
   protected readonly navSecondary: readonly Sidebar07NavItem[] = [
     {
       title: 'Buscar',
       url: '/buscar',
-      icon: 'lucideSearch',
+      icon: SearchIcon,
     },
     {
       title: 'Configuración',
       url: '/config',
-      icon: 'lucideSettings',
+      icon: SettingsIcon,
     },
   ];
 
@@ -56,72 +110,72 @@ export class AppSidebarComponent {
     {
       title: 'Dashboard',
       url: '/',
-      icon: 'lucideLayoutDashboard',
+      icon: LayoutDashboardIcon,
       isActive: true,
     },
     {
       title: 'Ventas',
       url: '/ventas',
-      icon: 'lucideShoppingCart',
+      icon: ShoppingCartIcon,
       items: [
-        { title: 'Punto de venta', url: '/ventas' },
-        { title: 'Historial', url: '/ventas/historial' },
-        { title: 'Turnos de caja', url: '/ventas/turnos' },
-        { title: 'Terminales', url: '/cajas' },
-        { title: 'Promociones', url: '/promociones' },
+        { title: 'Punto de venta', url: '/ventas', icon: ScanTextIcon },
+        { title: 'Historial', url: '/ventas/historial', icon: HistoryIcon },
+        { title: 'Turnos de caja', url: '/ventas/turnos', icon: ClockIcon },
+        { title: 'Terminales', url: '/cajas', icon: MonitorCheckIcon },
+        { title: 'Promociones', url: '/promociones', icon: TagIcon },
       ],
     },
     {
       title: 'Pedidos',
       url: '/pedidos',
-      icon: 'lucideClipboardList',
+      icon: ClipboardListIcon,
       items: [
-        { title: 'Tablero', url: '/pedidos' },
-        { title: 'Nuevo pedido', url: '/pedidos/nuevo' },
+        { title: 'Tablero', url: '/pedidos', icon: KanbanIcon },
+        { title: 'Nuevo pedido', url: '/pedidos/nuevo', icon: CirclePlusIcon },
       ],
     },
     {
       title: 'Inventario',
       url: '/inventario',
-      icon: 'lucidePackage',
+      icon: BoxesIcon,
       items: [
-        { title: 'Productos', url: '/inventario/productos' },
-        { title: 'Nuevo Producto', url: '/inventario/productos/nuevo' },
-        { title: 'Categorías', url: '/inventario/categorias' },
+        { title: 'Productos', url: '/inventario/productos', icon: LayersIcon },
+        { title: 'Nuevo Producto', url: '/inventario/productos/nuevo', icon: CirclePlusIcon },
+        { title: 'Categorías', url: '/inventario/categorias', icon: FolderKanbanIcon },
       ],
     },
     {
       title: 'Sucursales',
       url: '/sucursales',
-      icon: 'lucideStore',
+      icon: LandmarkIcon,
     },
     {
       title: 'Clientes',
       url: '/clientes',
-      icon: 'lucideUsers',
+      icon: UserRoundIcon,
       items: [
-        { title: 'Clientes', url: '/clientes' },
-        { title: 'Monedero', url: '/clientes/monedero' },
+        { title: 'Clientes', url: '/clientes', icon: UserRoundCheckIcon },
+        { title: 'Monedero', url: '/clientes/monedero', icon: HandCoinsIcon },
       ],
     },
     {
       title: 'Usuarios',
       url: '/usuarios',
-      icon: 'lucideUsers',
+      icon: UserCogIcon,
       items: [
-        { title: 'Usuarios', url: '/usuarios' },
-        { title: 'Roles y permisos', url: '/usuarios/roles' },
+        { title: 'Usuarios', url: '/usuarios', icon: UserPenIcon },
+        { title: 'Roles y permisos', url: '/usuarios/roles', icon: KeyRoundIcon },
       ],
     },
     {
       title: 'Reportes',
       url: '/reportes',
-      icon: 'lucideBarChart3',
+      icon: ChartColumnIcon,
     },
     {
       title: 'Auditoría',
       url: '/auditoria',
-      icon: 'lucideShieldCheck',
+      icon: ShieldCheckIcon,
     },
   ];
 }

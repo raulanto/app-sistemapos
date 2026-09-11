@@ -4,7 +4,7 @@
       <ng-icon name="lucideArrowLeft" class="size-5" />
     </a>
     <div>
-      <h1 class="text-2xl font-bold tracking-tight">Nuevo Producto</h1>
+      <h1 class="text-4xl font-bold tracking-tight">Nuevo Producto</h1>
       <p class="text-muted-foreground">Llena los datos para registrar un nuevo producto en el inventario.</p>
     </div>
   </div>
@@ -198,13 +198,16 @@
           </div>
         </fieldset>
 
-        <z-separator></z-separator>
+        <details class="group rounded-lg border" [open]="seccionAbierta('avanzada')" (toggle)="syncSeccion('avanzada', $event)">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-4 p-4 [&::-webkit-details-marker]:hidden">
+            <div>
+              <span class="text-base font-semibold">Configuración avanzada</span>
+              <p class="text-sm text-muted-foreground">Opcional: mayoreo, IVA incluido, control por lote y envases abiertos.</p>
+            </div>
+            <ng-icon name="lucideChevronDown" class="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+          </summary>
 
-        <fieldset z-field-set>
-          <legend z-field-legend>Configuración avanzada</legend>
-          <p z-field-description>Opcional: mayoreo, IVA incluido, control por lote y envases abiertos.</p>
-
-          <div z-field-group class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+          <div z-field-group class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 border-t p-4">
             <div z-field zOrientation="horizontal" class="md:col-span-2">
               <z-switch formControlName="es_sobre_pedido" zId="es_sobre_pedido"></z-switch>
               <label z-field-label for="es_sobre_pedido">Sobre pedido (se vende sin existencia)</label>
@@ -250,18 +253,21 @@
             </div>
             <p z-field-description class="md:col-span-2">Cashback al vender con teléfono: el % (sobre el subtotal) tiene prioridad; el monto es fijo por unidad.</p>
           </div>
-        </fieldset>
+        </details>
 
         @if (!esServicio()) {
-        <z-separator></z-separator>
-
-        <!-- Inventario Inicial -->
-        <fieldset z-field-set>
-          <div class="flex items-start justify-between gap-4">
+        <details class="group rounded-lg border" [open]="seccionAbierta('inventario')" (toggle)="syncSeccion('inventario', $event)">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-4 p-4 [&::-webkit-details-marker]:hidden">
             <div>
-              <legend z-field-legend>Inventario inicial</legend>
-              <p z-field-description>Opcional. Registra stock, umbrales y costo de compra por sucursal en un solo paso.</p>
+              <span class="text-base font-semibold">Inventario inicial</span>
+              @if (existenciasArray.length) { <span class="text-muted-foreground"> · {{ existenciasArray.length }}</span> }
+              <p class="text-sm text-muted-foreground">Opcional. Registra stock, umbrales y costo de compra por sucursal en un solo paso.</p>
             </div>
+            <ng-icon name="lucideChevronDown" class="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+          </summary>
+
+          <div class="border-t p-4">
+          <div class="mb-4 flex justify-end">
             <button type="button" z-button zType="outline" zSize="sm" (click)="agregarExistencia()">
               <ng-icon name="lucidePlus" class="mr-2" />
               Agregar sucursal
@@ -328,21 +334,25 @@
               </z-empty>
             }
           </div>
-        </fieldset>
+          </div>
+        </details>
         } @else {
         <z-alert zType="default" zTitle="Producto de tipo servicio" zDescription="No maneja inventario: no aplican stock inicial ni presentaciones de venta."></z-alert>
         }
 
         @if (form.get('tipo')?.value !== 'kit' && !esServicio()) {
-          <z-separator></z-separator>
-
-          <!-- Presentaciones de Venta (Unidades) -->
-          <fieldset z-field-set>
-            <div class="flex items-start justify-between gap-4">
+          <details class="group rounded-lg border" [open]="seccionAbierta('presentaciones')" (toggle)="syncSeccion('presentaciones', $event)">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 p-4 [&::-webkit-details-marker]:hidden">
               <div>
-                <legend z-field-legend>Presentaciones de venta</legend>
-                <p z-field-description>Opcional. Formas alternativas de vender el producto. La unidad base se incluye automáticamente.</p>
+                <span class="text-base font-semibold">Presentaciones de venta</span>
+                @if (unidadesArray.length) { <span class="text-muted-foreground"> · {{ unidadesArray.length }}</span> }
+                <p class="text-sm text-muted-foreground">Opcional. Formas alternativas de vender el producto. La unidad base se incluye automáticamente.</p>
               </div>
+              <ng-icon name="lucideChevronDown" class="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+            </summary>
+
+            <div class="border-t p-4">
+            <div class="mb-4 flex justify-end">
               <button type="button" z-button zType="outline" zSize="sm" (click)="agregarUnidad()">
                 <ng-icon name="lucidePlus" class="mr-2" />
                 Agregar presentación
@@ -430,7 +440,8 @@
                 </z-empty>
               }
             </div>
-          </fieldset>
+            </div>
+          </details>
         }
 
         @if (form.get('tipo')?.value === 'kit') {

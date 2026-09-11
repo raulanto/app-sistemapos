@@ -60,7 +60,9 @@ export class SucursalCreateComponent {
     this.model.update(m => ({ ...m, latitud: c.lat, longitud: c.lon }));
   }
 
-  guardar() {
+  guardar(event: Event) {
+    event.preventDefault();
+
     const root = this.sucForm();
     if (!root.valid()) {
       root.markAsTouched();

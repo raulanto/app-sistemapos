@@ -183,6 +183,9 @@ export class ProductoDetailComponent implements OnInit {
     return this.unidadesMedidaCatalogo().find(u => u.id === id) ?? null;
   });
 
+  /** Gráfica visible en la pestaña Análisis. */
+  readonly grafica = signal<'balance' | 'costo' | 'stock' | 'tipos'>('balance');
+
   chartData = computed(() => {
     const movs = this.movimientos();
     // Group by date (DD/MM/YYYY)
