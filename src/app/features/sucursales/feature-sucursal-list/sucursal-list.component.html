@@ -21,40 +21,34 @@
 
   <!-- Resumen -->
   <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-    <div z-card class="gap-0 py-4">
-      <z-card-content class="flex items-start justify-between gap-3">
-        <div class="space-y-1">
-          <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total de sucursales</p>
-          <p class="text-2xl font-semibold tabular-nums">{{ totalSucursales() }}</p>
-        </div>
-        <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-          <ng-icon name="lucideStore" class="size-4" />
-        </span>
-      </z-card-content>
+    <div class="flex flex-col gap-2 rounded-xl border bg-card p-1.5">
+      <div class="flex items-center gap-2 px-2.5 pt-1.5 text-sm font-medium">
+        <ng-icon name="lucideStore" class="size-4 text-muted-foreground" /> Sucursales
+      </div>
+      <div class="rounded-lg bg-card-foreground p-4">
+        <p class="text-4xl font-extrabold text-accent">{{ totalSucursales() }}</p>
+        <p class="mt-1.5 text-sm text-neutral-400">Registradas en el sistema</p>
+      </div>
     </div>
 
-    <div z-card class="gap-0 py-4">
-      <z-card-content class="flex items-start justify-between gap-3">
-        <div class="space-y-1">
-          <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Activas</p>
-          <p class="text-2xl font-semibold tabular-nums text-green-600 dark:text-green-400">{{ totalActivas() }}</p>
-        </div>
-        <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-          <ng-icon name="lucideCircleCheck" class="size-4" />
-        </span>
-      </z-card-content>
+    <div class="flex flex-col gap-2 rounded-xl border bg-card p-1.5">
+      <div class="flex items-center gap-2 px-2.5 pt-1.5 text-sm font-medium">
+        <ng-icon name="lucideCircleCheck" class="size-4 text-muted-foreground" /> Activas
+      </div>
+      <div class="rounded-lg bg-card-foreground p-4">
+        <p class="text-4xl font-extrabold text-accent">{{ totalActivas() }}</p>
+        <p class="mt-1.5 text-sm text-neutral-400">Operando ahora</p>
+      </div>
     </div>
 
-    <div z-card class="gap-0 py-4">
-      <z-card-content class="flex items-start justify-between gap-3">
-        <div class="space-y-1">
-          <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Inactivas</p>
-          <p class="text-2xl font-semibold tabular-nums" [class.text-destructive]="totalInactivas() > 0">{{ totalInactivas() }}</p>
-        </div>
-        <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-          <ng-icon name="lucideBan" class="size-4" />
-        </span>
-      </z-card-content>
+    <div class="flex flex-col gap-2 rounded-xl border bg-card p-1.5">
+      <div class="flex items-center gap-2 px-2.5 pt-1.5 text-sm font-medium">
+        <ng-icon name="lucideBan" class="size-4 text-muted-foreground" /> Inactivas
+      </div>
+      <div class="rounded-lg bg-card-foreground p-4">
+        <p class="text-4xl font-extrabold text-accent" [class.text-red-400]="totalInactivas() > 0">{{ totalInactivas() }}</p>
+        <p class="mt-1.5 text-sm text-neutral-400">Pausadas</p>
+      </div>
     </div>
   </div>
 
