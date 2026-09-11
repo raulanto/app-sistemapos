@@ -1,4 +1,7 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, inject } from '@angular/core';
+
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideSearch } from '@ng-icons/lucide';
 
 import {
   BoxesIcon,
@@ -27,7 +30,9 @@ import {
   UserRoundIcon,
 } from 'ng-animated-icons';
 
+import { ZardKbdImports } from '../../../shared/components/kbd/kbd.imports';
 import { ZardSidebarImports } from '../../../shared/components/sidebar/sidebar.imports';
+import { CommandPaletteService } from '../command-palette/command-palette.service';
 import { NavMainComponent, type Sidebar07NavItem } from './nav-main.component';
 import { NavSecondaryComponent } from './nav-secondary.component';
 import { NavUserComponent } from './nav-user.component';
@@ -38,15 +43,28 @@ import { TeamSwitcherComponent } from './team-switcher.component';
   standalone: true,
   imports: [
     ...ZardSidebarImports,
+    ...ZardKbdImports,
     TeamSwitcherComponent,
     NavMainComponent,
     NavSecondaryComponent,
     NavUserComponent,
+    NgIcon,
   ],
+  viewProviders: [provideIcons({ lucideSearch })],
   template: `
     <z-sidebar zCollapsible="icon">
       <div z-sidebar-header>
         <lib-sidebar-07-team-switcher />
+
+        <ul z-sidebar-menu>
+          <li z-sidebar-menu-item>
+            <button z-sidebar-menu-button type="button" (click)="commandPalette.open()" zTooltip="Buscar">
+              <ng-icon name="lucideSearch" />
+              <span>Buscar...</span>
+              <z-kbd class="ml-auto">Ctrl K</z-kbd>
+            </button>
+          </li>
+        </ul>
       </div>
 
       <z-sidebar-content>
@@ -65,6 +83,15 @@ import { TeamSwitcherComponent } from './team-switcher.component';
   host: { class: 'contents' },
 })
 export class AppSidebarComponent {
+  protected readonly commandPalette = inject(CommandPaletteService);
+
+  @HostListener('document:keydown', ['$event'])
+  protected onKeydown(event: KeyboardEvent) {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      this.commandPalette.open();
+    }
+  }
 
   protected readonly navSecondary: readonly Sidebar07NavItem[] = [
     {
