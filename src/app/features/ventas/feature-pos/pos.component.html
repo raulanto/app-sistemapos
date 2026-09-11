@@ -1,536 +1,262 @@
-<div class="flex h-[calc(100vh-4rem)] flex-col p-0 m-0">
-  <!-- Barra superior -->
-  <div class="flex flex-wrap items-center justify-between gap-3 border-b bg-card px-4 py-3">
-    <div class="flex items-center gap-2">
-      <ng-icon name="lucideShoppingCart" class="size-5 text-primary" />
-      <h1 class="text-lg font-bold tracking-tight">Punto de venta</h1>
-      @if (turno(); as t) {
-        <z-badge zType="secondary" class="ml-1">
-          {{ t.caja?.nombre ? t.caja?.nombre + ' · ' : 'Caja abierta · ' }}{{ t.abierto_en | date:'HH:mm' }}
-        </z-badge>
-      }
-    </div>
-    <div class="flex items-center gap-2">
-      <a z-button zType="ghost" zSize="sm" routerLink="/ventas/historial">
-        <ng-icon name="lucideHistory" class="mr-1.5 size-4" /> Historial
-      </a>
-      @if (turno() && canOperarCaja()) {
-        <button z-button zType="ghost" zSize="sm" (click)="abrirMovimientos()">
-          <ng-icon name="lucideArrowLeftRight" class="mr-1.5 size-4" /> Movimientos
-        </button>
-        <button z-button zType="outline" zSize="sm" (click)="cerrarCaja()">
-          <ng-icon name="lucideLockKeyhole" class="mr-1.5 size-4" /> Cerrar caja
-        </button>
-      }
-    </div>
-  </div>
+<div #posRoot class="flex h-[calc(100vh-4rem)] flex-col bg-background p-0 m-0 [&:fullscreen]:h-screen">
+  <app-pos-header
+    [turno]="turno()"
+    [canOperarCaja]="canOperarCaja()"
+    [isFullscreen]="isFullscreen()"
+    (abrirMovimientos)="abrirMovimientos()"
+    (cerrarCaja)="cerrarCaja()"
+    (toggleFullscreen)="toggleFullscreen()"
+  />
 
   @if (cargandoTurno()) {
     <div class="grid flex-1 place-items-center p-8">
       <z-skeleton class="h-40 w-96" />
     </div>
   } @else if (!turno()) {
-    <!-- Sin turno -->
-    <div class="grid flex-1 place-items-center p-8">
-      <div class="max-w-sm text-center">
-        <div class="mx-auto grid size-14 place-items-center rounded-2xl bg-primary/10 text-primary">
-          <ng-icon name="lucideLockKeyhole" class="size-6" />
-        </div>
-        <h2 class="mt-4 text-xl font-semibold">No hay caja abierta</h2>
-        <p class="mt-1 text-sm text-muted-foreground">Abre un turno declarando el efectivo inicial para empezar a vender.</p>
-        @if (canOperarCaja()) {
-          <button z-button zType="default" class="mt-4" (click)="abrirCaja()">
-            <ng-icon name="lucideBanknote" class="mr-2 size-4" /> Abrir caja
-          </button>
-        }
-      </div>
-    </div>
+    <app-pos-turno-vacio [canOperarCaja]="canOperarCaja()" (abrirCaja)="abrirCaja()" />
   } @else {
     <!-- POS -->
     <div class="grid flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[1fr_400px]">
-      <!-- Catálogo -->
-      <div class="flex flex-col overflow-hidden border-r">
-        <div class="flex flex-col gap-2 border-b p-3 sm:flex-row">
-          <div class="relative flex-1">
-            <ng-icon name="lucideSearch" class="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <input z-input class="pl-8" placeholder="Buscar producto…" [ngModel]="q()" (ngModelChange)="q.set($event)" />
-          </div>
-          <div class="relative sm:w-56">
-            <ng-icon name="lucideScanBarcode" class="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <input z-input class="pl-8" placeholder="Código de barras" [ngModel]="codigo()" (ngModelChange)="codigo.set($event)" (keyup.enter)="escanear()" />
-          </div>
-          <div class="flex shrink-0 items-center gap-0.5 self-start rounded-md border p-0.5 sm:self-auto">
-            <button type="button" class="grid size-8 place-items-center rounded transition"
-                    [class.bg-accent]="vista() === 'grid'"
-                    [class.text-accent-foreground]="vista() === 'grid'"
-                    [class.text-muted-foreground]="vista() !== 'grid'"
-                    (click)="setVista('grid')" title="Ver en cuadrícula" aria-label="Ver en cuadrícula">
-              <ng-icon name="lucideLayoutGrid" class="size-4" />
-            </button>
-            <button type="button" class="grid size-8 place-items-center rounded transition"
-                    [class.bg-accent]="vista() === 'lista'"
-                    [class.text-accent-foreground]="vista() === 'lista'"
-                    [class.text-muted-foreground]="vista() !== 'lista'"
-                    (click)="setVista('lista')" title="Ver en lista" aria-label="Ver en lista">
-              <ng-icon name="lucideList" class="size-4" />
-            </button>
-          </div>
-        </div>
-
-        <!-- Bloques: filtro por categoría -->
-        @if (categoriasConProductos().length) {
-          <div class="flex gap-1.5 overflow-x-auto border-b px-3 py-2">
-            <button z-button [zType]="categoriaSel() === null ? 'default' : 'outline'" zSize="sm" (click)="seleccionarCategoria(null)">Todas</button>
-            @for (c of categoriasConProductos(); track c.id) {
-              <button z-button [zType]="categoriaSel() === c.id ? 'default' : 'outline'" zSize="sm" class="shrink-0" (click)="seleccionarCategoria(c.id)">
-                {{ c.nombre }}
-              </button>
-            }
-          </div>
-        }
-
-        <div class="flex-1 overflow-y-auto p-3">
-          @if (cargandoCatalogo()) {
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-              @for (i of [1,2,3,4,5,6]; track i) { <z-skeleton class="h-32" /> }
-            </div>
-          } @else if (productosFiltrados().length === 0) {
-            <z-empty zIcon="lucideSearch" zTitle="Sin resultados" zDescription="Ningún producto coincide con la búsqueda o el filtro." class="py-12" />
-          } @else {
-            @for (bloque of bloques(); track bloque.id ?? 'sin') {
-              <section class="mb-5">
-                <div class="sticky top-0 z-10 -mx-3 mb-2 flex items-center gap-2 bg-background/95 px-3 py-1.5 backdrop-blur">
-                  <ng-icon name="lucideLayers" class="size-4 text-muted-foreground" />
-                  <h4 class="text-sm font-semibold">{{ bloque.nombre }}</h4>
-                  <z-badge zType="secondary" class="tabular-nums text-[10px]">{{ bloque.count }}</z-badge>
-                </div>
-
-                @if (vista() === 'grid') {
-                  <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-                    @for (it of bloque.items; track it.key) {
-                      <button type="button"
-                              class="group flex flex-col overflow-hidden rounded-lg border bg-card text-left transition hover:border-primary hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                              (click)="agregar(it.producto, it.unidad)">
-                        <div class="relative aspect-video w-full bg-muted">
-                          @if (imgSrc(it); as src) {
-                            <img [src]="src" [alt]="it.producto.nombre" class="size-full object-cover" (error)="marcarImgRota(src)" />
-                          } @else {
-                            <div class="grid size-full place-items-center text-muted-foreground">
-                              <ng-icon [name]="it.producto.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-6" />
-                            </div>
-                          }
-                          <span class="absolute left-1.5 top-1.5 rounded bg-background/90 px-1.5 py-0.5 text-[0.7rem] font-medium shadow-sm">
-                            {{ it.unidad ? it.unidad.nombre : (it.producto.unidad_medida | titlecase) }}
-                          </span>
-                        </div>
-                        <div class="flex flex-1 flex-col p-2.5">
-                          <span class="line-clamp-2 text-sm font-medium">{{ it.producto.nombre }}</span>
-                          <span class="mt-0.5 text-xs text-muted-foreground">{{ it.producto.sku }}</span>
-                          <span class="mt-1 font-semibold tabular-nums text-green-600">
-                            {{ (it.unidad ? it.unidad.precio_venta : it.producto.precio_venta) | currency }}
-                          </span>
-                          @if (stockDe(it); as s) {
-                            <span class="text-[0.7rem] text-muted-foreground">{{ s }} disp.</span>
-                          } @else if (stockDe(it) === 0) {
-                            <span class="text-[0.7rem] font-medium text-destructive">Sin stock</span>
-                          }
-                          @if (!it.unidad && it.producto.precio_mayoreo && it.producto.cantidad_minima_mayoreo) {
-                            <span class="text-[0.7rem] text-primary">mayoreo {{ it.producto.precio_mayoreo | currency }} · ≥ {{ it.producto.cantidad_minima_mayoreo }}</span>
-                          }
-                          <span class="mt-2 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground group-hover:text-primary">
-                            <ng-icon name="lucidePlus" class="size-3.5" /> Agregar
-                          </span>
-                        </div>
-                      </button>
-                    }
-                  </div>
-                } @else {
-                  <div class="divide-y overflow-hidden rounded-lg border">
-                    @for (it of bloque.items; track it.key) {
-                      <button type="button"
-                              class="group flex w-full items-center gap-3 p-2 text-left transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                              (click)="agregar(it.producto, it.unidad)">
-                        <div class="relative size-11 shrink-0 overflow-hidden rounded-md bg-muted">
-                          @if (imgSrc(it); as src) {
-                            <img [src]="src" [alt]="it.producto.nombre" class="size-full object-cover" (error)="marcarImgRota(src)" />
-                          } @else {
-                            <div class="grid size-full place-items-center text-muted-foreground">
-                              <ng-icon [name]="it.producto.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-4" />
-                            </div>
-                          }
-                        </div>
-                        <div class="min-w-0 flex-1">
-                          <p class="truncate text-sm font-medium">{{ it.producto.nombre }}</p>
-                          <p class="truncate text-xs text-muted-foreground">
-                            {{ it.unidad ? it.unidad.nombre : (it.producto.unidad_medida | titlecase) }} · {{ it.producto.sku }}
-                            @if (stockDe(it); as s) { · {{ s }} disp. } @else if (stockDe(it) === 0) { · <span class="text-destructive">sin stock</span> }
-                            @if (!it.unidad && it.producto.precio_mayoreo && it.producto.cantidad_minima_mayoreo) {
-                              · <span class="text-primary">mayoreo {{ it.producto.precio_mayoreo | currency }} ≥ {{ it.producto.cantidad_minima_mayoreo }}</span>
-                            }
-                          </p>
-                        </div>
-                        <span class="shrink-0 text-sm font-semibold tabular-nums text-green-600">
-                          {{ (it.unidad ? it.unidad.precio_venta : it.producto.precio_venta) | currency }}
-                        </span>
-                        <ng-icon name="lucidePlus" class="size-4 shrink-0 text-muted-foreground group-hover:text-primary" />
-                      </button>
-                    }
-                  </div>
-                }
-              </section>
-            }
-          }
-        </div>
-      </div>
+      <app-pos-catalogo
+        [sucursalId]="catalogoSucursalId()"
+        [refrescarTick]="catalogoRefrescarTick()"
+        (agregar)="agregar($event.producto, $event.unidad)"
+      />
 
       <!-- Carrito + cobro -->
       <div class="flex flex-col overflow-hidden bg-muted/20">
         @if (ventaOk(); as v) {
-          <!-- Ticket: sale por donde estaba el carrito, sin tapar el catálogo -->
-          <div class="flex-1 overflow-y-auto p-4">
-            <div class="mx-auto grid h-5 w-[96%] place-items-center rounded-t-lg rounded-b-sm bg-foreground/80 shadow-inner">
-              <div class="pos-slot h-1.5 w-[80%] rounded-full bg-background/70"></div>
-            </div>
-
-            <div class="pos-ticket border-x border-b border-dashed bg-card px-5 pb-10 pt-6 text-center shadow-xl">
-              <div class="mx-auto grid size-12 place-items-center rounded-2xl bg-green-500/10 text-green-600">
-                <ng-icon name="lucideCircleCheck" class="size-6" />
-              </div>
-              <h2 class="mt-2.5 text-lg font-semibold">Venta registrada</h2>
-              <p class="mt-0.5 font-mono text-[0.7rem] text-muted-foreground">{{ v.id }}</p>
-
-              <div class="my-3 border-t border-dashed"></div>
-
-              <dl class="space-y-1.5 text-sm">
-                @if (ahorroPromo(v) > 0) {
-                  <div class="flex justify-between text-primary"><dt>Ahorro en promociones</dt><dd class="tabular-nums font-medium">{{ ahorroPromo(v) | currency }}</dd></div>
-                }
-                <div class="flex justify-between"><dt class="text-muted-foreground">Total</dt><dd class="tabular-nums font-semibold">{{ v.total | currency }}</dd></div>
-                <div class="flex justify-between"><dt class="text-muted-foreground">Pagado</dt><dd class="tabular-nums">{{ v.monto_pagado | currency }}</dd></div>
-                @if (+v.efectivo_recibido > 0) {
-                  <div class="flex justify-between"><dt class="text-muted-foreground">Recibido en efectivo</dt><dd class="tabular-nums">{{ v.efectivo_recibido | currency }}</dd></div>
-                }
-                @if (+v.cambio > 0) {
-                  <div class="flex justify-between text-green-600"><dt>Cambio</dt><dd class="tabular-nums font-medium">{{ v.cambio | currency }}</dd></div>
-                }
-                @if (+v.saldo_pendiente > 0) {
-                  <div class="flex justify-between"><dt class="text-muted-foreground">A crédito</dt><dd class="tabular-nums text-amber-600">{{ v.saldo_pendiente | currency }}</dd></div>
-                }
-                @if (+(v.monedero_usado ?? 0) > 0) {
-                  <div class="flex justify-between"><dt class="text-muted-foreground">Pagado con monedero</dt><dd class="tabular-nums">{{ v.monedero_usado | currency }}</dd></div>
-                }
-                @if (+(v.monedero_generado ?? 0) > 0) {
-                  <div class="flex justify-between text-primary"><dt>Monedero acumulado</dt><dd class="tabular-nums font-medium">+ {{ v.monedero_generado | currency }}</dd></div>
-                }
-                <div class="flex justify-between"><dt class="text-muted-foreground">Estado</dt><dd><z-badge [zType]="v.estado === 'pagada' ? 'default' : 'secondary'">{{ v.estado }}</z-badge></dd></div>
-              </dl>
-
-              @if (ahorroPromo(v) > 0) {
-                <ul class="mt-2.5 space-y-0.5 text-left text-xs text-muted-foreground">
-                  @for (pr of promosTicket(v); track $index) {
-                    <li class="flex justify-between gap-2"><span class="min-w-0 truncate">{{ pr.promo_etiqueta }}</span><span class="shrink-0 tabular-nums">− {{ pr.monto | currency }}</span></li>
-                  }
-                </ul>
-              }
-
-              <p class="mt-3 text-[0.7rem] text-muted-foreground">¡Gracias por su compra!</p>
-            </div>
-
-            <div class="pos-ticket-actions mt-4 flex gap-2">
-              <button z-button zType="outline" class="flex-1" (click)="imprimirTicket(v.id)">
-                <ng-icon name="lucidePrinter" class="mr-2 size-4" /> Ticket
-              </button>
-              <button z-button zType="default" class="flex-1" (click)="nuevaVenta()">
-                <ng-icon name="lucidePlus" class="mr-2 size-4" /> Nueva venta
-              </button>
-            </div>
-          </div>
+          <app-pos-ticket
+            [venta]="v"
+            (imprimir)="imprimirTicket($event)"
+            (nuevaVenta)="nuevaVenta()"
+          />
         } @else {
-        <div class="flex items-center justify-between border-b bg-card px-3 py-2">
-          <div class="flex items-center gap-2">
-            <ng-icon name="lucideShoppingCart" class="size-4 text-muted-foreground" />
-            <span class="text-sm font-semibold">Carrito</span>
-            @if (carrito().length) {
-              <z-badge zType="secondary" class="tabular-nums text-[10px]">{{ carrito().length }}</z-badge>
-            }
-          </div>
-          @if (carrito().length) {
-            <button z-button zType="ghost" zSize="sm" class="text-muted-foreground hover:text-destructive" (click)="vaciarCarrito()">
-              <ng-icon name="lucideTrash2" class="mr-1.5 size-3.5" /> Vaciar
-            </button>
-          }
-        </div>
+          <app-pos-carrito
+            [lineas]="lineasVista()"
+            [expandedLinea]="expandedLinea()"
+            [canDescuentoManual]="canDescuentoManual()"
+            (quitar)="quitar($event)"
+            (setCantidad)="setCantidad($event.key, $event.cantidad)"
+            (pasoCantidad)="pasoCantidad($event.key, $event.delta)"
+            (setPrecio)="setPrecio($event.key, $event.precio)"
+            (setDescuentoLinea)="setDescuentoLinea($event.key, $event.descuento)"
+            (toggleLinea)="toggleLinea($event)"
+            (vaciarCarrito)="vaciarCarrito()"
+          />
 
-        <div class="flex-1 overflow-y-auto p-3">
-          @if (carrito().length === 0) {
-            <z-empty zIcon="lucideShoppingCart" zTitle="Carrito vacío" zDescription="Toca un producto del catálogo para agregarlo." class="py-12" />
-          } @else {
-            <ul class="space-y-2">
-              @for (l of carrito(); track l.key) {
-                <li class="overflow-hidden rounded-lg border bg-card transition"
-                    [class.border-destructive]="l.cantidad <= 0 || sinStock(l)">
-                  <div class="flex items-start gap-2.5 p-2.5">
-                    <button type="button" class="flex min-w-0 flex-1 items-start gap-2.5 text-left"
-                            [attr.aria-expanded]="expandedLinea() === l.key" (click)="toggleLinea(l.key)">
-                      <div class="relative size-10 shrink-0 overflow-hidden rounded-md bg-muted">
-                        @if (imgSrc(l); as src) {
-                          <img [src]="src" [alt]="l.producto.nombre" class="size-full object-cover" (error)="marcarImgRota(src)" />
-                        } @else {
-                          <div class="grid size-full place-items-center text-muted-foreground">
-                            <ng-icon [name]="l.producto.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-4" />
-                          </div>
-                        }
-                      </div>
-                      <div class="min-w-0 flex-1">
-                        <p class="truncate text-sm font-medium leading-tight">{{ l.producto.nombre }}</p>
-                        <p class="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                          <span class="tabular-nums">{{ l.cantidad }}</span> ×
-                          <span class="tabular-nums">{{ precioEfectivo(l) | currency }}</span>
-                          @if (aplicaMayoreo(l)) { <span class="text-primary">· mayoreo</span> }
-                          @if (promoDeLinea(l)) { <ng-icon name="lucideTag" class="size-3 shrink-0 text-primary" /> }
-                        </p>
-                      </div>
-                      <span class="shrink-0 text-sm font-semibold tabular-nums">
-                        {{ (lineaSubtotal(l) - (promoDeLinea(l)?.descuento ?? 0)) | currency }}
-                      </span>
-                    </button>
-                    <button z-button zType="ghost" zSize="icon-sm" class="-mr-1 -mt-1 shrink-0 text-muted-foreground hover:text-destructive" (click)="quitar(l.key)">
-                      <ng-icon name="lucideTrash" class="size-4" />
-                    </button>
-                  </div>
-
-                  @if (l.cantidad <= 0) {
-                    <p class="px-2.5 pb-2 text-[0.7rem] font-medium text-destructive">La cantidad debe ser mayor a 0.</p>
-                  }
-                  @if (sinStock(l)) {
-                    <p class="px-2.5 pb-2 text-[0.7rem] font-medium text-destructive">Sin stock suficiente.</p>
-                  }
-
-                  <div class="linea-detalle" [class.abierta]="expandedLinea() === l.key"
-                       [attr.inert]="expandedLinea() === l.key ? null : ''">
-                    <div>
-                      <div class="border-t px-2.5 pb-2.5 pt-2">
-                        <div class="grid items-end gap-2" [class]="canDescuentoManual() ? 'grid-cols-[auto_1fr_1fr]' : 'grid-cols-[auto_1fr]'">
-                          <div class="flex items-center gap-1">
-                            <button z-button zType="outline" zSize="icon-sm" (click)="pasoCantidad(l.key, -1)"><ng-icon name="lucideMinus" class="size-3.5" /></button>
-                            <input z-input class="w-14 text-center" type="number" [step]="l.producto.permite_venta_fraccionada ? 'any' : '1'" min="0"
-                                   [ngModel]="l.cantidad" (ngModelChange)="setCantidad(l.key, $event)" />
-                            <button z-button zType="outline" zSize="icon-sm" (click)="pasoCantidad(l.key, 1)"><ng-icon name="lucidePlus" class="size-3.5" /></button>
-                          </div>
-                          <label class="text-[0.7rem] text-muted-foreground">Precio
-                            <input z-input class="mt-0.5" type="number" min="0" step="0.01" [disabled]="aplicaMayoreo(l)"
-                                   [ngModel]="aplicaMayoreo(l) ? precioEfectivo(l) : l.precio_unitario" (ngModelChange)="setPrecio(l.key, $event)" />
-                          </label>
-                          @if (canDescuentoManual()) {
-                            <label class="text-[0.7rem] text-muted-foreground">Desc.
-                              <input z-input class="mt-0.5" type="number" min="0" step="0.01" [ngModel]="l.descuento_linea" (ngModelChange)="setDescuentoLinea(l.key, $event)" />
-                            </label>
-                          }
-                        </div>
-
-                        @if (promosDeLinea(l).length > 1) {
-                          <ul class="mt-1.5 space-y-0.5 border-t pt-1.5">
-                            @for (pr of promosDeLinea(l); track $index) {
-                              <li class="flex items-center gap-1 text-[0.7rem] text-primary">
-                                <ng-icon name="lucideTag" class="size-3 shrink-0" />
-                                <span class="min-w-0 flex-1 truncate">{{ pr.promo_etiqueta }}</span>
-                                <span class="shrink-0 tabular-nums">− {{ pr.monto | currency }}</span>
-                              </li>
-                            }
-                          </ul>
-                        } @else if (promoDeLinea(l); as promo) {
-                          <p class="mt-1.5 flex items-center gap-1 border-t pt-1.5 text-[0.7rem] text-primary">
-                            <ng-icon name="lucideTag" class="size-3 shrink-0" />
-                            <span class="truncate">{{ promo.etiqueta }} · − {{ promo.descuento | currency }}</span>
-                          </p>
-                        }
-                      </div>
-                    </div>
-                  </div>
-                </li>
+          <!-- Totales + pagos -->
+          <div class="space-y-3 border-t bg-card p-3">
+            <div class="flex items-center justify-between text-sm text-muted-foreground">
+              <span>Subtotal</span
+              ><span class="tabular-nums">{{ subtotalLineas() | currency }}</span>
+            </div>
+            @if (canDescuentoManual()) {
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-muted-foreground">Descuento total</span>
+                <input
+                  z-input
+                  class="w-28 text-right"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  [ngModel]="descuentoTotal()"
+                  (ngModelChange)="setDescuentoTotal($event)"
+                />
+              </div>
+              @if (descuentoTotal() > descTotalAplicado() + 0.001) {
+                <p class="-mt-1 text-right text-[0.7rem] text-amber-600">
+                  Ajustado a {{ descTotalAplicado() | currency }} (no puede pasar del subtotal).
+                </p>
               }
-            </ul>
-          }
-        </div>
-
-        <!-- Totales + pagos -->
-        <div class="space-y-3 border-t bg-card p-3">
-          <div class="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Subtotal</span><span class="tabular-nums">{{ subtotalLineas() | currency }}</span>
-          </div>
-          @if (canDescuentoManual()) {
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-muted-foreground">Descuento total</span>
-              <input z-input class="w-28 text-right" type="number" min="0" step="0.01" [ngModel]="descuentoTotal()" (ngModelChange)="setDescuentoTotal($event)" />
-            </div>
-            @if (descuentoTotal() > descTotalAplicado() + 0.001) {
-              <p class="-mt-1 text-right text-[0.7rem] text-amber-600">Ajustado a {{ descTotalAplicado() | currency }} (no puede pasar del subtotal).</p>
-            }
-            @if (hayDescuentoManual()) {
-              <div>
-                <input z-input class="h-8 text-sm" [class.border-destructive]="faltaMotivo()"
-                       placeholder="Motivo del descuento *"
-                       [ngModel]="motivoDescuento()" (ngModelChange)="motivoDescuento.set($event)" />
-                @if (faltaMotivo()) {
-                  <p class="mt-1 text-[0.7rem] font-medium text-destructive">El descuento manual necesita un motivo.</p>
-                }
-              </div>
-            }
-          }
-          @if (totalPromociones() > 0) {
-            <div class="flex items-center justify-between text-sm text-primary">
-              <span>Promociones</span><span class="tabular-nums">− {{ totalPromociones() | currency }}</span>
-            </div>
-          }
-          <div class="flex items-center justify-between text-lg font-bold">
-            <span class="flex items-center gap-1.5">
-              Total
-              @if (cotizando()) { <span class="text-[0.7rem] font-normal text-muted-foreground">calculando…</span> }
-            </span>
-            <span class="tabular-nums">{{ total() | currency }}</span>
-          </div>
-
-          <!-- Teléfono / monedero -->
-          <div class="rounded-md border p-2">
-            <div class="relative">
-              <ng-icon name="lucidePhone" class="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <input z-input class="h-8 pl-8 text-sm" inputmode="tel" placeholder="Teléfono (monedero, opcional)"
-                     [ngModel]="telefono()" (ngModelChange)="telefono.set($event)" />
-            </div>
-            @if (telefono().trim()) {
-              <div class="mt-1.5 flex items-center justify-between text-xs">
-                <span class="text-muted-foreground">
-                  @if (consultandoMonedero()) { Consultando saldo… }
-                  @else if (!telefonoValido()) { Teléfono incompleto }
-                  @else { Saldo: <span class="font-medium text-foreground tabular-nums">{{ monederoDisponible() | currency }}</span> }
-                </span>
-                @if (monederoAGenerar() > 0) {
-                  <span class="text-primary">genera {{ monederoAGenerar() | currency }}</span>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- Cupón -->
-          <div class="rounded-md border p-2">
-            <div class="flex gap-2">
-              <div class="relative flex-1">
-                <ng-icon name="lucideTicket" class="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                <input z-input class="h-8 pl-8 text-sm uppercase" placeholder="Cupón (opcional)"
-                       [ngModel]="codigoCupon()" (ngModelChange)="codigoCupon.set($event); cuponEstado.set('idle')"
-                       (keyup.enter)="validarCupon()" />
-              </div>
-              @if (cuponEstado() === 'ok') {
-                <button z-button zType="ghost" zSize="sm" (click)="quitarCupon()"><ng-icon name="lucideX" class="size-4" /></button>
-              } @else {
-                <button z-button zType="outline" zSize="sm" [zDisabled]="!codigoCupon().trim() || cuponEstado() === 'validando'" (click)="validarCupon()">
-                  Aplicar
-                </button>
+              @if (hayDescuentoManual()) {
+                <div>
+                  <input
+                    z-input
+                    class="h-8 text-sm"
+                    [class.border-destructive]="faltaMotivo()"
+                    placeholder="Motivo del descuento *"
+                    [ngModel]="motivoDescuento()"
+                    (ngModelChange)="motivoDescuento.set($event)"
+                  />
+                  @if (faltaMotivo()) {
+                    <p class="mt-1 text-[0.7rem] font-medium text-destructive">
+                      El descuento manual necesita un motivo.
+                    </p>
+                  }
+                </div>
               }
-            </div>
-            @if (cuponEstado() === 'validando') {
-              <p class="mt-1.5 text-xs text-muted-foreground">Validando cupón…</p>
-            } @else if (cuponEstado() === 'ok') {
-              <p class="mt-1.5 flex items-center gap-1 text-xs text-green-600">
-                <ng-icon name="lucideCircleCheck" class="size-3.5" /> {{ cuponMsg() }}
-              </p>
-            } @else if (cuponEstado() === 'error') {
-              <p class="mt-1.5 text-xs font-medium text-destructive">{{ cuponMsg() }}</p>
             }
-          </div>
-
-          <!-- Pagos -->
-          <div class="space-y-1.5">
-            @for (p of pagos(); track $index) {
-              <div class="flex items-center gap-2">
-                <z-badge zType="outline" class="w-28 justify-center capitalize">{{ p.metodo_pago.replace('_', ' ') }}</z-badge>
-                <input z-input class="flex-1 text-right" type="number" min="0" step="0.01" [ngModel]="p.monto" (ngModelChange)="setMontoPago($index, $event)" />
-                <button z-button zType="ghost" zSize="icon-sm" (click)="quitarPago($index)"><ng-icon name="lucideX" class="size-4" /></button>
+            @if (totalPromociones() > 0) {
+              <div class="flex items-center justify-between text-sm text-primary">
+                <span>Promociones</span
+                ><span class="tabular-nums">− {{ totalPromociones() | currency }}</span>
               </div>
-              @if (p.metodo_pago === 'efectivo') {
-                <div class="flex items-center gap-2 pl-1 text-xs text-muted-foreground">
-                  <span class="w-28 text-right">Recibí con</span>
-                  <input z-input class="flex-1 text-right" type="number" min="0" step="0.01" placeholder="—"
-                         [ngModel]="p.monto_recibido ?? null" (ngModelChange)="setRecibido($index, $event)" />
-                  <span class="w-16 text-right tabular-nums" [class.text-green-600]="cambioPago(p) > 0">
-                    {{ cambioPago(p) > 0 ? (cambioPago(p) | currency) : '' }}
+            }
+            <div class="flex items-center justify-between text-lg font-bold">
+              <span class="flex items-center gap-1.5">
+                Total
+                @if (cotizando()) {
+                  <span class="text-[0.7rem] font-normal text-muted-foreground">calculando…</span>
+                }
+              </span>
+              <span class="tabular-nums">{{ total() | currency }}</span>
+            </div>
+
+            <!-- Teléfono / monedero -->
+            <div class="rounded-md border p-2">
+              <div class="relative">
+                <ng-icon
+                  name="lucidePhone"
+                  class="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+                />
+                <input
+                  z-input
+                  class="h-8 pl-8 text-sm"
+                  inputmode="tel"
+                  placeholder="Teléfono (monedero, opcional)"
+                  [ngModel]="telefono()"
+                  (ngModelChange)="telefono.set($event)"
+                />
+              </div>
+              @if (telefono().trim()) {
+                <div class="mt-1.5 flex items-center justify-between text-xs">
+                  <span class="text-muted-foreground">
+                    @if (consultandoMonedero()) {
+                      Consultando saldo…
+                    } @else if (!telefonoValido()) {
+                      Teléfono incompleto
+                    } @else {
+                      Saldo:
+                      <span class="font-medium text-foreground tabular-nums">{{
+                        monederoDisponible() | currency
+                      }}</span>
+                    }
                   </span>
-                </div>
-              }
-            }
-            <div class="flex flex-wrap gap-1.5">
-              @for (m of metodosPago; track m.value) {
-                <button z-button zType="outline" zSize="sm" (click)="agregarPago(m.value)">+ {{ m.label }}</button>
-              }
-              @if (monederoDisponible() > 0) {
-                <button z-button zType="outline" zSize="sm" (click)="agregarPago('monedero')">
-                  <ng-icon name="lucideWallet" class="mr-1 size-3.5" /> Monedero
-                </button>
-              }
-              <button z-button zType="secondary" zSize="sm" (click)="pagoExacto()">Efectivo exacto</button>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between text-sm">
-            <span class="text-muted-foreground">{{ saldoPendiente() > 0 ? 'Falta / a crédito' : 'Sobrepago' }}</span>
-            <span class="tabular-nums font-medium" [class.text-amber-600]="saldoPendiente() > 0">
-              {{ (saldoPendiente() > 0 ? saldoPendiente() : -saldoPendiente()) | currency }}
-            </span>
-          </div>
-          @if (cambioTotal() > 0) {
-            <div class="flex items-center justify-between text-sm font-medium text-green-600">
-              <span>Cambio a devolver</span><span class="tabular-nums">{{ cambioTotal() | currency }}</span>
-            </div>
-          }
-
-          <!-- Cliente (solo si queda saldo a crédito) -->
-          @if (requiereCliente()) {
-            <div class="rounded-md border border-amber-500/40 bg-amber-500/5 p-2">
-              @if (cliente(); as c) {
-                <div class="flex items-center justify-between text-sm">
-                  <span><span class="font-medium">{{ c.nombre }}</span> · disp. {{ (+c.limite_credito - +c.saldo_credito) | currency }}</span>
-                  <button z-button zType="ghost" zSize="icon-sm" (click)="quitarCliente()"><ng-icon name="lucideX" class="size-4" /></button>
-                </div>
-              } @else {
-                <div class="relative">
-                  <input z-input placeholder="Buscar cliente para el crédito…" [ngModel]="clienteBusqueda()" (ngModelChange)="clienteBusqueda.set($event); buscarClientes()" />
-                  @if (clientesEncontrados().length) {
-                    <ul class="absolute bottom-full z-10 mb-1 max-h-40 w-full overflow-y-auto rounded-md border bg-popover shadow">
-                      @for (c of clientesEncontrados(); track c.id) {
-                        <li>
-                          <button type="button" class="flex w-full items-center justify-between px-2.5 py-1.5 text-left text-sm hover:bg-accent" (click)="elegirCliente(c)">
-                            <span>{{ c.nombre }}</span>
-                            <span class="text-xs text-muted-foreground">disp. {{ (+c.limite_credito - +c.saldo_credito) | currency }}</span>
-                          </button>
-                        </li>
-                      }
-                    </ul>
+                  @if (monederoAGenerar() > 0) {
+                    <span class="text-primary">genera {{ monederoAGenerar() | currency }}</span>
                   }
                 </div>
               }
             </div>
-          }
 
-          @if (hayLineaInvalida()) {
-            <p class="text-[0.8rem] font-medium text-destructive">Hay líneas con cantidad 0. Ajústalas para poder cobrar.</p>
-          }
-          @if (hayLineaSinStock()) {
-            <p class="text-[0.8rem] font-medium text-destructive">Hay líneas sin stock suficiente. Ajusta las cantidades.</p>
-          }
-          @if (faltaTelefonoMonedero()) {
-            <p class="text-[0.8rem] font-medium text-destructive">Captura el teléfono para pagar con monedero.</p>
-          }
-          @if (excesoMonedero()) {
-            <p class="text-[0.8rem] font-medium text-destructive">El pago con monedero supera el saldo disponible.</p>
-          }
-          <button z-button zType="default" class="w-full" [zLoading]="cobrando()" [zDisabled]="!puedeCobrar() || cobrando()" (click)="cobrar()">
-            <ng-icon name="lucideReceiptText" class="mr-2 size-4" />
-            Cobrar {{ aCobrar() | currency }}
-            @if (hayPagoMonedero()) {
-              <span class="ml-1 text-xs font-normal opacity-80">(monedero − {{ monederoUsado() | currency }})</span>
+            <!-- Cupón -->
+            <div class="rounded-md border p-2">
+              <div class="flex gap-2">
+                <div class="relative flex-1">
+                  <ng-icon
+                    name="lucideTicket"
+                    class="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+                  />
+                  <input
+                    z-input
+                    class="h-8 pl-8 text-sm uppercase"
+                    placeholder="Cupón (opcional)"
+                    [ngModel]="codigoCupon()"
+                    (ngModelChange)="codigoCupon.set($event); cuponEstado.set('idle')"
+                    (keyup.enter)="validarCupon()"
+                  />
+                </div>
+                @if (cuponEstado() === 'ok') {
+                  <button z-button zType="ghost" zSize="sm" (click)="quitarCupon()">
+                    <ng-icon name="lucideX" class="size-4" />
+                  </button>
+                } @else {
+                  <button
+                    z-button
+                    zType="outline"
+                    zSize="sm"
+                    [zDisabled]="!codigoCupon().trim() || cuponEstado() === 'validando'"
+                    (click)="validarCupon()"
+                  >
+                    Aplicar
+                  </button>
+                }
+              </div>
+              @if (cuponEstado() === 'validando') {
+                <p class="mt-1.5 text-xs text-muted-foreground">Validando cupón…</p>
+              } @else if (cuponEstado() === 'ok') {
+                <p class="mt-1.5 flex items-center gap-1 text-xs text-green-600">
+                  <ng-icon name="lucideCircleCheck" class="size-3.5" /> {{ cuponMsg() }}
+                </p>
+              } @else if (cuponEstado() === 'error') {
+                <p class="mt-1.5 text-xs font-medium text-destructive">{{ cuponMsg() }}</p>
+              }
+            </div>
+
+            <app-pos-pagos
+              [pagos]="pagos()"
+              [monederoDisponible]="monederoDisponible()"
+              (agregarPago)="agregarPago($event)"
+              (setMontoPago)="setMontoPago($event.i, $event.monto)"
+              (setRecibido)="setRecibido($event.i, $event.v)"
+              (quitarPago)="quitarPago($event)"
+              (pagoExacto)="pagoExacto()"
+            />
+
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-muted-foreground">{{
+                saldoPendiente() > 0 ? 'Falta / a crédito' : 'Sobrepago'
+              }}</span>
+              <span class="tabular-nums font-medium" [class.text-amber-600]="saldoPendiente() > 0">
+                {{ (saldoPendiente() > 0 ? saldoPendiente() : -saldoPendiente()) | currency }}
+              </span>
+            </div>
+            @if (cambioTotal() > 0) {
+              <div class="flex items-center justify-between text-sm font-medium text-green-600">
+                <span>Cambio a devolver</span
+                ><span class="tabular-nums">{{ cambioTotal() | currency }}</span>
+              </div>
             }
-          </button>
-        </div>
+
+            @if (requiereCliente()) {
+              <app-pos-cliente-credito
+                [cliente]="cliente()"
+                [clienteBusqueda]="clienteBusqueda()"
+                [clientesEncontrados]="clientesEncontrados()"
+                (busquedaChange)="clienteBusqueda.set($event); buscarClientes()"
+                (elegirCliente)="elegirCliente($event)"
+                (quitarCliente)="quitarCliente()"
+              />
+            }
+
+            @if (hayLineaInvalida()) {
+              <p class="text-[0.8rem] font-medium text-destructive">
+                Hay líneas con cantidad 0. Ajústalas para poder cobrar.
+              </p>
+            }
+            @if (hayLineaSinStock()) {
+              <p class="text-[0.8rem] font-medium text-destructive">
+                Hay líneas sin stock suficiente. Ajusta las cantidades.
+              </p>
+            }
+            @if (faltaTelefonoMonedero()) {
+              <p class="text-[0.8rem] font-medium text-destructive">
+                Captura el teléfono para pagar con monedero.
+              </p>
+            }
+            @if (excesoMonedero()) {
+              <p class="text-[0.8rem] font-medium text-destructive">
+                El pago con monedero supera el saldo disponible.
+              </p>
+            }
+            <button
+              z-button
+              zType="default"
+              class="w-full"
+              [zLoading]="cobrando()"
+              [zDisabled]="!puedeCobrar() || cobrando()"
+              (click)="cobrar()"
+            >
+              <ng-icon name="lucideReceiptText" class="mr-2 size-4" />
+              Cobrar {{ aCobrar() | currency }}
+              @if (hayPagoMonedero()) {
+                <span class="ml-1 text-xs font-normal opacity-80"
+                  >(monedero − {{ monederoUsado() | currency }})</span
+                >
+              }
+            </button>
+          </div>
         }
       </div>
     </div>

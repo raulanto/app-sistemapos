@@ -1,0 +1,106 @@
+<div class="flex items-center justify-between border-b bg-card px-3 py-2">
+  <div class="flex items-center gap-2">
+    <ng-icon name="lucideShoppingCart" class="size-4 text-muted-foreground" />
+    <span class="text-sm font-semibold">Carrito</span>
+    @if (lineas().length) {
+      <z-badge zType="secondary" class="tabular-nums text-[10px]">{{ lineas().length }}</z-badge>
+    }
+  </div>
+  @if (lineas().length) {
+    <button z-button zType="ghost" zSize="sm" class="text-muted-foreground hover:text-destructive" (click)="vaciarCarrito.emit()">
+      <ng-icon name="lucideTrash2" class="mr-1.5 size-3.5" /> Vaciar
+    </button>
+  }
+</div>
+
+<div class="flex-1 overflow-y-auto p-3">
+  @if (lineas().length === 0) {
+    <z-empty zIcon="lucideShoppingCart" zTitle="Carrito vacío" zDescription="Toca un producto del catálogo para agregarlo." class="py-12" />
+  } @else {
+    <ul class="space-y-2">
+      @for (l of lineas(); track l.key) {
+        <li class="overflow-hidden rounded-lg border bg-card transition"
+            [class.border-destructive]="l.invalida || l.sinStock">
+          <div class="flex items-start gap-2.5 p-2.5">
+            <button type="button" class="flex min-w-0 flex-1 items-start gap-2.5 text-left"
+                    [attr.aria-expanded]="expandedLinea() === l.key" (click)="toggleLinea.emit(l.key)">
+              <div class="relative size-10 shrink-0 overflow-hidden rounded-md bg-muted">
+                @if (imgSrc(l); as src) {
+                  <img [src]="src" [alt]="l.producto.nombre" class="size-full object-cover" (error)="marcarImgRota(src)" />
+                } @else {
+                  <div class="grid size-full place-items-center text-muted-foreground">
+                    <ng-icon [name]="l.producto.tipo === 'kit' ? 'lucideLayers' : 'lucidePackage'" class="size-4" />
+                  </div>
+                }
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium leading-tight">{{ l.producto.nombre }}</p>
+                <p class="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                  <span class="tabular-nums">{{ l.cantidad }}</span> ×
+                  <span class="tabular-nums">{{ l.precioEfectivo | currency }}</span>
+                  @if (l.aplicaMayoreo) { <span class="text-primary">· mayoreo</span> }
+                  @if (l.promo) { <ng-icon name="lucideTag" class="size-3 shrink-0 text-primary" /> }
+                </p>
+              </div>
+              <span class="shrink-0 text-sm font-semibold tabular-nums">
+                {{ l.subtotalMostrado | currency }}
+              </span>
+            </button>
+            <button z-button zType="ghost" zSize="icon-sm" class="-mr-1 -mt-1 shrink-0 text-muted-foreground hover:text-destructive" (click)="quitar.emit(l.key)">
+              <ng-icon name="lucideTrash" class="size-4" />
+            </button>
+          </div>
+
+          @if (l.invalida) {
+            <p class="px-2.5 pb-2 text-[0.7rem] font-medium text-destructive">La cantidad debe ser mayor a 0.</p>
+          }
+          @if (l.sinStock) {
+            <p class="px-2.5 pb-2 text-[0.7rem] font-medium text-destructive">Sin stock suficiente.</p>
+          }
+
+          <div class="linea-detalle" [class.abierta]="expandedLinea() === l.key"
+               [attr.inert]="expandedLinea() === l.key ? null : ''">
+            <div>
+              <div class="border-t px-2.5 pb-2.5 pt-2">
+                <div class="grid items-end gap-2" [class]="canDescuentoManual() ? 'grid-cols-[auto_1fr_1fr]' : 'grid-cols-[auto_1fr]'">
+                  <div class="flex items-center gap-1">
+                    <button z-button zType="outline" zSize="icon-sm" (click)="pasoCantidad.emit({ key: l.key, delta: -1 })"><ng-icon name="lucideMinus" class="size-3.5" /></button>
+                    <input z-input class="w-14 text-center" type="number" [step]="l.producto.permite_venta_fraccionada ? 'any' : '1'" min="0"
+                           [ngModel]="l.cantidad" (ngModelChange)="setCantidad.emit({ key: l.key, cantidad: $event })" />
+                    <button z-button zType="outline" zSize="icon-sm" (click)="pasoCantidad.emit({ key: l.key, delta: 1 })"><ng-icon name="lucidePlus" class="size-3.5" /></button>
+                  </div>
+                  <label class="text-[0.7rem] text-muted-foreground">Precio
+                    <input z-input class="mt-0.5" type="number" min="0" step="0.01" [disabled]="l.aplicaMayoreo"
+                           [ngModel]="l.aplicaMayoreo ? l.precioEfectivo : l.precioUnitario" (ngModelChange)="setPrecio.emit({ key: l.key, precio: $event })" />
+                  </label>
+                  @if (canDescuentoManual()) {
+                    <label class="text-[0.7rem] text-muted-foreground">Desc.
+                      <input z-input class="mt-0.5" type="number" min="0" step="0.01" [ngModel]="l.descuentoLinea" (ngModelChange)="setDescuentoLinea.emit({ key: l.key, descuento: $event })" />
+                    </label>
+                  }
+                </div>
+
+                @if (l.promos.length > 1) {
+                  <ul class="mt-1.5 space-y-0.5 border-t pt-1.5">
+                    @for (pr of l.promos; track $index) {
+                      <li class="flex items-center gap-1 text-[0.7rem] text-primary">
+                        <ng-icon name="lucideTag" class="size-3 shrink-0" />
+                        <span class="min-w-0 flex-1 truncate">{{ pr.promo_etiqueta }}</span>
+                        <span class="shrink-0 tabular-nums">− {{ pr.monto | currency }}</span>
+                      </li>
+                    }
+                  </ul>
+                } @else if (l.promo; as promo) {
+                  <p class="mt-1.5 flex items-center gap-1 border-t pt-1.5 text-[0.7rem] text-primary">
+                    <ng-icon name="lucideTag" class="size-3 shrink-0" />
+                    <span class="truncate">{{ promo.etiqueta }} · − {{ promo.descuento | currency }}</span>
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>

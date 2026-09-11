@@ -1,41 +1,28 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CurrencyPipe, DatePipe, TitleCasePipe } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { debounceTime, switchMap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
-  lucideScanBarcode,
-  lucideSearch,
-  lucidePlus,
-  lucideMinus,
-  lucideTrash,
-  lucideShoppingCart,
-  lucideLockKeyhole,
-  lucideReceiptText,
-  lucideUserPlus,
-  lucideX,
   lucideCircleCheck,
-  lucideBanknote,
-  lucideHistory,
-  lucidePackage,
-  lucideLayers,
-  lucidePrinter,
-  lucideLayoutGrid,
-  lucideList,
-  lucideTag,
-  lucideTrash2,
   lucidePhone,
-  lucideWallet,
+  lucideReceiptText,
   lucideTicket,
-  lucideArrowLeftRight,
+  lucideX,
 } from '@ng-icons/lucide';
 
-import { ProductoService } from '../../inventario/data-access/producto.service';
-import { CategoriaService } from '../../inventario/data-access/categoria.service';
-import { ProductoResponse, UnidadResponse, CategoriaResponse } from '../../inventario/data-access/inventario.models';
+import { ProductoResponse, UnidadResponse } from '../../inventario/data-access/inventario.models';
 import { ClienteService } from '../../clientes/data-access/cliente.service';
 import { CajaService } from '../data-access/caja.service';
 import { VentaService } from '../data-access/venta.service';
@@ -45,22 +32,26 @@ import {
   CotizacionVentaResponse,
   CrearVentaRequest,
   MetodoPago,
-  METODOS_PAGO,
   VentaResponse,
 } from '../data-access/ventas.models';
 import { AuthService } from '@/core/auth/api/auth.service';
 import { PERMISOS } from '@/core/auth/permissions';
 
 import { ZardButtonComponent } from '../../../shared/components/button/button.component';
-import { ZardBadgeComponent } from '../../../shared/components/badge/badge.component';
 import { ZardInputComponent } from '../../../shared/components/input/input.component';
-import { ZardEmptyComponent } from '../../../shared/components/empty/empty.component';
 import { ZardSkeletonComponent } from '../../../shared/components/skeleton/skeleton.component';
 import { ZardSheetService } from '../../../shared/components/sheet/sheet.service';
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
 import { AbrirCajaSheetComponent } from '../ui/abrir-caja-sheet/abrir-caja-sheet.component';
 import { CerrarCajaSheetComponent } from '../ui/cerrar-caja-sheet/cerrar-caja-sheet.component';
 import { MovimientosCajaSheetComponent } from '../ui/movimientos-caja-sheet/movimientos-caja-sheet.component';
+import { PosHeaderComponent } from '../ui/pos-header/pos-header.component';
+import { PosTurnoVacioComponent } from '../ui/pos-turno-vacio/pos-turno-vacio.component';
+import { PosCatalogoComponent } from '../ui/pos-catalogo/pos-catalogo.component';
+import { PosCarritoComponent, type LineaVista } from '../ui/pos-carrito/pos-carrito.component';
+import { PosPagosComponent } from '../ui/pos-pagos/pos-pagos.component';
+import { PosClienteCreditoComponent } from '../ui/pos-cliente-credito/pos-cliente-credito.component';
+import { PosTicketComponent } from '../ui/pos-ticket/pos-ticket.component';
 
 interface LineaCarrito {
   key: string;
@@ -76,92 +67,32 @@ interface LineaCarrito {
   standalone: true,
   imports: [
     CurrencyPipe,
-    DatePipe,
-    TitleCasePipe,
     FormsModule,
-    RouterLink,
     NgIconComponent,
     ZardButtonComponent,
-    ZardBadgeComponent,
     ZardInputComponent,
-    ZardEmptyComponent,
     ZardSkeletonComponent,
+    PosHeaderComponent,
+    PosTurnoVacioComponent,
+    PosCatalogoComponent,
+    PosCarritoComponent,
+    PosPagosComponent,
+    PosClienteCreditoComponent,
+    PosTicketComponent,
   ],
   viewProviders: [
     provideIcons({
-      lucideScanBarcode,
-      lucideSearch,
-      lucidePlus,
-      lucideMinus,
-      lucideTrash,
-      lucideShoppingCart,
-      lucideLockKeyhole,
-      lucideReceiptText,
-      lucideUserPlus,
-      lucideX,
       lucideCircleCheck,
-      lucideBanknote,
-      lucideHistory,
-      lucidePackage,
-      lucideLayers,
-      lucidePrinter,
-      lucideLayoutGrid,
-      lucideList,
-      lucideTag,
-      lucideTrash2,
       lucidePhone,
-      lucideWallet,
+      lucideReceiptText,
       lucideTicket,
-      lucideArrowLeftRight,
+      lucideX,
     }),
   ],
   templateUrl: './pos.component.html',
-  styles: [
-    `
-    @keyframes pos-feed {
-      from { clip-path: inset(100% 0 0 0); }
-      to { clip-path: inset(0 0 0 0); }
-    }
-    @keyframes pos-drop {
-      0% { transform: translateY(-8px); }
-      55% { transform: translateY(4px); }
-      100% { transform: translateY(0); }
-    }
-    @keyframes pos-slot {
-      0%, 100% { opacity: .35; transform: scaleX(.9); }
-      50% { opacity: .9; transform: scaleX(1); }
-    }
-    @keyframes pos-actions-in {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .pos-slot { animation: pos-slot 1s ease-in-out 3; }
-    .pos-ticket {
-      transform-origin: top center;
-      animation: pos-feed 1s cubic-bezier(.2, .9, .25, 1) both, pos-drop .5s ease-out .95s both;
-      --tooth: 12px;
-      -webkit-mask:
-        conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / var(--tooth) var(--tooth) repeat-x,
-        linear-gradient(#000 0 0) top / 100% calc(100% - var(--tooth)) no-repeat;
-      mask:
-        conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / var(--tooth) var(--tooth) repeat-x,
-        linear-gradient(#000 0 0) top / 100% calc(100% - var(--tooth)) no-repeat;
-    }
-    .pos-ticket-actions { animation: pos-actions-in .3s ease-out 1.35s both; }
-    .linea-detalle { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .22s ease; }
-    .linea-detalle.abierta { grid-template-rows: 1fr; }
-    .linea-detalle > div { overflow: hidden; min-height: 0; }
-    @media (prefers-reduced-motion: reduce) {
-      .pos-ticket, .pos-ticket-actions, .pos-slot { animation: none; }
-      .linea-detalle { transition: none; }
-    }
-  `,
-  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PosComponent {
-  private productoService = inject(ProductoService);
-  private categoriaService = inject(CategoriaService);
   private clienteService = inject(ClienteService);
   private cajaService = inject(CajaService);
   private ventaService = inject(VentaService);
@@ -174,21 +105,16 @@ export class PosComponent {
   /** Sin este permiso el POS no ofrece descuento manual (por línea ni total). */
   readonly canDescuentoManual = computed(() => this.authService.hasPermission(...PERMISOS.ventas.descuentoManual));
 
-  readonly metodosPago = METODOS_PAGO;
-
   readonly turno = signal<CajaTurnoResponse | null>(null);
   readonly cargandoTurno = signal(true);
 
-  readonly productos = signal<ProductoResponse[]>([]);
-  readonly categorias = signal<CategoriaResponse[]>([]);
-  readonly categoriaSel = signal<string | null>(null);
-  readonly cargandoCatalogo = signal(false);
-  readonly q = signal('');
-  readonly codigo = signal('');
-  /** Disposición del catálogo: tarjetas (grid) o filas (lista). Se recuerda en localStorage. */
-  readonly vista = signal<'grid' | 'lista'>(this.leerVista());
-  /** ids de productos cuya imagen falló al cargar. */
-  readonly imgRoto = signal<Set<string>>(new Set());
+  private readonly posRoot = viewChild<ElementRef<HTMLElement>>('posRoot');
+  readonly isFullscreen = signal(false);
+
+  /** Sucursal del turno activo; el catálogo la usa para acotar sus productos. */
+  readonly catalogoSucursalId = computed(() => this.turno()?.sucursal_id ?? null);
+  /** Se incrementa para pedirle al catálogo que recargue (p. ej. tras cobrar). */
+  readonly catalogoRefrescarTick = signal(0);
 
   readonly carrito = signal<LineaCarrito[]>([]);
   /** Línea con sus controles desplegados; el resto se muestra colapsado (acordeón). */
@@ -239,55 +165,6 @@ export class PosComponent {
   private nuevoIdem() {
     return typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
   }
-
-  readonly productosFiltrados = computed(() => {
-    const t = this.q().trim().toLowerCase();
-    const cat = this.categoriaSel();
-    return this.productos().filter(p => {
-      if (cat && p.categoria_id !== cat) return false;
-      if (!t) return true;
-      return (
-        p.nombre.toLowerCase().includes(t) ||
-        p.sku.toLowerCase().includes(t) ||
-        (p.codigo_barras ?? '').toLowerCase().includes(t)
-      );
-    });
-  });
-
-  /**
-   * Catálogo agrupado por categoría (bloques). Cada presentación (unidad base +
-   * cada unidad activa) es su propia tarjeta; "Sin categoría" al final.
-   */
-  readonly bloques = computed(() => {
-    const nombrePorId = new Map(this.categorias().map(c => [c.id, c.nombre]));
-    const grupos = new Map<string, { key: string; producto: ProductoResponse; unidad: UnidadResponse | null }[]>();
-    for (const p of this.productosFiltrados()) {
-      const k = p.categoria_id ?? '';
-      let lista = grupos.get(k);
-      if (!lista) {
-        lista = [];
-        grupos.set(k, lista);
-      }
-      lista.push({ key: `${p.id}:base`, producto: p, unidad: null });
-      for (const u of p.unidades ?? []) {
-        if (u.activo) lista.push({ key: `${p.id}:${u.id}`, producto: p, unidad: u });
-      }
-    }
-    return [...grupos.entries()]
-      .map(([id, items]) => ({
-        id: id || null,
-        nombre: nombrePorId.get(id) ?? 'Sin categoría',
-        items,
-        count: new Set(items.map(i => i.producto.id)).size,
-      }))
-      .sort((a, b) => (a.nombre === 'Sin categoría' ? 1 : b.nombre === 'Sin categoría' ? -1 : a.nombre.localeCompare(b.nombre)));
-  });
-
-  /** Chips: categorías que tienen al menos un producto en el catálogo. */
-  readonly categoriasConProductos = computed(() => {
-    const conProd = new Set(this.productos().map(p => p.categoria_id));
-    return this.categorias().filter(c => conProd.has(c.id)).sort((a, b) => a.nombre.localeCompare(b.nombre));
-  });
 
   // --- Precios y descuentos ---
 
@@ -352,6 +229,28 @@ export class PosComponent {
   readonly requiereCliente = computed(() => this.saldoPendiente() > 0.009);
   readonly hayLineaInvalida = computed(() => this.carrito().some(l => !(l.cantidad > 0)));
 
+  /** Vista de sólo-lectura del carrito para `app-pos-carrito` (evita pasarle 6 funciones). */
+  readonly lineasVista = computed<LineaVista[]>(() =>
+    this.carrito().map(l => {
+      const promo = this.promoDeLinea(l);
+      return {
+        key: l.key,
+        producto: l.producto,
+        unidad: l.unidad,
+        cantidad: l.cantidad,
+        precioUnitario: l.precio_unitario,
+        descuentoLinea: l.descuento_linea,
+        precioEfectivo: this.precioEfectivo(l),
+        aplicaMayoreo: this.aplicaMayoreo(l),
+        subtotalMostrado: this.lineaSubtotal(l) - (promo?.descuento ?? 0),
+        promo,
+        promos: this.promosDeLinea(l),
+        sinStock: this.sinStock(l),
+        invalida: !(l.cantidad > 0),
+      };
+    }),
+  );
+
   // --- Descuento manual ---
   /** Hay descuento manual si el total o alguna línea traen un descuento tecleado. */
   readonly hayDescuentoManual = computed(
@@ -398,6 +297,12 @@ export class PosComponent {
 
   constructor() {
     this.cargarTurno();
+
+    const fsAbort = new AbortController();
+    document.addEventListener('fullscreenchange', () => this.isFullscreen.set(!!document.fullscreenElement), {
+      signal: fsAbort.signal,
+    });
+    inject(DestroyRef).onDestroy(() => fsAbort.abort());
 
     // Cotización en vivo: cada cambio del carrito re-pide el total con promos + mayoreo.
     toObservable(this.fingerprint)
@@ -459,7 +364,6 @@ export class PosComponent {
       next: t => {
         this.turno.set(t);
         this.cargandoTurno.set(false);
-        if (t) this.cargarCatalogo();
       },
       error: err => {
         console.error('Error al leer el turno', err);
@@ -468,89 +372,14 @@ export class PosComponent {
     });
   }
 
-  private cargarCatalogo() {
-    // Catálogo acotado a la sucursal del turno: sólo productos con existencia ahí,
-    // con su stock embebido (preset POS de la guía de ventas §2.0).
-    const suc = this.turno()?.sucursal_id;
-    this.cargandoCatalogo.set(true);
-    this.productoService
-      .listar({
-        activo: true,
-        page_size: 100,
-        sort: 'nombre:asc',
-        ...(suc ? { sucursal_id: [suc] } : {}),
-        include: ['unidades', 'existencias'],
-      })
-      .subscribe({
-      next: res => {
-        this.productos.set(res.data);
-        this.imgRoto.set(new Set());
-        this.cargandoCatalogo.set(false);
-      },
-      error: err => {
-        console.error('Error al cargar el catálogo', err);
-        this.cargandoCatalogo.set(false);
-      },
-    });
-    if (this.categorias().length === 0) {
-      this.categoriaService.listar().subscribe({
-        next: cs => this.categorias.set(cs.filter(c => c.activo)),
-        error: err => console.error('Error al cargar categorías', err),
-      });
+  // --- Pantalla completa ---
+
+  toggleFullscreen() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      this.posRoot()?.nativeElement.requestFullscreen();
     }
-  }
-
-  seleccionarCategoria(id: string | null) {
-    this.categoriaSel.set(this.categoriaSel() === id ? null : id);
-  }
-
-  /**
-   * Foto de la tarjeta: portada de la presentación; si no tiene (o su URL falla), cae
-   * a la del producto; si esa también falla, al icono. Prefiere la original sobre el
-   * thumbnail (la miniatura la genera una Lambda que puede no existir y dar 404).
-   */
-  imgSrc(it: { producto: ProductoResponse; unidad: UnidadResponse | null }): string | null {
-    const roto = this.imgRoto();
-    const candidatos = [
-      it.unidad?.imagen_principal?.url,
-      it.unidad?.imagen_principal?.thumbnail_url,
-      it.producto.imagen_principal?.url,
-      it.producto.imagen_principal?.thumbnail_url,
-    ];
-    return candidatos.find((u): u is string => !!u && !roto.has(u)) ?? null;
-  }
-  /** La imagen `src` no cargó: se descarta y la tarjeta prueba el siguiente candidato. */
-  marcarImgRota(src: string | null) {
-    if (src) this.imgRoto.update(s => new Set(s).add(src));
-  }
-
-  private leerVista(): 'grid' | 'lista' {
-    try {
-      return localStorage.getItem('pos-vista') === 'lista' ? 'lista' : 'grid';
-    } catch {
-      return 'grid';
-    }
-  }
-  setVista(v: 'grid' | 'lista') {
-    this.vista.set(v);
-    try {
-      localStorage.setItem('pos-vista', v);
-    } catch {
-      /* almacenamiento no disponible: la vista sólo dura la sesión */
-    }
-  }
-
-  /**
-   * Stock de la tarjeta en su propia unidad: unidad base para el producto,
-   * `base / factor` (piezas enteras) para una presentación. `null` = no lleva
-   * inventario (servicio, sobre pedido, kit).
-   */
-  stockDe(it: { producto: ProductoResponse; unidad: UnidadResponse | null }): number | null {
-    const base = Number(it.producto.existencias?.[0]?.cantidad);
-    if (!Number.isFinite(base)) return null;
-    if (!it.unidad) return base;
-    const f = Number(it.unidad.factor) || 1;
-    return f > 0 ? Math.floor(base / f) : base;
   }
 
   // --- Caja ---
@@ -569,7 +398,6 @@ export class PosComponent {
           obs.subscribe({
             next: (turno: CajaTurnoResponse) => {
               this.turno.set(turno);
-              this.cargarCatalogo();
               this.sonner.success('Caja abierta');
               resolve();
             },
@@ -655,24 +483,6 @@ export class PosComponent {
     }
     // La última línea tocada queda desplegada; las anteriores se colapsan para una lista limpia.
     this.expandedLinea.set(key);
-  }
-
-  escanear() {
-    const cod = this.codigo().trim();
-    if (!cod) return;
-    this.productoService.resolverCodigo(cod).subscribe({
-      next: r => {
-        const prod = this.productos().find(p => p.id === r.producto_id);
-        if (!prod) {
-          this.sonner.error('El código resolvió a un producto que no está en el catálogo cargado');
-          return;
-        }
-        const uni = r.unidad_id ? (prod.unidades ?? []).find(x => x.id === r.unidad_id) ?? null : null;
-        this.agregar(prod, uni);
-        this.codigo.set('');
-      },
-      error: () => this.sonner.error('Código no encontrado'),
-    });
   }
 
   /** Valor libre mientras se escribe; el mínimo se valida al cobrar (evita bloquear "0.5" al teclear). */
@@ -922,7 +732,7 @@ export class PosComponent {
         this.idemKey = this.nuevoIdem();
         // Refresca el catálogo (stock embebido) mientras corre la animación del ticket,
         // así la siguiente venta arranca con existencias actualizadas.
-        this.cargarCatalogo();
+        this.catalogoRefrescarTick.update(v => v + 1);
       },
       error: err => {
         this.cobrando.set(false);
@@ -973,22 +783,6 @@ export class PosComponent {
   nuevaVenta() {
     this.ventaOk.set(null);
     this.idemKey = this.nuevoIdem();
-  }
-
-  /** Ahorro total por promociones de una venta ya registrada (para el ticket). */
-  ahorroPromo(v: VentaResponse): number {
-    return (v.lineas ?? []).reduce((s, l) => s + (Number(l.promo_descuento) || 0), 0);
-  }
-
-  /** Filas de promo para el ticket: el desglose si viene, si no la etiqueta única. */
-  promosTicket(v: VentaResponse): { promo_etiqueta: string; monto: string }[] {
-    return (v.lineas ?? []).flatMap(l => {
-      if (l.promos_aplicadas?.length) return l.promos_aplicadas;
-      if (l.promo_etiqueta && Number(l.promo_descuento) > 0) {
-        return [{ promo_etiqueta: l.promo_etiqueta, monto: l.promo_descuento ?? '0' }];
-      }
-      return [];
-    });
   }
 
   imprimirTicket(ventaId: string) {
