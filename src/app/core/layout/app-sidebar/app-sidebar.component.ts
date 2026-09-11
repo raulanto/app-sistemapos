@@ -3,14 +3,27 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import {
   BoxesIcon,
   ChartColumnIcon,
+  CirclePlusIcon,
   ClipboardListIcon,
+  ClockIcon,
+  FolderKanbanIcon,
+  HandCoinsIcon,
+  HistoryIcon,
+  KanbanIcon,
+  KeyRoundIcon,
   LandmarkIcon,
+  LayersIcon,
   LayoutDashboardIcon,
+  MonitorCheckIcon,
+  ScanTextIcon,
   SearchIcon,
   SettingsIcon,
   ShieldCheckIcon,
   ShoppingCartIcon,
+  TagIcon,
   UserCogIcon,
+  UserPenIcon,
+  UserRoundCheckIcon,
   UserRoundIcon,
 } from 'ng-animated-icons';
 
@@ -78,11 +91,11 @@ export class AppSidebarComponent {
       url: '/ventas',
       icon: ShoppingCartIcon,
       items: [
-        { title: 'Punto de venta', url: '/ventas' },
-        { title: 'Historial', url: '/ventas/historial' },
-        { title: 'Turnos de caja', url: '/ventas/turnos' },
-        { title: 'Terminales', url: '/cajas' },
-        { title: 'Promociones', url: '/promociones' },
+        { title: 'Punto de venta', url: '/ventas', icon: ScanTextIcon },
+        { title: 'Historial', url: '/ventas/historial', icon: HistoryIcon },
+        { title: 'Turnos de caja', url: '/ventas/turnos', icon: ClockIcon },
+        { title: 'Terminales', url: '/cajas', icon: MonitorCheckIcon },
+        { title: 'Promociones', url: '/promociones', icon: TagIcon },
       ],
     },
     {
@@ -90,8 +103,8 @@ export class AppSidebarComponent {
       url: '/pedidos',
       icon: ClipboardListIcon,
       items: [
-        { title: 'Tablero', url: '/pedidos' },
-        { title: 'Nuevo pedido', url: '/pedidos/nuevo' },
+        { title: 'Tablero', url: '/pedidos', icon: KanbanIcon },
+        { title: 'Nuevo pedido', url: '/pedidos/nuevo', icon: CirclePlusIcon },
       ],
     },
     {
@@ -99,9 +112,9 @@ export class AppSidebarComponent {
       url: '/inventario',
       icon: BoxesIcon,
       items: [
-        { title: 'Productos', url: '/inventario/productos' },
-        { title: 'Nuevo Producto', url: '/inventario/productos/nuevo' },
-        { title: 'Categorías', url: '/inventario/categorias' },
+        { title: 'Productos', url: '/inventario/productos', icon: LayersIcon },
+        { title: 'Nuevo Producto', url: '/inventario/productos/nuevo', icon: CirclePlusIcon },
+        { title: 'Categorías', url: '/inventario/categorias', icon: FolderKanbanIcon },
       ],
     },
     {
@@ -114,8 +127,8 @@ export class AppSidebarComponent {
       url: '/clientes',
       icon: UserRoundIcon,
       items: [
-        { title: 'Clientes', url: '/clientes' },
-        { title: 'Monedero', url: '/clientes/monedero' },
+        { title: 'Clientes', url: '/clientes', icon: UserRoundCheckIcon },
+        { title: 'Monedero', url: '/clientes/monedero', icon: HandCoinsIcon },
       ],
     },
     {
@@ -123,8 +136,8 @@ export class AppSidebarComponent {
       url: '/usuarios',
       icon: UserCogIcon,
       items: [
-        { title: 'Usuarios', url: '/usuarios' },
-        { title: 'Roles y permisos', url: '/usuarios/roles' },
+        { title: 'Usuarios', url: '/usuarios', icon: UserPenIcon },
+        { title: 'Roles y permisos', url: '/usuarios/roles', icon: KeyRoundIcon },
       ],
     },
     {

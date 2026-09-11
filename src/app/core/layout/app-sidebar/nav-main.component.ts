@@ -10,6 +10,8 @@ import { ZardSidebarImports } from '../../../shared/components/sidebar/sidebar.i
 export interface Sidebar07NavSubItem {
   readonly title: string;
   readonly url: string;
+  /** Componente de `ng-animated-icons` (p. ej. `HistoryIcon`). */
+  readonly icon: Type<unknown>;
 }
 
 export interface Sidebar07NavItem {
@@ -74,8 +76,8 @@ export class NavHoverDirective {
                 <ul z-sidebar-menu-sub>
                   @for (subItem of item.items; track subItem.title) {
                     <li z-sidebar-menu-sub-item>
-                      <a z-sidebar-menu-sub-button class="transition-colors" [routerLink]="subItem.url" routerLinkActive="nav-sub-active bg-sidebar-accent text-sidebar-accent-foreground font-medium">
-                        <span class="inline-block size-1.5 shrink-0 rounded-full bg-current opacity-0 transition-opacity in-[.nav-sub-active]:opacity-100"></span>
+                      <a z-sidebar-menu-sub-button class="transition-colors" navHover #hovSub="navHover" [routerLink]="subItem.url" routerLinkActive="bg-sidebar-accent text-sidebar-accent-foreground font-medium" [routerLinkActiveOptions]="{ exact: true }">
+                        <ng-container [ngComponentOutlet]="subItem.icon" [ngComponentOutletInputs]="{ size: 16, animate: hovSub.hovered() }" />
                         <span>{{ subItem.title }}</span>
                       </a>
                     </li>
