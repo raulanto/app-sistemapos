@@ -89,6 +89,10 @@ export class ProductoFormSheetComponent implements OnInit {
     instancia_capacidad_default: [null as number | null],
     precio_incluye_impuesto: [false],
     es_sobre_pedido: [false],
+    duracion_minutos: [null as number | null],
+    tiempo_buffer_minutos: [0],
+    requiere_recurso: [false],
+    disponibilidad_cruzada_activa: [false],
     precio_mayoreo: [null as number | null],
     cantidad_minima_mayoreo: [null as number | null],
     monedero_pct: [null as number | null],
@@ -253,6 +257,8 @@ export class ProductoFormSheetComponent implements OnInit {
 
     const numOrNull = (v: any) => (v === '' || v == null ? null : Number(v));
     data.incremento_minimo_venta = numOrNull(data.incremento_minimo_venta);
+    data.duracion_minutos = numOrNull(data.duracion_minutos);
+    data.tiempo_buffer_minutos = Number(data.tiempo_buffer_minutos) || 0;
     data.instancia_capacidad_default = numOrNull(data.instancia_capacidad_default);
     data.precio_mayoreo = numOrNull(data.precio_mayoreo);
     data.cantidad_minima_mayoreo = numOrNull(data.cantidad_minima_mayoreo);
@@ -269,6 +275,7 @@ export class ProductoFormSheetComponent implements OnInit {
       updateData.cambiar_descripcion = this.form.get('descripcion')?.dirty ?? false;
       updateData.cambiar_unidad_medida_id = this.form.get('unidad_medida_id')?.dirty ?? false;
       updateData.cambiar_incremento_minimo_venta = this.form.get('incremento_minimo_venta')?.dirty ?? false;
+      updateData.cambiar_duracion_minutos = this.form.get('duracion_minutos')?.dirty ?? false;
       updateData.cambiar_instancia_capacidad_default = this.form.get('instancia_capacidad_default')?.dirty ?? false;
       updateData.cambiar_mayoreo =
         (this.form.get('precio_mayoreo')?.dirty || this.form.get('cantidad_minima_mayoreo')?.dirty) ?? false;

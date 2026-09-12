@@ -66,6 +66,16 @@ export const PERMISOS = {
     /** Emitir la venta de un pedido confirmado. */
     facturar: ['pedidos.facturar'],
   },
+  agenda: {
+    /** Alta/baja de recursos, calificar empleados, cargar horarios/excepciones. */
+    administrar: ['agenda.administrar'],
+    /** Crear, listar todas, reofertar, asignar manual, iniciar/completar/cancelar/no-show, facturar cualquier cita. */
+    gestionar: ['citas.gestionar'],
+    /** Ver sólo las citas propias (ofertadas o asignadas). */
+    verPropias: ['citas.ver_propias', 'citas.gestionar'],
+    /** Aceptar/rechazar una oferta propia; iniciar/completar la propia. */
+    responderOferta: ['citas.responder_oferta'],
+  },
   reportes: {
     leer: ['reportes.leer', 'REP_VER'],
   },

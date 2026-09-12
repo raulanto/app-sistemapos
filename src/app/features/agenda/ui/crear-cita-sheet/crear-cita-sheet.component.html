@@ -1,0 +1,84 @@
+<div class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
+  <div z-field>
+    <label z-field-label>Servicio *</label>
+    @if (cargandoServicios()) {
+      <z-skeleton class="h-9 w-full" />
+    } @else {
+      <z-select [ngModel]="servicioId()" (ngModelChange)="servicioId.set($event)" placeholder="Elegir servicio">
+        @for (s of servicios(); track s.id) {
+          <z-select-item [zValue]="s.id">{{ s.nombre }} · {{ s.duracion_minutos }} min</z-select-item>
+        } @empty {
+          <z-select-item zValue="" [zDisabled]="true">No hay servicios agendables</z-select-item>
+        }
+      </z-select>
+      @if (servicios().length === 0) {
+        <p z-field-description>
+          Ningún producto tiene "duración" cargada. Edítalo en Inventario → sección "Agenda" para que aparezca aquí.
+        </p>
+      }
+    }
+  </div>
+
+  <div z-field>
+    <label z-field-label for="fecha_hora_inicio">Fecha y hora *</label>
+    <input z-input id="fecha_hora_inicio" type="datetime-local" [ngModel]="fechaHoraInicio()" (ngModelChange)="fechaHoraInicio.set($event)" />
+  </div>
+
+  @if (requiereRecurso()) {
+    <div z-field>
+      <label z-field-label>Recurso</label>
+      <z-select [ngModel]="recursoId()" (ngModelChange)="recursoId.set($event)" placeholder="Automático (elige uno libre)">
+        <z-select-item zValue="">Automático (elige uno libre)</z-select-item>
+        @for (r of recursos(); track r.id) {
+          <z-select-item [zValue]="r.id">{{ r.nombre }}</z-select-item>
+        }
+      </z-select>
+      <p z-field-description>Este servicio necesita silla/cabina/equipo. Déjalo en automático si no importa cuál.</p>
+    </div>
+  }
+
+  @if (permiteCruzada()) {
+    <div z-field zOrientation="horizontal">
+      <z-checkbox [ngModel]="disponibilidadCruzada()" (ngModelChange)="disponibilidadCruzada.set($event)" />
+      <label z-field-label>Ofertar también a empleados de otra sucursal</label>
+    </div>
+  }
+
+  <div z-field>
+    <label z-field-label>Cliente (opcional)</label>
+    @if (cliente(); as c) {
+      <div class="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+        <span>{{ c.nombre }}</span>
+        <button type="button" z-button zType="ghost" zSize="icon-sm" (click)="quitarCliente()">
+          <ng-icon name="lucideX" class="size-4" />
+        </button>
+      </div>
+    } @else {
+      <div class="flex gap-2">
+        <input z-input class="flex-1" placeholder="Buscar cliente por nombre o teléfono…"
+               [ngModel]="clienteBusqueda()" (ngModelChange)="clienteBusqueda.set($event)"
+               (keyup.enter)="buscarClientes()" />
+        <button type="button" z-button zType="outline" zSize="icon" [zLoading]="buscandoClientes()" (click)="buscarClientes()">
+          <ng-icon name="lucideSearch" class="size-4" />
+        </button>
+      </div>
+      @if (buscandoClientes()) {
+        <z-skeleton class="mt-1 h-9 w-full" />
+      } @else if (clientesEncontrados().length) {
+        <ul class="mt-1 divide-y rounded-md border text-sm">
+          @for (c of clientesEncontrados(); track c.id) {
+            <li class="cursor-pointer px-3 py-2 hover:bg-muted" (click)="elegirCliente(c)">
+              {{ c.nombre }} <span class="text-muted-foreground">{{ c.telefono }}</span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p z-field-description>Sin resultados{{ clienteBusqueda().trim() ? ' para "' + clienteBusqueda().trim() + '"' : '' }}.</p>
+      }
+    }
+  </div>
+
+  <p class="text-[0.8rem] text-muted-foreground">
+    Al crear la cita se les ofrece a todos los empleados calificados y libres a la vez; el primero que acepte se la queda.
+  </p>
+</div>

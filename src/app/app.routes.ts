@@ -12,6 +12,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
+        path: 'dashboard',
+        loadChildren: () =>
+          import('./features/dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES),
+      },
+      {
         path: 'usuarios',
         loadChildren: () =>
           import('./features/usuarios/usuarios.routes').then((m) => m.USUARIOS_ROUTES),
@@ -33,6 +38,10 @@ export const routes: Routes = [
       {
         path: 'pedidos',
         loadChildren: () => import('./features/pedidos/pedidos.routes').then((m) => m.PEDIDOS_ROUTES),
+      },
+      {
+        path: 'agenda',
+        loadChildren: () => import('./features/agenda/agenda.routes').then((m) => m.AGENDA_ROUTES),
       },
       {
         path: 'promociones',
@@ -58,7 +67,7 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/sucursales/sucursales.routes').then((m) => m.SUCURSALES_ROUTES),
       },
-      { path: '', redirectTo: '/ventas', pathMatch: 'full' },
+      { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
     ],
   },
 ];

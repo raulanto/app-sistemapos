@@ -1,0 +1,13 @@
+<div class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
+  <div z-field>
+    <label z-field-label>Empleado *</label>
+    <z-select [ngModel]="empleadoId()" (ngModelChange)="empleadoId.set($event)" placeholder="Elegir empleado">
+      @for (u of usuarios; track u.id) {
+        <z-select-item [zValue]="u.id">{{ u.nombre }}</z-select-item>
+      } @empty {
+        <z-select-item zValue="" [zDisabled]="true">Sin candidatos calificados</z-select-item>
+      }
+    </z-select>
+    <p z-field-description>Sólo se listan empleados ya calificados para este servicio; igual se revalida que estén libres en ese horario.</p>
+  </div>
+</div>

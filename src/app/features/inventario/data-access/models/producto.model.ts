@@ -37,6 +37,14 @@ export interface ProductoResponse {
   cantidad_minima_mayoreo?: string | null;
   /** No se mantiene en stock; se vende sin existencia. */
   es_sobre_pedido?: boolean;
+  /** Agendable en `/agenda` sólo si `tipo: 'servicio'` y esto tiene valor. Cuánto dura la cita. */
+  duracion_minutos?: number | null;
+  /** Limpieza/preparación entre citas; se suma a la duración al calcular el fin de la cita. */
+  tiempo_buffer_minutos?: number;
+  /** Si la cita necesita silla/cabina/equipo además del empleado. */
+  requiere_recurso?: boolean;
+  /** Permite ofertar la cita a empleados con horario declarado en otra sucursal. */
+  disponibilidad_cruzada_activa?: boolean;
   /** Monedero (cashback): % del subtotal por línea al vender con teléfono. Si null, se usa `monedero_monto`. */
   monedero_pct?: string | null;
   /** Monedero: monto fijo por unidad. Ambos null = el producto no genera cashback. */
@@ -84,6 +92,11 @@ export interface CrearProductoRequest {
   monedero_monto?: number | string | null;
   tipo?: TipoProducto;
   activo?: boolean;
+  /** Obligatorio para que el servicio sea agendable en `/agenda`. */
+  duracion_minutos?: number | null;
+  tiempo_buffer_minutos?: number;
+  requiere_recurso?: boolean;
+  disponibilidad_cruzada_activa?: boolean;
 }
 
 export interface ActualizarProductoRequest {
@@ -122,6 +135,12 @@ export interface ActualizarProductoRequest {
   codigo_barras?: string | null;
   cambiar_codigo_barras?: boolean;
   cambiar_descripcion?: boolean;
+  duracion_minutos?: number | null;
+  /** Con el flag en true, `duracion_minutos: null` sí lo borra (deja de ser agendable). */
+  cambiar_duracion_minutos?: boolean;
+  tiempo_buffer_minutos?: number | null;
+  requiere_recurso?: boolean | null;
+  disponibilidad_cruzada_activa?: boolean | null;
 }
 
 export interface ProductoQuery {

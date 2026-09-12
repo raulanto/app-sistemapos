@@ -5,6 +5,8 @@ import { lucideSearch } from '@ng-icons/lucide';
 
 import {
   BoxesIcon,
+  CalendarCheckIcon,
+  CalendarDaysIcon,
   ChartColumnIcon,
   CirclePlusIcon,
   ClipboardListIcon,
@@ -109,7 +111,7 @@ export class AppSidebarComponent {
   protected readonly navMain: readonly Sidebar07NavItem[] = [
     {
       title: 'Dashboard',
-      url: '/',
+      url: '/dashboard',
       icon: LayoutDashboardIcon,
       isActive: true,
     },
@@ -132,6 +134,15 @@ export class AppSidebarComponent {
       items: [
         { title: 'Tablero', url: '/pedidos', icon: KanbanIcon },
         { title: 'Nuevo pedido', url: '/pedidos/nuevo', icon: CirclePlusIcon },
+      ],
+    },
+    {
+      title: 'Agenda',
+      url: '/agenda',
+      icon: CalendarDaysIcon,
+      items: [
+        { title: 'Citas', url: '/agenda', icon: CalendarCheckIcon },
+        { title: 'Catálogo', url: '/agenda/catalogo', icon: FolderKanbanIcon },
       ],
     },
     {
