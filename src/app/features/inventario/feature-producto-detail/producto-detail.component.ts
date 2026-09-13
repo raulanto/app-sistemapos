@@ -29,6 +29,8 @@ import {
   lucideCircleCheck,
   lucideUser,
   lucideScale,
+  lucideStar,
+  lucideTruck,
 } from '@ng-icons/lucide';
 
 import { ProductoService } from '../data-access/producto.service';
@@ -60,6 +62,9 @@ import { ZardSeparatorComponent } from '../../../shared/components/separator/sep
 import { ZardAlertDialogService } from '../../../shared/components/alert-dialog/alert-dialog.service';
 import { ImagenGaleriaComponent } from '../ui/imagen-galeria/imagen-galeria.component';
 import { ComponenteResponse } from '../data-access/inventario.models';
+import { ProveedorService } from '../../proveedores/data-access/proveedor.service';
+import { mensajeProveedorError, ProductoProveedorResponse, ProveedorResponse } from '../../proveedores/data-access/proveedores.models';
+import { ProductoProveedorFormSheetComponent } from '../../proveedores/ui/producto-proveedor-form-sheet/producto-proveedor-form-sheet.component';
 
 @Component({
   selector: 'app-producto-detail',
@@ -108,6 +113,8 @@ import { ComponenteResponse } from '../data-access/inventario.models';
       lucideCircleCheck,
       lucideUser,
       lucideScale,
+      lucideStar,
+      lucideTruck,
     }),
   ]
 })
@@ -124,9 +131,11 @@ export class ProductoDetailComponent implements OnInit {
   private readonly sonner = inject(ZardSonnerService);
   private readonly alertDialog = inject(ZardAlertDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly proveedorService = inject(ProveedorService);
 
   readonly canEditar = computed(() => this.authService.hasPermission(...PERMISOS.inventario.editar));
   readonly canCrearMovimiento = computed(() => this.authService.hasPermission(...PERMISOS.inventario.crear));
+  readonly canGestionarProveedores = computed(() => this.authService.hasPermission(...PERMISOS.proveedores.productoProveedor));
 
   producto = signal<ProductoResponse | null>(null);
   movimientos = signal<MovimientoResponse[]>([]);
@@ -294,6 +303,7 @@ export class ProductoDetailComponent implements OnInit {
       next: (prod) => {
         this.producto.set(prod);
         this.cargarMovimientos(id);
+        this.cargarProveedoresProducto(id);
         if (prod.tipo !== 'kit') {
           this.cargarUnidades(id);
           this.cargarDesglose(id);
@@ -338,6 +348,96 @@ export class ProductoDetailComponent implements OnInit {
       error: (err) => {
         console.error('Error al desglosar existencias:', err);
         this.desglose.set(null);
+      },
+    });
+  }
+
+  /** Proveedores vinculados a este producto (ficha «Proveedores»). */
+  readonly proveedoresProducto = signal<{ link: ProductoProveedorResponse; nombreProveedor: string }[]>([]);
+  readonly cargandoProveedoresProducto = signal(true);
+
+  cargarProveedoresProducto(productoId: string) {
+    this.cargandoProveedoresProducto.set(true);
+    this.proveedorService.listarProveedoresDeProducto(productoId, true).subscribe({
+      next: (links) => {
+        if (links.length === 0) {
+          this.proveedoresProducto.set([]);
+          this.cargandoProveedoresProducto.set(false);
+          return;
+        }
+        forkJoin(
+          links.map((link) => this.proveedorService.obtener(link.proveedor_id).pipe(catchError(() => of(null)))),
+        ).subscribe((provs) => {
+          this.proveedoresProducto.set(
+            links.map((link, i) => ({ link, nombreProveedor: (provs[i] as ProveedorResponse | null)?.razon_social ?? link.proveedor_id.slice(0, 8) })),
+          );
+          this.cargandoProveedoresProducto.set(false);
+          this.cdr.markForCheck();
+        });
+      },
+      error: () => this.cargandoProveedoresProducto.set(false),
+    });
+  }
+
+  agregarProveedor() {
+    const prod = this.producto();
+    if (!prod) return;
+    this.sheetService.create({
+      zTitle: 'Vincular proveedor',
+      zDescription: `Agrega un proveedor para ${prod.nombre}.`,
+      zContent: ProductoProveedorFormSheetComponent,
+      zSize: 'lg',
+      zData: { productoId: prod.id },
+      zOkText: 'Vincular',
+      zCancelText: 'Cancelar',
+      zOnOk: (instance: any) => {
+        const obs = instance.save();
+        if (!obs) return false;
+        return new Promise<void>((resolve, reject) => {
+          obs.subscribe({
+            next: () => {
+              this.sonner.success('Proveedor vinculado');
+              this.cargarProveedoresProducto(prod.id);
+              resolve();
+            },
+            error: (err: unknown) => {
+              this.sonner.error(mensajeProveedorError(err, 'No se pudo vincular el proveedor'));
+              reject(err);
+            },
+          });
+        });
+      },
+    });
+  }
+
+  marcarPrincipalProveedor(fila: { link: ProductoProveedorResponse }) {
+    const prod = this.producto();
+    if (!prod) return;
+    this.proveedorService.marcarPrincipal(prod.id, fila.link.id).subscribe({
+      next: () => {
+        this.sonner.success('Marcado como proveedor principal');
+        this.cargarProveedoresProducto(prod.id);
+      },
+      error: (err) => this.sonner.error(mensajeProveedorError(err, 'No se pudo marcar como principal')),
+    });
+  }
+
+  desvincularProveedorProducto(fila: { link: ProductoProveedorResponse; nombreProveedor: string }) {
+    const prod = this.producto();
+    if (!prod) return;
+    this.alertDialog.confirm({
+      zTitle: `¿Desvincular ${fila.nombreProveedor}?`,
+      zDescription: 'Este producto dejará de comprarse a ese proveedor.',
+      zOkText: 'Desvincular',
+      zOkDestructive: true,
+      zOnOk: () => {
+        this.proveedorService.desvincularProveedor(prod.id, fila.link.id).subscribe({
+          next: () => {
+            this.sonner.success('Vínculo desactivado');
+            this.cargarProveedoresProducto(prod.id);
+          },
+          error: (err) => this.sonner.error(mensajeProveedorError(err, 'No se pudo desvincular')),
+        });
       },
     });
   }

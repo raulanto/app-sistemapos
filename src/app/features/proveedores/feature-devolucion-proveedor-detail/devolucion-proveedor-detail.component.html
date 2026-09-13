@@ -1,0 +1,92 @@
+<div class="p-6 w-full max-w-4xl mx-auto space-y-6">
+  <a routerLink="/proveedores/devoluciones" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+    <ng-icon name="lucideArrowLeft" class="size-4" /> Devoluciones
+  </a>
+
+  @if (loading()) {
+    <z-skeleton class="h-10 w-72" />
+    <z-skeleton class="h-56 w-full" />
+  } @else if (error() || !devolucion()) {
+    <z-empty zIcon="lucideBan" zTitle="Devolución no encontrada" zDescription="El folio no existe o no tienes acceso." class="py-16" />
+  } @else if (devolucion(); as d) {
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div class="space-y-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <h1 class="text-2xl font-bold tracking-tight">{{ d.folio }}</h1>
+          <z-badge [zType]="estadoBadge(d.estado)">{{ labelEstado(d.estado) }}</z-badge>
+        </div>
+        <p class="text-sm text-muted-foreground">{{ d.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        @if (d.estado === 'pendiente' && canGestionar()) {
+          <button z-button zType="default" zSize="sm" [zLoading]="working()" (click)="enviar()">
+            <ng-icon name="lucideSend" class="mr-2 size-4" /> Enviar al proveedor
+          </button>
+        }
+        @if (d.estado === 'enviada' && canGestionar()) {
+          <button z-button zType="default" zSize="sm" (click)="cerrar()">
+            <ng-icon name="lucideCheck" class="mr-2 size-4" /> Cerrar devolución
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+      <div class="lg:col-span-2 space-y-6">
+        <div z-card>
+          <z-card-header><z-card-title zTitle="Líneas devueltas" class="text-base" /></z-card-header>
+          <z-card-content class="overflow-x-auto p-0">
+            <table z-table>
+              <thead z-table-header class="bg-muted/50">
+                <tr z-table-row>
+                  <th z-table-head>Producto</th>
+                  <th z-table-head class="text-right">Cantidad</th>
+                </tr>
+              </thead>
+              <tbody z-table-body>
+                @for (l of d.lineas; track l.id) {
+                  <tr z-table-row>
+                    <td z-table-cell class="font-medium">
+                      <a [routerLink]="['/inventario/productos', l.producto_id]" class="text-primary hover:underline">
+                        {{ nombreProducto(l.producto_id) }}
+                      </a>
+                    </td>
+                    <td z-table-cell class="text-right tabular-nums">{{ l.cantidad }}</td>
+                  </tr>
+                } @empty {
+                  <tr z-table-row><td z-table-cell colspan="2" class="p-0"><z-empty zTitle="Sin líneas" class="py-10" /></td></tr>
+                }
+              </tbody>
+            </table>
+          </z-card-content>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <div z-card>
+          <z-card-header><z-card-title zTitle="Resolución" class="text-base" /></z-card-header>
+          <z-card-content>
+            <dl class="space-y-2 text-sm">
+              <div class="flex justify-between gap-3">
+                <dt class="text-muted-foreground">Recepción</dt>
+                <dd><a [routerLink]="['/proveedores/recepciones', d.recepcion_id]" class="text-primary hover:underline">Ver recepción</a></dd>
+              </div>
+              @if (d.estado === 'cerrada') {
+                <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Resultado</dt><dd>{{ labelResultado(d.resultado) }}</dd></div>
+                @if (d.resultado === 'aceptada_proveedor') {
+                  <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Resolución</dt><dd>{{ labelResolucion(d.tipo_resolucion) }}</dd></div>
+                }
+                <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Cierre</dt><dd>{{ d.fecha_cierre | date:'dd/MM/yyyy' }}</dd></div>
+              } @else if (d.fecha_envio) {
+                <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Enviada</dt><dd>{{ d.fecha_envio | date:'dd/MM/yyyy' }}</dd></div>
+              }
+              @if (d.notas) {
+                <div class="pt-2 text-muted-foreground">{{ d.notas }}</div>
+              }
+            </dl>
+          </z-card-content>
+        </div>
+      </div>
+    </div>
+  }
+</div>

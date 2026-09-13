@@ -1,6 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, Injector, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 
-import { ZardDialogService } from '@/shared/components/dialog';
+import { filter, take } from 'rxjs';
+
+import { ZardDialogRef, ZardDialogService } from '@/shared/components/dialog';
 
 import { CommandPaletteComponent } from './command-palette.component';
 
@@ -12,9 +15,17 @@ import { CommandPaletteComponent } from './command-palette.component';
 @Injectable({ providedIn: 'root' })
 export class CommandPaletteService {
   private readonly dialog = inject(ZardDialogService);
+  private readonly injector = inject(Injector);
+  private ref: ZardDialogRef<CommandPaletteComponent> | null = null;
 
+  /** Ctrl/Cmd+K vuelve a llamar a esto: si ya está abierto, lo cierra en vez de apilar otro. */
   open(): void {
-    this.dialog.create({
+    if (this.ref) {
+      this.ref.close();
+      return;
+    }
+
+    this.ref = this.dialog.create({
       zContent: CommandPaletteComponent,
       zTitle: 'Buscar',
       zHideHeader: true,
@@ -22,5 +33,12 @@ export class CommandPaletteService {
       zClosable: false,
       zCustomClasses: 'gap-0 bg-transparent p-0 shadow-none ring-0 sm:max-w-lg',
     });
+
+    toObservable(this.ref.isClosing, { injector: this.injector })
+      .pipe(
+        filter(Boolean),
+        take(1),
+      )
+      .subscribe(() => (this.ref = null));
   }
 }

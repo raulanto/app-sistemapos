@@ -1,0 +1,93 @@
+<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto" (ngSubmit)="save()">
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label>Proveedor *</label>
+      <z-select formControlName="proveedor_id" placeholder="Selecciona un proveedor">
+        @for (p of proveedores(); track p.id) {
+          <z-select-item [zValue]="p.id">{{ p.codigo }} · {{ p.razon_social }}</z-select-item>
+        }
+      </z-select>
+    </div>
+    <div z-field>
+      <label z-field-label for="numero_factura">Factura</label>
+      <input z-input id="numero_factura" type="text" formControlName="numero_factura" placeholder="Opcional" />
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label for="numero_remision">Remisión</label>
+      <input z-input id="numero_remision" type="text" formControlName="numero_remision" placeholder="Opcional" />
+    </div>
+    <div z-field>
+      <label z-field-label for="transportista">Transportista</label>
+      <input z-input id="transportista" type="text" formControlName="transportista" placeholder="Opcional" />
+    </div>
+  </div>
+
+  <div class="space-y-3">
+    <div class="flex items-center justify-between">
+      <h3 class="text-sm font-semibold">Líneas recibidas</h3>
+      <button type="button" z-button zType="outline" zSize="sm" (click)="agregarLinea()">
+        <ng-icon name="lucidePlus" class="mr-1.5 size-3.5" /> Agregar línea
+      </button>
+    </div>
+
+    <div class="space-y-3" formArrayName="lineas">
+      @for (linea of lineas.controls; track $index; let i = $index) {
+        <div [formGroupName]="i" class="space-y-2 rounded-lg border p-3">
+          <div class="grid grid-cols-12 items-end gap-2">
+            <div z-field class="col-span-5">
+              <label z-field-label>Producto</label>
+              <z-select formControlName="producto_id" placeholder="Producto">
+                @for (p of productos(); track p.id) {
+                  <z-select-item [zValue]="p.id">{{ p.sku }} · {{ p.nombre }}</z-select-item>
+                }
+              </z-select>
+            </div>
+            <div z-field class="col-span-2">
+              <label z-field-label>Esperada</label>
+              <input z-input type="number" min="0" step="0.01" formControlName="cantidad_esperada" placeholder="Opcional" />
+            </div>
+            <div z-field class="col-span-2">
+              <label z-field-label>Buena</label>
+              <input z-input type="number" min="0" step="0.01" formControlName="cantidad_recibida_buena" />
+            </div>
+            <div z-field class="col-span-2">
+              <label z-field-label>Defectuosa</label>
+              <input z-input type="number" min="0" step="0.01" formControlName="cantidad_defectuosa" />
+            </div>
+            <div class="col-span-1 flex justify-end">
+              <button type="button" z-button zType="ghost" zSize="icon-sm" class="text-destructive"
+                      [disabled]="lineas.length === 1" (click)="quitarLinea(i)">
+                <ng-icon name="lucideTrash" class="size-4" />
+              </button>
+            </div>
+          </div>
+
+          @if (tieneDefecto(i)) {
+            <div class="grid grid-cols-2 gap-2 rounded-md bg-muted/50 p-2">
+              <div z-field [attr.data-invalid]="faltaDefecto(i) || null">
+                <label z-field-label>Motivo del defecto *</label>
+                <z-select formControlName="motivo_defecto" placeholder="Motivo">
+                  @for (m of motivos; track m.value) { <z-select-item [zValue]="m.value">{{ m.label }}</z-select-item> }
+                </z-select>
+              </div>
+              <div z-field [attr.data-invalid]="faltaDefecto(i) || null">
+                <label z-field-label>Acción *</label>
+                <z-select formControlName="accion_defecto" placeholder="Acción">
+                  @for (a of acciones; track a.value) { <z-select-item [zValue]="a.value">{{ a.label }}</z-select-item> }
+                </z-select>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <div z-field>
+    <label z-field-label for="notas">Notas</label>
+    <textarea z-textarea id="notas" formControlName="notas" rows="2" placeholder="Opcional"></textarea>
+  </div>
+</form>

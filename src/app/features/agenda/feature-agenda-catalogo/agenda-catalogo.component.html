@@ -1,0 +1,61 @@
+<div class="p-6 w-full max-w-4xl mx-auto space-y-6">
+  <div>
+    <h1 class="text-6xl font-extrabold">Catálogo de agenda</h1>
+    <p class="text-muted-foreground">Recursos, qué empleados atienden qué servicio, y sus horarios.</p>
+  </div>
+
+  <z-tab-group>
+    <z-tab label="Recursos" zIcon="lucideArmchair">
+      <div class="pt-4 space-y-4">
+        <div class="flex justify-end">
+          <button z-button zType="default" zSize="sm" (click)="crear()">
+            <ng-icon name="lucidePlus" class="mr-2" /> Nuevo recurso
+          </button>
+        </div>
+
+        <div z-card>
+          <z-card-content class="p-0">
+            @if (loading()) {
+              <div class="space-y-2 p-4">
+                <z-skeleton class="h-10 w-full" />
+                <z-skeleton class="h-10 w-full" />
+              </div>
+            } @else if (recursos().length === 0) {
+              <z-empty zIcon="lucideArmchair" zTitle="Sin recursos" zDescription="Crea sillas, cabinas o equipos para servicios que los requieran." class="py-14" />
+            } @else {
+              <ul class="divide-y">
+                @for (r of recursos(); track r.id) {
+                  <li class="flex items-center gap-3 px-4 py-3" [class.opacity-60]="!r.activo">
+                    <span class="font-medium">{{ r.nombre }}</span>
+                    @if (r.tipo) { <z-badge zType="secondary" class="text-[11px]">{{ r.tipo }}</z-badge> }
+                    @if (!r.activo) { <z-badge zType="secondary" class="text-[11px]">Inactivo</z-badge> }
+                    <div class="ml-auto flex items-center gap-1">
+                      <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Editar" (click)="editar(r)">
+                        <ng-icon name="lucidePencil" class="size-4" />
+                      </button>
+                      @if (r.activo) {
+                        <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-destructive" title="Desactivar" (click)="desactivar(r)">
+                          <ng-icon name="lucideBan" class="size-4" />
+                        </button>
+                      } @else {
+                        <button z-button zType="ghost" zSize="icon-sm" class="text-muted-foreground hover:text-primary" title="Reactivar" (click)="reactivar(r)">
+                          <ng-icon name="lucideRotateCcw" class="size-4" />
+                        </button>
+                      }
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </z-card-content>
+        </div>
+      </div>
+    </z-tab>
+
+    <z-tab label="Empleados">
+      <div class="pt-4">
+        <app-empleado-agenda-editor />
+      </div>
+    </z-tab>
+  </z-tab-group>
+</div>

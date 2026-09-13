@@ -1,0 +1,26 @@
+<form class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
+  @let nombre = recursoForm.nombre();
+  @let nombreInvalid = nombre.invalid() && nombre.touched();
+  <div z-field [attr.data-invalid]="nombreInvalid || null">
+    <label z-field-label for="nombre">Nombre *</label>
+    <input
+      z-input
+      id="nombre"
+      type="text"
+      maxlength="80"
+      placeholder="Ej. Silla 1"
+      [formField]="recursoForm.nombre"
+      [attr.aria-invalid]="nombreInvalid || null"
+    />
+    @if (nombreInvalid) {
+      <z-field-error [zErrors]="nombre.errors()" />
+    }
+  </div>
+
+  @if (!isEditing) {
+    <div z-field>
+      <label z-field-label for="tipo">Tipo (opcional)</label>
+      <input z-input id="tipo" type="text" maxlength="30" placeholder="Ej. silla, cabina, equipo" [formField]="recursoForm.tipo" />
+    </div>
+  }
+</form>

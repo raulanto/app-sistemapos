@@ -1,0 +1,30 @@
+<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto" (ngSubmit)="save()">
+  <p class="text-sm text-muted-foreground">
+    Elige qué líneas defectuosas devolver y cuánto de cada una (no puede exceder lo defectuoso registrado).
+  </p>
+
+  <div class="divide-y rounded-lg border" formArrayName="lineas">
+    @for (linea of lineas.controls; track $index; let i = $index) {
+      <div [formGroupName]="i" class="flex flex-wrap items-center gap-3 p-3">
+        <z-checkbox [id]="'incluir-' + i" formControlName="incluir"></z-checkbox>
+        <label [for]="'incluir-' + i" class="flex-1 min-w-40 text-sm font-medium">
+          {{ nombreProducto(elegibles()[i].producto_id) }}
+          <span class="block text-xs font-normal text-muted-foreground">
+            Defectuoso disponible: {{ linea.get('disponible')!.value }}
+          </span>
+        </label>
+        <div z-field class="w-32">
+          <input z-input type="number" min="0.01" [max]="linea.get('disponible')!.value" step="0.01"
+                 formControlName="cantidad" [disabled]="!linea.get('incluir')!.value" />
+        </div>
+      </div>
+    } @empty {
+      <p class="p-4 text-sm text-muted-foreground">Esta recepción no tiene líneas defectuosas marcadas para devolución.</p>
+    }
+  </div>
+
+  <div z-field>
+    <label z-field-label for="notas">Notas</label>
+    <textarea z-textarea id="notas" formControlName="notas" rows="2" placeholder="Opcional"></textarea>
+  </div>
+</form>

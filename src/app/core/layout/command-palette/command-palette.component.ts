@@ -28,7 +28,7 @@ import { ZardEmptyComponent } from '@/shared/components/empty/empty.component';
 import type { CommandPaletteAction, CommandPaletteGroup } from './command-palette.types';
 
 const NAVEGACION: readonly CommandPaletteAction[] = [
-  { label: 'Dashboard', url: '/', icon: 'lucideLayoutDashboard' },
+  { label: 'Dashboard', url: '/dashboard', icon: 'lucideLayoutDashboard' },
   { label: 'Punto de venta', url: '/ventas', icon: 'lucideShoppingCart' },
   { label: 'Pedidos', url: '/pedidos', icon: 'lucideClipboardList' },
   { label: 'Inventario', url: '/inventario/productos', icon: 'lucideBoxes' },

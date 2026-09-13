@@ -1,0 +1,7 @@
+<div class="grid min-h-0 flex-1 auto-rows-min gap-5 px-4 pb-4 overflow-y-auto">
+  <div z-field>
+    <label z-field-label for="motivo">Motivo (opcional)</label>
+    <textarea z-textarea id="motivo" rows="3" placeholder="Ej. el cliente canceló por teléfono"
+              [ngModel]="motivo()" (ngModelChange)="motivo.set($event)"></textarea>
+  </div>
+</div>

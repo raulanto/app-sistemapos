@@ -1,0 +1,373 @@
+<div class="w-full space-y-6 p-6">
+  <div>
+    <h1 class="text-3xl font-bold tracking-tight">Panel general</h1>
+    <p class="text-muted-foreground">
+      @if (nombreUsuario()) {
+        Hola, {{ nombreUsuario() }}. Esto es lo que pasa hoy en cada módulo.
+      } @else {
+        Resumen en vivo de ventas, caja, inventario y más.
+      }
+    </p>
+  </div>
+
+  <ng-template #statGrid let-cards>
+    <div
+      class="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:shadow-xs sm:grid-cols-2 xl:grid-cols-4"
+    >
+      @for (card of cards; track card.description) {
+        <z-card class="gap-3 transition-shadow duration-200 hover:shadow-md">
+          <z-card-header>
+            <z-card-description [zDescription]="card.description" class="text-xs font-medium uppercase tracking-wide" />
+            <z-card-title [zTitle]="card.value" class="mt-1 text-2xl font-semibold tabular-nums lg:text-3xl" />
+            <z-card-action>
+              <z-badge zType="outline" class="gap-1 font-medium">
+                <ng-icon [name]="trendIcon(card.trend)" class="size-3.5" />
+                {{ card.badge }}
+              </z-badge>
+            </z-card-action>
+          </z-card-header>
+          <z-card-footer class="flex-col items-start gap-1 border-t border-border/60 bg-transparent pt-3 text-sm">
+            <div class="line-clamp-1 flex items-center gap-1.5 font-medium">
+              {{ card.headline }}
+              <ng-icon [name]="trendIcon(card.trend)" class="size-4 text-muted-foreground" />
+            </div>
+            <div class="text-xs text-muted-foreground">{{ card.caption }}</div>
+          </z-card-footer>
+        </z-card>
+      }
+    </div>
+  </ng-template>
+
+  @if (cargando()) {
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+        <z-skeleton class="h-32" />
+      }
+    </div>
+  } @else {
+    <!-- Ventas y caja -->
+    @if (canVentas() || canCaja()) {
+      <section class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+            <ng-icon name="lucideWallet" class="size-4" /> Ventas y caja
+          </h2>
+          <a routerLink="/ventas/historial" class="text-xs font-medium text-primary hover:underline">Ver historial →</a>
+        </div>
+        <ng-container *ngTemplateOutlet="statGrid; context: { $implicit: ventasCajaCards() }" />
+
+        @if (canVentas()) {
+          <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <z-card>
+              <z-card-header>
+                <z-card-title zTitle="Ventas por día" />
+                <z-card-description zDescription="Últimos 7 días" />
+              </z-card-header>
+              <z-card-content>
+                @if (ventasPorDiaData().length) {
+                  <z-chart
+                    class="block w-full"
+                    zType="bar"
+                    [zData]="ventasPorDiaData()"
+                    [zSeries]="ventasPorDiaSeries"
+                    [zConfig]="ventasPorDiaConfig"
+                    zXAxisKey="fecha"
+                  >
+                    <z-chart-tooltip />
+                  </z-chart>
+                } @else {
+                  <z-empty zIcon="lucideTrendingUp" zTitle="Sin datos" zDescription="Aún no hay ventas esta semana." class="py-8" />
+                }
+              </z-card-content>
+            </z-card>
+
+            <div class="overflow-hidden rounded-xl border">
+              <div class="overflow-x-auto">
+                <table z-table>
+                  <thead z-table-header class="bg-muted/50">
+                    <tr z-table-row>
+                      <th z-table-head>Fecha</th>
+                      <th z-table-head>Cliente</th>
+                      <th z-table-head class="text-right">Total</th>
+                      <th z-table-head>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody z-table-body>
+                    @for (v of ultimasVentasLista(); track v.id) {
+                      <tr z-table-row class="cursor-pointer hover:bg-muted/40" [routerLink]="['/ventas/historial', v.id]">
+                        <td z-table-cell class="whitespace-nowrap text-xs text-muted-foreground">{{ v.created_at | date: 'dd/MM HH:mm' }}</td>
+                        <td z-table-cell class="text-sm">{{ v.cliente?.nombre || 'Mostrador' }}</td>
+                        <td z-table-cell class="text-right tabular-nums font-medium">{{ v.total | currency }}</td>
+                        <td z-table-cell><z-badge [zType]="ventaBadge(v.estado)" class="capitalize">{{ v.estado.replace('_', ' ') }}</z-badge></td>
+                      </tr>
+                    } @empty {
+                      <tr z-table-row>
+                        <td z-table-cell colspan="4" class="p-0">
+                          <z-empty zIcon="lucideWallet" zTitle="Sin ventas" zDescription="Todavía no hay ventas registradas." class="py-8" />
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Inventario -->
+    @if (inventarioCards().length) {
+      <section class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+            <ng-icon name="lucideBoxes" class="size-4" /> Inventario
+          </h2>
+          <a routerLink="/inventario/productos" class="text-xs font-medium text-primary hover:underline">Ver catálogo →</a>
+        </div>
+        <ng-container *ngTemplateOutlet="statGrid; context: { $implicit: inventarioCards() }" />
+
+        <z-card class="lg:max-w-xl">
+          <z-card-header>
+            <z-card-title zTitle="Productos por tipo" />
+            <z-card-description zDescription="Reparto del catálogo activo" />
+          </z-card-header>
+          <z-card-content>
+            @if (productosPorTipoChart().length) {
+              <z-chart class="block w-full" zType="pie" [zData]="productosPorTipoChart()" [zSeries]="productosTipoSeries" zXAxisKey="tipo">
+                <z-chart-tooltip />
+                <z-chart-legend />
+              </z-chart>
+            } @else {
+              <z-empty zIcon="lucideBoxes" zTitle="Sin datos" zDescription="Registra productos para ver el reparto." class="py-8" />
+            }
+          </z-card-content>
+        </z-card>
+      </section>
+    }
+
+    <!-- Clientes -->
+    @if (clientesCards().length) {
+      <section class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+            <ng-icon name="lucideUsers" class="size-4" /> Clientes
+          </h2>
+          <a routerLink="/clientes" class="text-xs font-medium text-primary hover:underline">Ver clientes →</a>
+        </div>
+        <ng-container *ngTemplateOutlet="statGrid; context: { $implicit: clientesCards() }" />
+
+        <div class="overflow-hidden rounded-xl border">
+          <div class="overflow-x-auto">
+            <table z-table>
+              <thead z-table-header class="bg-muted/50">
+                <tr z-table-row>
+                  <th z-table-head>Cliente</th>
+                  <th z-table-head class="text-right">Límite</th>
+                  <th z-table-head class="text-right">Saldo</th>
+                  <th z-table-head class="text-right">Disponible</th>
+                </tr>
+              </thead>
+              <tbody z-table-body>
+                @for (c of clientesConSaldoTabla(); track c.id) {
+                  <tr z-table-row>
+                    <td z-table-cell class="text-sm font-medium">{{ c.nombre }}</td>
+                    <td z-table-cell class="text-right tabular-nums text-muted-foreground">{{ c.limite_credito | currency }}</td>
+                    <td z-table-cell class="text-right tabular-nums text-amber-600">{{ c.saldo_credito | currency }}</td>
+                    <td z-table-cell class="text-right tabular-nums font-medium">{{ disponibleCredito(c) | currency }}</td>
+                  </tr>
+                } @empty {
+                  <tr z-table-row>
+                    <td z-table-cell colspan="4" class="p-0">
+                      <z-empty zIcon="lucideUsers" zTitle="Sin saldos pendientes" zDescription="Ningún cliente tiene crédito activo." class="py-8" />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- Pedidos -->
+    @if (pedidosCards().length) {
+      <section class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+            <ng-icon name="lucideClipboardList" class="size-4" /> Pedidos
+          </h2>
+          <a routerLink="/pedidos" class="text-xs font-medium text-primary hover:underline">Ver pedidos →</a>
+        </div>
+        <ng-container *ngTemplateOutlet="statGrid; context: { $implicit: pedidosCards() }" />
+
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <z-card>
+            <z-card-header>
+              <z-card-title zTitle="Pedidos por estado" />
+              <z-card-description zDescription="Todo el histórico" />
+            </z-card-header>
+            <z-card-content>
+              @if (pedidosPorEstadoChart().length) {
+                <z-chart
+                  class="block w-full"
+                  zType="bar"
+                  [zData]="pedidosPorEstadoChart()"
+                  [zSeries]="pedidosEstadoSeries"
+                  [zConfig]="pedidosEstadoConfig"
+                  zXAxisKey="estado"
+                >
+                  <z-chart-tooltip />
+                </z-chart>
+              } @else {
+                <z-empty zIcon="lucideClipboardList" zTitle="Sin datos" zDescription="Todavía no hay pedidos registrados." class="py-8" />
+              }
+            </z-card-content>
+          </z-card>
+
+          <div class="overflow-hidden rounded-xl border">
+            <div class="overflow-x-auto">
+              <table z-table>
+                <thead z-table-header class="bg-muted/50">
+                  <tr z-table-row>
+                    <th z-table-head>Fecha</th>
+                    <th z-table-head>Teléfono</th>
+                    <th z-table-head class="text-right">Total</th>
+                    <th z-table-head>Estado</th>
+                    <th z-table-head>Entrega</th>
+                  </tr>
+                </thead>
+                <tbody z-table-body>
+                  @for (p of pedidosRecientesLista(); track p.id) {
+                    <tr z-table-row class="cursor-pointer hover:bg-muted/40" [routerLink]="['/pedidos', p.id]">
+                      <td z-table-cell class="whitespace-nowrap text-xs text-muted-foreground">{{ p.created_at | date: 'dd/MM HH:mm' }}</td>
+                      <td z-table-cell class="text-sm">{{ p.telefono || '—' }}</td>
+                      <td z-table-cell class="text-right tabular-nums font-medium">{{ p.total | currency }}</td>
+                      <td z-table-cell><z-badge [zType]="pedidoBadge(p.estado)" class="capitalize">{{ p.estado }}</z-badge></td>
+                      <td z-table-cell>
+                        @if (p.estado_entrega) {
+                          <z-badge [zType]="entregaBadge(p.estado_entrega)" class="capitalize">{{ p.estado_entrega.replace('_', ' ') }}</z-badge>
+                        } @else {
+                          <span class="text-xs text-muted-foreground">—</span>
+                        }
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr z-table-row>
+                      <td z-table-cell colspan="5" class="p-0">
+                        <z-empty zIcon="lucideClipboardList" zTitle="Sin pedidos" zDescription="Todavía no hay pedidos registrados." class="py-8" />
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- Promociones -->
+    @if (promocionesCards().length) {
+      <section class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+            <ng-icon name="lucideTag" class="size-4" /> Promociones
+          </h2>
+          <a routerLink="/promociones" class="text-xs font-medium text-primary hover:underline">Ver promociones →</a>
+        </div>
+        <ng-container *ngTemplateOutlet="statGrid; context: { $implicit: promocionesCards() }" />
+
+        <div class="overflow-hidden rounded-xl border">
+          <div class="overflow-x-auto">
+            <table z-table>
+              <thead z-table-header class="bg-muted/50">
+                <tr z-table-row>
+                  <th z-table-head>Nombre</th>
+                  <th z-table-head>Tipo</th>
+                  <th z-table-head>Cupón</th>
+                  <th z-table-head>Vigente hasta</th>
+                </tr>
+              </thead>
+              <tbody z-table-body>
+                @for (pr of promocionesTabla(); track pr.id) {
+                  <tr z-table-row>
+                    <td z-table-cell class="text-sm font-medium">{{ pr.nombre }}</td>
+                    <td z-table-cell class="text-sm capitalize text-muted-foreground">{{ pr.tipo.replace('_', ' ') }}</td>
+                    <td z-table-cell>
+                      <z-badge [zType]="pr.requiere_cupon ? 'secondary' : 'outline'">{{ pr.requiere_cupon ? 'Requiere' : 'No' }}</z-badge>
+                    </td>
+                    <td z-table-cell class="text-xs text-muted-foreground">{{ pr.vigente_hasta ? (pr.vigente_hasta | date: 'dd/MM/yyyy') : 'Sin límite' }}</td>
+                  </tr>
+                } @empty {
+                  <tr z-table-row>
+                    <td z-table-cell colspan="4" class="p-0">
+                      <z-empty zIcon="lucideTag" zTitle="Sin promociones activas" zDescription="No hay promociones vigentes." class="py-8" />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- Sucursales -->
+    <section class="space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+          <ng-icon name="lucideLandmark" class="size-4" /> Sucursales
+        </h2>
+        <a routerLink="/sucursales" class="text-xs font-medium text-primary hover:underline">Ver sucursales →</a>
+      </div>
+      <ng-container *ngTemplateOutlet="statGrid; context: { $implicit: sucursalesCards() }" />
+    </section>
+
+    <!-- Usuarios -->
+    @if (usuariosCards().length) {
+      <section class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+            <ng-icon name="lucideUserCog" class="size-4" /> Usuarios
+          </h2>
+          <a routerLink="/usuarios" class="text-xs font-medium text-primary hover:underline">Ver usuarios →</a>
+        </div>
+        <ng-container *ngTemplateOutlet="statGrid; context: { $implicit: usuariosCards() }" />
+
+        <div class="overflow-hidden rounded-xl border">
+          <div class="overflow-x-auto">
+            <table z-table>
+              <thead z-table-header class="bg-muted/50">
+                <tr z-table-row>
+                  <th z-table-head>Nombre</th>
+                  <th z-table-head>Email</th>
+                  <th z-table-head>Rol</th>
+                  <th z-table-head>Último acceso</th>
+                </tr>
+              </thead>
+              <tbody z-table-body>
+                @for (u of usuariosRecientesTabla(); track u.id) {
+                  <tr z-table-row>
+                    <td z-table-cell class="text-sm font-medium">{{ u.nombre }}</td>
+                    <td z-table-cell class="text-sm text-muted-foreground">{{ u.email }}</td>
+                    <td z-table-cell class="text-sm">{{ u.rol?.nombre || '—' }}</td>
+                    <td z-table-cell class="text-xs text-muted-foreground">
+                      {{ u.last_login_at ? (u.last_login_at | date: 'dd/MM/yyyy HH:mm') : 'Nunca' }}
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr z-table-row>
+                    <td z-table-cell colspan="4" class="p-0">
+                      <z-empty zIcon="lucideUserCog" zTitle="Sin usuarios" zDescription="No hay usuarios registrados." class="py-8" />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    }
+  }
+</div>

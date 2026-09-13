@@ -1,0 +1,167 @@
+<div class="space-y-6">
+  <label class="flex flex-col gap-1 text-xs text-muted-foreground max-w-sm">
+    Empleado
+    <z-select [ngModel]="empleadoId()" (ngModelChange)="elegirEmpleado($event)" placeholder="Elegir empleado">
+      @for (u of usuarios(); track u.id) { <z-select-item [zValue]="u.id">{{ u.nombre }}</z-select-item> }
+    </z-select>
+  </label>
+
+  @if (!empleadoId()) {
+    <p class="text-sm text-muted-foreground">Elige un empleado para gestionar sus servicios, horario y excepciones.</p>
+  } @else if (loading()) {
+    <z-skeleton class="h-10 w-full" />
+    <z-skeleton class="h-10 w-full" />
+  } @else {
+    <!-- Servicios que atiende -->
+    <div class="space-y-2">
+      <h3 class="text-sm font-semibold">Servicios que atiende</h3>
+      <div class="flex flex-wrap gap-2">
+        @for (s of serviciosAgendables(); track s.id) {
+          <button type="button" z-button [zType]="calificadoIds().has(s.id) ? 'default' : 'outline'" zSize="sm"
+                  (click)="toggleServicio(s.id)">
+            {{ s.nombre }}
+          </button>
+        } @empty {
+          <p class="text-sm text-muted-foreground">No hay servicios agendables en el catálogo.</p>
+        }
+      </div>
+    </div>
+
+    <!-- Horario semanal -->
+    <div class="space-y-2">
+      <h3 class="text-sm font-semibold">Horario semanal</h3>
+      <div class="flex flex-wrap items-end gap-2 rounded-lg border bg-card p-3">
+        <label class="flex flex-col gap-1 text-xs text-muted-foreground">
+          Sucursal
+          <z-select class="w-40" [ngModel]="nuevaSucursalId()" (ngModelChange)="nuevaSucursalId.set($event)">
+            @for (s of sucursalService.sucursales(); track s.id) { <z-select-item [zValue]="s.id">{{ s.nombre }}</z-select-item> }
+          </z-select>
+        </label>
+        <label class="flex flex-col gap-1 text-xs text-muted-foreground">
+          Día
+          <z-select class="w-32" [ngModel]="nuevoDia().toString()" (ngModelChange)="nuevoDia.set(+$event)">
+            @for (d of dias; track d.value) { <z-select-item [zValue]="d.value.toString()">{{ d.label }}</z-select-item> }
+          </z-select>
+        </label>
+        <label class="flex flex-col gap-1 text-xs text-muted-foreground">
+          Desde
+          <input z-input type="time" class="w-28" [ngModel]="nuevoHoraInicio()" (ngModelChange)="nuevoHoraInicio.set($event)" />
+        </label>
+        <label class="flex flex-col gap-1 text-xs text-muted-foreground">
+          Hasta
+          <input z-input type="time" class="w-28" [ngModel]="nuevoHoraFin()" (ngModelChange)="nuevoHoraFin.set($event)" />
+        </label>
+        <button z-button zType="outline" zSize="sm" (click)="agregarHorario()">
+          <ng-icon name="lucidePlus" class="mr-1.5 size-3.5" /> Agregar
+        </button>
+      </div>
+      <div class="divide-y rounded-lg border">
+        @for (h of horarios(); track h.id) {
+          <div class="flex items-center justify-between px-3 py-2 text-sm">
+            <span>{{ labelDia(h.dia_semana) }} · {{ h.hora_inicio }}–{{ h.hora_fin }}</span>
+            <button z-button zType="ghost" zSize="icon-sm" class="text-destructive" (click)="quitarHorario(h)">
+              <ng-icon name="lucideTrash" class="size-4" />
+            </button>
+          </div>
+        } @empty {
+          <p class="p-3 text-sm text-muted-foreground">Sin horario cargado.</p>
+        }
+      </div>
+    </div>
+
+    <!-- Excepciones -->
+    <div class="space-y-2">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-sm font-semibold">Excepciones</h3>
+        <div class="flex items-center gap-1">
+          <button z-button zType="ghost" zSize="icon-sm" title="Rango anterior" (click)="semanaAnterior()">
+            <ng-icon name="lucideChevronLeft" class="size-4" />
+          </button>
+          <button z-button zType="ghost" zSize="sm" (click)="irAHoy()">Hoy</button>
+          <button z-button zType="ghost" zSize="icon-sm" title="Rango siguiente" (click)="semanaSiguiente()">
+            <ng-icon name="lucideChevronRight" class="size-4" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Rango a mano, por si el bloque de 7 días no alcanza -->
+      <div class="flex flex-wrap items-end gap-2">
+        <label class="flex flex-col gap-1 text-xs text-muted-foreground">
+          Desde
+          <input z-input type="date" class="w-40" [ngModel]="rangoInicio()" (ngModelChange)="setRangoInicio($event)" />
+        </label>
+        <label class="flex flex-col gap-1 text-xs text-muted-foreground">
+          Hasta
+          <input z-input type="date" class="w-40" [ngModel]="rangoFin()" (ngModelChange)="setRangoFin($event)" [min]="rangoInicio()" />
+        </label>
+      </div>
+
+      <!-- Tira de días: un punto ámbar marca los que ya tienen alguna excepción -->
+      @if (cargandoRango()) {
+        <z-skeleton class="h-16 w-full" />
+      } @else {
+        <div class="flex gap-1.5 overflow-x-auto pb-1">
+          @for (d of diasRango(); track d.fecha) {
+            <button type="button" (click)="elegirDiaActivo(d.fecha)"
+                    class="flex min-w-16 shrink-0 flex-col items-center gap-1 rounded-lg border px-3 py-2 transition-colors hover:bg-muted"
+                    [class.border-primary]="diaActivo() === d.fecha"
+                    [class.bg-primary/5]="diaActivo() === d.fecha">
+              <span class="text-[10px] uppercase text-muted-foreground">{{ d.corto }}</span>
+              <span class="text-sm font-semibold" [class.text-primary]="d.esHoy">{{ d.diaMes }}</span>
+              <span class="size-1.5 rounded-full" [class.bg-amber-500]="(excepcionesPorFecha()[d.fecha] ?? []).length > 0"></span>
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Día elegido: alta + lista, sólo de ese día -->
+      <div class="space-y-3 rounded-lg border bg-card p-3">
+        <p class="text-sm font-medium capitalize">{{ etiquetaDiaActivo() }}</p>
+
+        <div class="flex flex-wrap items-end gap-2">
+          <label class="flex flex-col gap-1 text-xs text-muted-foreground">
+            Tipo
+            <z-select class="w-44" [ngModel]="nuevoTipoExcepcion()" (ngModelChange)="nuevoTipoExcepcion.set($event)">
+              @for (t of tiposExcepcion; track t.value) { <z-select-item [zValue]="t.value">{{ t.label }}</z-select-item> }
+            </z-select>
+          </label>
+          <label class="flex flex-col gap-1 text-xs text-muted-foreground">
+            Desde (opcional)
+            <input z-input type="time" class="w-28" [ngModel]="nuevaHoraInicioExc()" (ngModelChange)="nuevaHoraInicioExc.set($event)" />
+          </label>
+          <label class="flex flex-col gap-1 text-xs text-muted-foreground">
+            Hasta (opcional)
+            <input z-input type="time" class="w-28" [ngModel]="nuevaHoraFinExc()" (ngModelChange)="nuevaHoraFinExc.set($event)" />
+          </label>
+          <label class="flex flex-col gap-1 text-xs text-muted-foreground flex-1 min-w-40">
+            Motivo (opcional)
+            <input z-input [ngModel]="nuevoMotivoExc()" (ngModelChange)="nuevoMotivoExc.set($event)" placeholder="Ej. cita médica" />
+          </label>
+          <button z-button zType="outline" zSize="sm" (click)="agregarExcepcion()">
+            <ng-icon name="lucidePlus" class="mr-1.5 size-3.5" /> Agregar
+          </button>
+        </div>
+        <p class="text-[0.8rem] text-muted-foreground">
+          "Bloqueo" sin horas = no atiende ese día completo. "Horario especial" reemplaza el horario base ese día.
+        </p>
+
+        <div class="divide-y rounded-md border">
+          @for (e of excepcionesDelDiaActivo(); track e.id) {
+            <div class="flex items-center justify-between px-3 py-2 text-sm">
+              <span>
+                {{ e.tipo === 'bloqueo' ? 'Bloqueo' : 'Horario especial' }}
+                @if (e.hora_inicio && e.hora_fin) { · {{ e.hora_inicio }}–{{ e.hora_fin }} }
+                @if (e.motivo) { <span class="text-muted-foreground"> · {{ e.motivo }}</span> }
+              </span>
+              <button z-button zType="ghost" zSize="icon-sm" class="text-destructive" (click)="quitarExcepcion(diaActivo(), e)">
+                <ng-icon name="lucideTrash" class="size-4" />
+              </button>
+            </div>
+          } @empty {
+            <p class="p-3 text-sm text-muted-foreground">Sin excepciones para este día.</p>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

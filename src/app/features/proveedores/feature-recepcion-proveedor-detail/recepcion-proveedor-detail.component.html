@@ -1,0 +1,91 @@
+<div class="p-6 w-full max-w-4xl mx-auto space-y-6">
+  <a routerLink="/proveedores/recepciones" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+    <ng-icon name="lucideArrowLeft" class="size-4" /> Recepciones
+  </a>
+
+  @if (loading()) {
+    <z-skeleton class="h-10 w-72" />
+    <z-skeleton class="h-56 w-full" />
+  } @else if (error() || !recepcion()) {
+    <z-empty zIcon="lucideBan" zTitle="Recepción no encontrada" zDescription="El folio no existe o no tienes acceso." class="py-16" />
+  } @else if (recepcion(); as r) {
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div class="space-y-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <h1 class="text-2xl font-bold tracking-tight">{{ r.folio }}</h1>
+          <z-badge [zType]="estadoBadge(r.estado)">{{ labelEstado(r.estado) }}</z-badge>
+        </div>
+        <p class="text-sm text-muted-foreground">{{ r.fecha_recepcion | date:'dd/MM/yyyy HH:mm' }}</p>
+      </div>
+      @if (hayDefectuososDevolvibles() && canGestionarDevolucion()) {
+        <button z-button zType="outline" zSize="sm" (click)="crearDevolucion()">
+          <ng-icon name="lucideRotateCcw" class="mr-2 size-4" /> Devolver al proveedor
+        </button>
+      }
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+      <div class="lg:col-span-2 space-y-6">
+        <div z-card>
+          <z-card-header><z-card-title zTitle="Líneas" class="text-base" /></z-card-header>
+          <z-card-content class="overflow-x-auto p-0">
+            <table z-table>
+              <thead z-table-header class="bg-muted/50">
+                <tr z-table-row>
+                  <th z-table-head>Producto</th>
+                  <th z-table-head class="text-right">Esperada</th>
+                  <th z-table-head class="text-right">Buena</th>
+                  <th z-table-head class="text-right">Defectuosa</th>
+                  <th z-table-head>Motivo / acción</th>
+                </tr>
+              </thead>
+              <tbody z-table-body>
+                @for (l of r.lineas; track l.id) {
+                  <tr z-table-row>
+                    <td z-table-cell class="font-medium">
+                      <a [routerLink]="['/inventario/productos', l.producto_id]" class="text-primary hover:underline">
+                        {{ nombreProducto(l.producto_id) }}
+                      </a>
+                    </td>
+                    <td z-table-cell class="text-right tabular-nums">{{ l.cantidad_esperada ?? '—' }}</td>
+                    <td z-table-cell class="text-right tabular-nums text-emerald-600">{{ l.cantidad_recibida_buena }}</td>
+                    <td z-table-cell class="text-right tabular-nums" [class.text-destructive]="+l.cantidad_defectuosa > 0">{{ l.cantidad_defectuosa }}</td>
+                    <td z-table-cell class="text-xs text-muted-foreground">
+                      @if (+l.cantidad_defectuosa > 0) {
+                        {{ labelMotivo(l.motivo_defecto) }} · {{ labelAccion(l.accion_defecto) }}
+                      } @else { — }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr z-table-row><td z-table-cell colspan="5" class="p-0"><z-empty zTitle="Sin líneas" class="py-10" /></td></tr>
+                }
+              </tbody>
+            </table>
+          </z-card-content>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <div z-card>
+          <z-card-header><z-card-title zTitle="Datos" class="text-base" /></z-card-header>
+          <z-card-content>
+            <dl class="space-y-2 text-sm">
+              <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Factura</dt><dd>{{ r.numero_factura || '—' }}</dd></div>
+              <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Remisión</dt><dd>{{ r.numero_remision || '—' }}</dd></div>
+              <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Transportista</dt><dd>{{ r.transportista || '—' }}</dd></div>
+              @if (r.pedido_id) {
+                <div class="flex justify-between gap-3">
+                  <dt class="text-muted-foreground">Pedido</dt>
+                  <dd><a [routerLink]="['/proveedores/pedidos', r.pedido_id]" class="text-primary hover:underline">Ver pedido</a></dd>
+                </div>
+              }
+              @if (r.notas) {
+                <div class="pt-2 text-muted-foreground">{{ r.notas }}</div>
+              }
+            </dl>
+          </z-card-content>
+        </div>
+      </div>
+    </div>
+  }
+</div>

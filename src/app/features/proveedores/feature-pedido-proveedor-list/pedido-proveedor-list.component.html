@@ -1,0 +1,142 @@
+<div class="p-6 w-full space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-6xl font-extrabold">Pedidos a proveedor</h1>
+      <p class="text-muted-foreground">Reabasto: motor de reorden y pedidos manuales, hasta que llega la mercancía.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      @if (canGenerarReorden()) {
+        <button z-button zType="outline" [zLoading]="evaluando()" (click)="evaluarReorden()">
+          <ng-icon name="lucideShuffle" class="mr-2" /> Evaluar reorden
+        </button>
+      }
+      @if (canGestionar()) {
+        <button z-button zType="default" (click)="nuevo()">
+          <ng-icon name="lucidePlus" class="mr-2" /> Nuevo pedido
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Contadores -->
+  <div class="flex flex-wrap gap-2 text-xs">
+    @for (e of estados; track e.value) {
+      <button type="button"
+              class="rounded-lg border px-2.5 py-1.5 transition-colors hover:bg-muted"
+              [class.border-primary]="estado() === e.value"
+              [class.bg-muted]="estado() === e.value"
+              (click)="setEstado(estado() === e.value ? '' : e.value)">
+        {{ e.label }}
+      </button>
+    }
+  </div>
+
+  <!-- Filtros -->
+  <div class="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Sucursal
+      <z-select class="w-44" [ngModel]="sucursalId()" (ngModelChange)="setSucursal($event)">
+        <z-select-item zValue="">Todas</z-select-item>
+        @for (s of sucursalService.sucursales(); track s.id) { <z-select-item [zValue]="s.id">{{ s.nombre }}</z-select-item> }
+      </z-select>
+    </label>
+    @if (hayFiltros()) {
+      <button z-button zType="ghost" zSize="sm" (click)="limpiarFiltros()">
+        <ng-icon name="lucideX" class="mr-1.5 size-3.5" /> Limpiar
+      </button>
+    }
+    <button z-button zType="outline" zSize="sm" class="ml-auto" [zLoading]="loading()" (click)="cargar()">
+      <ng-icon name="lucideRefreshCw" class="mr-1.5 size-3.5" /> Actualizar
+    </button>
+  </div>
+
+  <div class="overflow-hidden rounded-xl border">
+    <div class="overflow-x-auto">
+      <table z-table>
+        <thead z-table-header class="bg-muted/50">
+          <tr z-table-row>
+            <th z-table-head>Folio</th>
+            <th z-table-head>Fecha</th>
+            <th z-table-head>Estado</th>
+            <th z-table-head>Origen</th>
+            <th z-table-head class="text-right">Subtotal</th>
+            <th z-table-head>Entrega estimada</th>
+          </tr>
+        </thead>
+        <tbody z-table-body>
+          @if (loading()) {
+            @for (i of [1,2,3,4,5,6]; track i) {
+              <tr z-table-row><td z-table-cell colspan="6"><z-skeleton class="h-5 w-full" /></td></tr>
+            }
+          } @else {
+            @for (p of pedidos(); track p.id) {
+              <tr z-table-row class="cursor-pointer hover:bg-muted/40" [routerLink]="['/proveedores/pedidos', p.id]">
+                <td z-table-cell class="font-mono text-xs text-primary">{{ p.folio }}</td>
+                <td z-table-cell class="whitespace-nowrap text-xs text-muted-foreground">{{ p.fecha_pedido | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td z-table-cell><z-badge [zType]="estadoBadge(p.estado)">{{ labelEstado(p.estado) }}</z-badge></td>
+                <td z-table-cell class="text-sm text-muted-foreground">{{ p.generado_automaticamente ? 'Reorden automático' : 'Manual' }}</td>
+                <td z-table-cell class="text-right tabular-nums font-medium">{{ p.subtotal | currency }}</td>
+                <td z-table-cell class="whitespace-nowrap text-xs text-muted-foreground">
+                  {{ p.fecha_estimada_entrega ? (p.fecha_estimada_entrega | date:'dd/MM/yyyy') : '—' }}
+                </td>
+              </tr>
+            } @empty {
+              <tr z-table-row>
+                <td z-table-cell colspan="6" class="p-0">
+                  <z-empty
+                    zIcon="lucideShuffle"
+                    zTitle="Sin pedidos"
+                    [zDescription]="hayFiltros() ? 'Ningún pedido coincide con los filtros.' : 'Evalúa el reorden o crea un pedido manual.'"
+                    class="py-12"
+                  />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (!loading() && totalItems() > 0) {
+      <div class="flex flex-col items-center justify-between gap-4 border-t p-3 sm:flex-row">
+        <div class="text-sm text-muted-foreground tabular-nums">
+          {{ totalItems() }} pedido(s) · página {{ page() }} de {{ totalPages() }}
+        </div>
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium">Filas</span>
+            <z-select [ngModel]="pageSize().toString()" (ngModelChange)="setPageSize($event)">
+              <z-select-item zValue="20">20</z-select-item>
+              <z-select-item zValue="50">50</z-select-item>
+              <z-select-item zValue="100">100</z-select-item>
+            </z-select>
+          </div>
+          @if (totalPages() > 1) {
+            <z-pagination [zTotal]="totalPages()" [zPageIndex]="page()" [zContent]="content" />
+            <ng-template #content>
+              <ul z-pagination-content>
+                <li z-pagination-item>
+                  <z-pagination-previous (click)="prev()" [zDisabled]="page() === 1" />
+                </li>
+                @for (p of pages(); track p) {
+                  <li z-pagination-item>
+                    <button type="button" z-pagination-button [zActive]="p === page()" (click)="irAPagina(p)">
+                      <span class="sr-only">Ir a página</span>
+                      {{ p }}
+                    </button>
+                  </li>
+                }
+                @if (pages().length > 0 && pages()[pages().length - 1] < totalPages()) {
+                  <li z-pagination-item><z-pagination-ellipsis /></li>
+                }
+                <li z-pagination-item>
+                  <z-pagination-next (click)="next()" [zDisabled]="page() === totalPages()" />
+                </li>
+              </ul>
+            </ng-template>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

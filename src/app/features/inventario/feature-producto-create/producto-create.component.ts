@@ -96,6 +96,10 @@ export class ProductoCreateComponent implements OnInit {
     instancia_capacidad_default: [null as number | null],
     precio_incluye_impuesto: [false],
     es_sobre_pedido: [false],
+    duracion_minutos: [null as number | null],
+    tiempo_buffer_minutos: [0],
+    requiere_recurso: [false],
+    disponibilidad_cruzada_activa: [false],
     precio_mayoreo: [null as number | null],
     cantidad_minima_mayoreo: [null as number | null],
     monedero_pct: [null as number | null],
@@ -288,6 +292,14 @@ export class ProductoCreateComponent implements OnInit {
       // El backend fuerza permite_venta_fraccionada=true para este tipo.
       this.form.patchValue({ permite_venta_fraccionada: true });
     }
+    if (tipo !== 'servicio') {
+      this.form.patchValue({
+        duracion_minutos: null,
+        tiempo_buffer_minutos: 0,
+        requiere_recurso: false,
+        disponibilidad_cruzada_activa: false,
+      });
+    }
   }
 
   cargarCategorias() {
@@ -416,6 +428,8 @@ export class ProductoCreateComponent implements OnInit {
 
     const numOrNull = (v: any) => (v === '' || v == null ? null : Number(v));
     data.incremento_minimo_venta = numOrNull(data.incremento_minimo_venta);
+    data.duracion_minutos = numOrNull(data.duracion_minutos);
+    data.tiempo_buffer_minutos = Number(data.tiempo_buffer_minutos) || 0;
     data.instancia_capacidad_default = numOrNull(data.instancia_capacidad_default);
     data.precio_mayoreo = numOrNull(data.precio_mayoreo);
     data.cantidad_minima_mayoreo = numOrNull(data.cantidad_minima_mayoreo);

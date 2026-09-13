@@ -1,0 +1,70 @@
+<div class="p-6 w-full space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-6xl font-extrabold">Recepciones</h1>
+      <p class="text-muted-foreground">Mercancía recibida de proveedores: lo bueno entra a stock, lo defectuoso no.</p>
+    </div>
+    @if (canRegistrar()) {
+      <button z-button zType="default" (click)="nueva()">
+        <ng-icon name="lucidePlus" class="mr-2" /> Nueva recepción
+      </button>
+    }
+  </div>
+
+  <div class="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Sucursal
+      <z-select class="w-44" [ngModel]="sucursalId()" (ngModelChange)="setSucursal($event)">
+        <z-select-item zValue="">Todas</z-select-item>
+        @for (s of sucursalService.sucursales(); track s.id) { <z-select-item [zValue]="s.id">{{ s.nombre }}</z-select-item> }
+      </z-select>
+    </label>
+    @if (hayFiltros()) {
+      <button z-button zType="ghost" zSize="sm" (click)="limpiarFiltros()">
+        <ng-icon name="lucideX" class="mr-1.5 size-3.5" /> Limpiar
+      </button>
+    }
+    <button z-button zType="outline" zSize="sm" class="ml-auto" [zLoading]="loading()" (click)="cargar()">
+      <ng-icon name="lucideRefreshCw" class="mr-1.5 size-3.5" /> Actualizar
+    </button>
+  </div>
+
+  <div class="overflow-hidden rounded-xl border">
+    <div class="overflow-x-auto">
+      <table z-table>
+        <thead z-table-header class="bg-muted/50">
+          <tr z-table-row>
+            <th z-table-head>Folio</th>
+            <th z-table-head>Fecha</th>
+            <th z-table-head>Proveedor</th>
+            <th z-table-head>Estado</th>
+            <th z-table-head>Factura / Remisión</th>
+          </tr>
+        </thead>
+        <tbody z-table-body>
+          @if (loading()) {
+            @for (i of [1,2,3,4,5,6]; track i) {
+              <tr z-table-row><td z-table-cell colspan="5"><z-skeleton class="h-5 w-full" /></td></tr>
+            }
+          } @else {
+            @for (r of recepciones(); track r.id) {
+              <tr z-table-row class="cursor-pointer hover:bg-muted/40" [routerLink]="['/proveedores/recepciones', r.id]">
+                <td z-table-cell class="font-mono text-xs text-primary">{{ r.folio }}</td>
+                <td z-table-cell class="whitespace-nowrap text-xs text-muted-foreground">{{ r.fecha_recepcion | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td z-table-cell class="font-medium">{{ nombreProveedor(r.proveedor_id) }}</td>
+                <td z-table-cell><z-badge [zType]="estadoBadge(r.estado)">{{ labelEstado(r.estado) }}</z-badge></td>
+                <td z-table-cell class="text-sm text-muted-foreground">{{ r.numero_factura || r.numero_remision || '—' }}</td>
+              </tr>
+            } @empty {
+              <tr z-table-row>
+                <td z-table-cell colspan="5" class="p-0">
+                  <z-empty zIcon="lucidePlus" zTitle="Sin recepciones" zDescription="Registra la llegada de mercancía de un proveedor." class="py-12" />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

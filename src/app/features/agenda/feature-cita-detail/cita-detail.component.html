@@ -1,0 +1,126 @@
+<div class="p-6 w-full max-w-4xl mx-auto space-y-6">
+  <a routerLink="/agenda" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+    <ng-icon name="lucideArrowLeft" class="size-4" /> Agenda
+  </a>
+
+  @if (loading()) {
+    <z-skeleton class="h-10 w-72" />
+    <z-skeleton class="h-56 w-full" />
+  } @else if (error() || !cita()) {
+    <z-empty zIcon="lucideCalendarDays" zTitle="Cita no encontrada" zDescription="El folio no existe o no tienes acceso." class="py-16" />
+  } @else if (cita(); as c) {
+    <!-- Encabezado -->
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div class="space-y-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <h1 class="text-2xl font-bold tracking-tight">{{ servicio()?.nombre || 'Cita' }}</h1>
+          <z-badge [zType]="estadoBadge(c.estado)">{{ labelEstado(c.estado) }}</z-badge>
+        </div>
+        <p class="font-mono text-xs text-muted-foreground">{{ c.id }}</p>
+        <p class="text-sm text-muted-foreground">
+          {{ c.fecha_hora_inicio | date:'dd/MM/yyyy HH:mm' }} – {{ c.fecha_hora_fin | date:'HH:mm' }}
+        </p>
+      </div>
+
+      <!-- Acciones por estado -->
+      <div class="flex flex-wrap items-center gap-2">
+        @if (miOferta() && canResponder()) {
+          <button z-button zType="default" zSize="sm" [zLoading]="working()" (click)="aceptar()">
+            <ng-icon name="lucideCheck" class="mr-2 size-4" /> Aceptar
+          </button>
+          <button z-button zType="outline" zSize="sm" class="text-destructive hover:bg-destructive/10" [zLoading]="working()" (click)="rechazar()">
+            <ng-icon name="lucideX" class="mr-2 size-4" /> Rechazar
+          </button>
+        }
+        @if ((c.estado === 'por_asignar' || c.estado === 'sin_empleado_disponible') && canGestionar()) {
+          <button z-button zType="outline" zSize="sm" [zLoading]="working()" (click)="ofertar()">
+            <ng-icon name="lucideShuffle" class="mr-2 size-4" /> Reintentar oferta
+          </button>
+          <button z-button zType="outline" zSize="sm" (click)="asignarManual()">
+            <ng-icon name="lucideUserPlus" class="mr-2 size-4" /> Asignar manual
+          </button>
+        }
+        @if (c.estado === 'asignada' && puedeOperar()) {
+          <button z-button zType="default" zSize="sm" [zLoading]="working()" (click)="iniciar()">
+            <ng-icon name="lucideCircleCheck" class="mr-2 size-4" /> Iniciar
+          </button>
+        }
+        @if (c.estado === 'en_proceso' && puedeOperar()) {
+          <button z-button zType="default" zSize="sm" [zLoading]="working()" (click)="completar()">
+            <ng-icon name="lucideCircleCheck" class="mr-2 size-4" /> Completar
+          </button>
+        }
+        @if (c.estado === 'asignada' && canGestionar()) {
+          <button z-button zType="outline" zSize="sm" [zLoading]="working()" (click)="noShow()">
+            <ng-icon name="lucideUserX" class="mr-2 size-4" /> No-show
+          </button>
+        }
+        @if (c.estado === 'completada' && !c.venta_detalle_id && canGestionar()) {
+          <button z-button zType="default" zSize="sm" (click)="facturar()">
+            <ng-icon name="lucideReceiptText" class="mr-2 size-4" /> Cobrar
+          </button>
+        }
+        @if (c.venta_detalle_id) {
+          <a z-button zType="outline" zSize="sm" [routerLink]="['/ventas/historial', c.venta_detalle_id]">
+            <ng-icon name="lucideReceiptText" class="mr-2 size-4" /> Ver venta
+          </a>
+        }
+        @if (!['completada', 'cancelada', 'no_show'].includes(c.estado) && canGestionar()) {
+          <button z-button zType="outline" zSize="sm" class="text-destructive hover:bg-destructive/10" (click)="cancelar()">
+            <ng-icon name="lucideBan" class="mr-2 size-4" /> Cancelar
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+      <div class="lg:col-span-2 space-y-6">
+        <div z-card>
+          <z-card-header><z-card-title zTitle="Detalle" class="text-base" /></z-card-header>
+          <z-card-content>
+            <dl class="space-y-2 text-sm">
+              <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Servicio</dt><dd class="text-right font-medium">{{ servicio()?.nombre || c.servicio_id.slice(0, 8) }}</dd></div>
+              @if (servicio(); as s) {
+                <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Precio</dt><dd class="tabular-nums">{{ s.precio_venta | currency }}</dd></div>
+              }
+              <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Cliente</dt><dd class="text-right">{{ clienteNombre() || 'Sin cliente' }}</dd></div>
+              <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Empleado asignado</dt><dd class="text-right font-medium">{{ nombreEmpleado(c.empleado_id) }}</dd></div>
+              @if (c.motivo_cancelacion) {
+                <div class="text-destructive">Cancelación: {{ c.motivo_cancelacion }}</div>
+              }
+            </dl>
+          </z-card-content>
+        </div>
+
+        <div z-card>
+          <z-card-header><z-card-title zTitle="Ofertas" class="text-base" /></z-card-header>
+          <z-card-content class="space-y-2">
+            @for (a of c.asignaciones; track a.id) {
+              <div class="flex items-center justify-between text-sm">
+                <span>{{ nombreEmpleado(a.empleado_id) }}</span>
+                <z-badge [zType]="asignacionBadge(a.estado)">{{ labelAsignacion(a.estado) }}</z-badge>
+              </div>
+            } @empty {
+              <p class="text-muted-foreground text-sm">Sin ofertas todavía.</p>
+            }
+          </z-card-content>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <div z-card>
+          <z-card-header><z-card-title zTitle="Datos" class="text-base" /></z-card-header>
+          <z-card-content>
+            <dl class="space-y-2 text-sm">
+              <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Creada</dt><dd class="tabular-nums">{{ c.created_at | date:'dd/MM/yy HH:mm' }}</dd></div>
+              <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Disp. cruzada</dt><dd>{{ c.disponibilidad_cruzada ? 'Sí' : 'No' }}</dd></div>
+              @if (c.recurso_id) {
+                <div class="flex justify-between gap-3"><dt class="text-muted-foreground">Recurso</dt><dd class="text-right">{{ recursoNombre() || c.recurso_id.slice(0, 8) }}</dd></div>
+              }
+            </dl>
+          </z-card-content>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -198,6 +198,35 @@
           </div>
         </fieldset>
 
+        @if (esServicio()) {
+        <z-separator></z-separator>
+        <fieldset z-field-set>
+          <legend z-field-legend>Agenda</legend>
+          <p z-field-description>Deja "Duración" vacía si este servicio no se agenda (p. ej. flete).</p>
+
+          <div z-field-group class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+            <div z-field>
+              <label z-field-label for="duracion_minutos">Duración (minutos)</label>
+              <input z-input id="duracion_minutos" type="number" min="1" step="1" formControlName="duracion_minutos" placeholder="Ej. 30">
+              <p z-field-description>Obligatoria para que el servicio sea agendable en Citas.</p>
+            </div>
+            <div z-field>
+              <label z-field-label for="tiempo_buffer_minutos">Buffer entre citas (minutos)</label>
+              <input z-input id="tiempo_buffer_minutos" type="number" min="0" step="1" formControlName="tiempo_buffer_minutos" placeholder="0">
+              <p z-field-description>Limpieza o preparación; se suma a la duración.</p>
+            </div>
+            <div z-field zOrientation="horizontal" class="md:col-span-2">
+              <z-switch formControlName="requiere_recurso" zId="requiere_recurso"></z-switch>
+              <label z-field-label for="requiere_recurso">Requiere recurso (silla, cabina, equipo)</label>
+            </div>
+            <div z-field zOrientation="horizontal" class="md:col-span-2">
+              <z-switch formControlName="disponibilidad_cruzada_activa" zId="disponibilidad_cruzada_activa"></z-switch>
+              <label z-field-label for="disponibilidad_cruzada_activa">Permite ofertar a empleados de otra sucursal</label>
+            </div>
+          </div>
+        </fieldset>
+        }
+
         <details class="group rounded-lg border" [open]="seccionAbierta('avanzada')" (toggle)="syncSeccion('avanzada', $event)">
           <summary class="flex cursor-pointer list-none items-center justify-between gap-4 p-4 [&::-webkit-details-marker]:hidden">
             <div>

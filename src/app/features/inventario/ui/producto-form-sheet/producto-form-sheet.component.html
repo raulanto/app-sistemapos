@@ -179,6 +179,33 @@
     <p class="text-[0.8rem] text-muted-foreground -mt-1">Cashback al vender con teléfono. Usá uno u otro: el % (sobre el subtotal) tiene prioridad; el monto es fijo por unidad.</p>
   </div>
 
+  @if (esServicio()) {
+    <div class="grid grid-cols-1 gap-3 rounded-md border border-border p-3">
+      <h3 class="text-sm font-medium">Agenda</h3>
+      <p class="text-[0.8rem] text-muted-foreground -mt-1">Dejá "Duración" vacía si este servicio no se agenda (p. ej. flete).</p>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div z-field>
+          <label z-field-label for="duracion_minutos">Duración (minutos)</label>
+          <input z-input id="duracion_minutos" type="number" min="1" step="1" formControlName="duracion_minutos" placeholder="Ej. 30">
+        </div>
+        <div z-field>
+          <label z-field-label for="tiempo_buffer_minutos">Buffer entre citas (minutos)</label>
+          <input z-input id="tiempo_buffer_minutos" type="number" min="0" step="1" formControlName="tiempo_buffer_minutos" placeholder="0">
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <z-checkbox id="requiere_recurso" formControlName="requiere_recurso"></z-checkbox>
+        <label for="requiere_recurso" class="text-sm">Requiere recurso (silla, cabina, equipo)</label>
+      </div>
+      <div class="flex items-center gap-2">
+        <z-checkbox id="disponibilidad_cruzada_activa" formControlName="disponibilidad_cruzada_activa"></z-checkbox>
+        <label for="disponibilidad_cruzada_activa" class="text-sm">Permite ofertar a empleados de otra sucursal</label>
+      </div>
+    </div>
+  }
+
   @if (!sheetData?.productoId && !esServicio()) {
     <div class="mt-4 border-t pt-4">
       <div class="flex items-center justify-between mb-4">

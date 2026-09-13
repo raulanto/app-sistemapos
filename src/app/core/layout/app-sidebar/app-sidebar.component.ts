@@ -5,8 +5,12 @@ import { lucideSearch } from '@ng-icons/lucide';
 
 import {
   BoxesIcon,
+  BriefcaseBusinessIcon,
+  CalendarCheckIcon,
+  CalendarDaysIcon,
   ChartColumnIcon,
   CirclePlusIcon,
+  ClipboardCheckIcon,
   ClipboardListIcon,
   ClockIcon,
   FolderKanbanIcon,
@@ -18,6 +22,8 @@ import {
   LayersIcon,
   LayoutDashboardIcon,
   MonitorCheckIcon,
+  PackageCheckIcon,
+  RotateCcwIcon,
   ScanTextIcon,
   SearchIcon,
   SettingsIcon,
@@ -109,7 +115,7 @@ export class AppSidebarComponent {
   protected readonly navMain: readonly Sidebar07NavItem[] = [
     {
       title: 'Dashboard',
-      url: '/',
+      url: '/dashboard',
       icon: LayoutDashboardIcon,
       isActive: true,
     },
@@ -132,6 +138,26 @@ export class AppSidebarComponent {
       items: [
         { title: 'Tablero', url: '/pedidos', icon: KanbanIcon },
         { title: 'Nuevo pedido', url: '/pedidos/nuevo', icon: CirclePlusIcon },
+      ],
+    },
+    {
+      title: 'Agenda',
+      url: '/agenda',
+      icon: CalendarDaysIcon,
+      items: [
+        { title: 'Citas', url: '/agenda', icon: CalendarCheckIcon },
+        { title: 'Catálogo', url: '/agenda/catalogo', icon: FolderKanbanIcon },
+      ],
+    },
+    {
+      title: 'Proveedores',
+      url: '/proveedores',
+      icon: BriefcaseBusinessIcon,
+      items: [
+        { title: 'Proveedores', url: '/proveedores', icon: BriefcaseBusinessIcon },
+        { title: 'Pedidos', url: '/proveedores/pedidos', icon: PackageCheckIcon },
+        { title: 'Recepciones', url: '/proveedores/recepciones', icon: ClipboardCheckIcon },
+        { title: 'Devoluciones', url: '/proveedores/devoluciones', icon: RotateCcwIcon },
       ],
     },
     {
