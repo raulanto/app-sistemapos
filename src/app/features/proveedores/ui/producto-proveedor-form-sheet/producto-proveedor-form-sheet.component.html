@@ -1,0 +1,53 @@
+<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto" (ngSubmit)="save()">
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Proveedor *</label>
+      <z-select formControlName="proveedor_id" placeholder="Selecciona un proveedor">
+        @for (p of proveedores(); track p.id) {
+          <z-select-item [zValue]="p.id">{{ p.codigo }} · {{ p.razon_social }}</z-select-item>
+        }
+      </z-select>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label for="precio_compra">Precio de compra *</label>
+      <input z-input id="precio_compra" type="number" min="0" step="0.01" formControlName="precio_compra" />
+    </div>
+    <div z-field>
+      <label z-field-label for="tiempo_entrega_dias">Tiempo de entrega (días) *</label>
+      <input z-input id="tiempo_entrega_dias" type="number" min="0" formControlName="tiempo_entrega_dias" />
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label for="stock_minimo">Stock mínimo *</label>
+      <input z-input id="stock_minimo" type="number" min="0" step="0.01" formControlName="stock_minimo" />
+      <p class="text-[0.8rem] text-muted-foreground">Dispara el reorden con este proveedor.</p>
+    </div>
+    <div z-field>
+      <label z-field-label for="cantidad_reorden">Cantidad a reordenar *</label>
+      <input z-input id="cantidad_reorden" type="number" min="0.01" step="0.01" formControlName="cantidad_reorden" />
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label for="stock_maximo">Stock máximo</label>
+      <input z-input id="stock_maximo" type="number" min="0" step="0.01" formControlName="stock_maximo" placeholder="Opcional" />
+    </div>
+    <div z-field>
+      <label z-field-label for="codigo_proveedor">SKU del proveedor</label>
+      <input z-input id="codigo_proveedor" type="text" formControlName="codigo_proveedor" placeholder="Opcional" />
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <z-checkbox id="es_proveedor_principal" formControlName="es_proveedor_principal"></z-checkbox>
+    <label for="es_proveedor_principal" class="text-sm">
+      Marcar como proveedor principal (el que usa el reorden automático)
+    </label>
+  </div>
+</form>

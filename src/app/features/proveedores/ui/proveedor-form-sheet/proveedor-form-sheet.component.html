@@ -1,0 +1,113 @@
+<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto" (ngSubmit)="save()">
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label for="codigo">Código *</label>
+      <input z-input id="codigo" type="text" formControlName="codigo" placeholder="Ej. PROV-COCA" />
+      @if (isEditing) {
+        <p class="text-[0.8rem] text-muted-foreground">No se puede renombrar una vez creado.</p>
+      }
+    </div>
+    <div z-field>
+      <label z-field-label for="rfc">RFC</label>
+      <input z-input id="rfc" type="text" formControlName="rfc" placeholder="Opcional" />
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label for="razon_social">Razón social *</label>
+      <input z-input id="razon_social" type="text" formControlName="razon_social" placeholder="Nombre legal del proveedor" />
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label for="nombre_comercial">Nombre comercial</label>
+      <input z-input id="nombre_comercial" type="text" formControlName="nombre_comercial" placeholder="Opcional" />
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label>Tipo de persona *</label>
+      <z-select formControlName="tipo_persona">
+        @for (t of tiposPersona; track t.value) { <z-select-item [zValue]="t.value">{{ t.label }}</z-select-item> }
+      </z-select>
+    </div>
+    <div z-field>
+      <label z-field-label>Moneda</label>
+      <input z-input type="text" formControlName="moneda" placeholder="MXN" />
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label>Condiciones de pago *</label>
+      <z-select formControlName="condiciones_pago">
+        @for (c of condicionesPago; track c.value) { <z-select-item [zValue]="c.value">{{ c.label }}</z-select-item> }
+      </z-select>
+    </div>
+    @if (esCredito()) {
+      <div z-field [attr.data-invalid]="faltaDiasCredito() || null">
+        <label z-field-label for="dias_credito">Días de crédito *</label>
+        <input z-input id="dias_credito" type="number" min="1" formControlName="dias_credito" placeholder="Ej. 30" />
+        @if (faltaDiasCredito()) {
+          <p class="text-[0.8rem] text-destructive">Requerido y mayor a 0 con condición "crédito".</p>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label for="contacto_principal">Contacto</label>
+      <input z-input id="contacto_principal" type="text" formControlName="contacto_principal" placeholder="Nombre del contacto" />
+    </div>
+    <div z-field>
+      <label z-field-label for="telefono">Teléfono</label>
+      <input z-input id="telefono" type="tel" formControlName="telefono" placeholder="Opcional" />
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label for="email">Email</label>
+      <input z-input id="email" type="email" formControlName="email" placeholder="Opcional" />
+    </div>
+  </div>
+
+  <fieldset class="grid grid-cols-2 gap-4 rounded-md border p-3">
+    <legend class="px-1 text-xs font-medium text-muted-foreground">Dirección (opcional)</legend>
+    <div z-field>
+      <label z-field-label for="direccion_calle">Calle</label>
+      <input z-input id="direccion_calle" type="text" formControlName="direccion_calle" />
+    </div>
+    <div z-field>
+      <label z-field-label for="direccion_numero">Número</label>
+      <input z-input id="direccion_numero" type="text" formControlName="direccion_numero" />
+    </div>
+    <div z-field>
+      <label z-field-label for="direccion_colonia">Colonia</label>
+      <input z-input id="direccion_colonia" type="text" formControlName="direccion_colonia" />
+    </div>
+    <div z-field>
+      <label z-field-label for="direccion_ciudad">Ciudad</label>
+      <input z-input id="direccion_ciudad" type="text" formControlName="direccion_ciudad" />
+    </div>
+    <div z-field>
+      <label z-field-label for="direccion_estado">Estado</label>
+      <input z-input id="direccion_estado" type="text" formControlName="direccion_estado" />
+    </div>
+    <div z-field>
+      <label z-field-label for="direccion_codigo_postal">Código postal</label>
+      <input z-input id="direccion_codigo_postal" type="text" formControlName="direccion_codigo_postal" />
+    </div>
+  </fieldset>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label for="notas">Notas</label>
+      <textarea z-textarea id="notas" formControlName="notas" rows="2" placeholder="Opcional"></textarea>
+    </div>
+  </div>
+</form>

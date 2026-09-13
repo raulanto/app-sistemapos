@@ -5,10 +5,12 @@ import { lucideSearch } from '@ng-icons/lucide';
 
 import {
   BoxesIcon,
+  BriefcaseBusinessIcon,
   CalendarCheckIcon,
   CalendarDaysIcon,
   ChartColumnIcon,
   CirclePlusIcon,
+  ClipboardCheckIcon,
   ClipboardListIcon,
   ClockIcon,
   FolderKanbanIcon,
@@ -20,6 +22,8 @@ import {
   LayersIcon,
   LayoutDashboardIcon,
   MonitorCheckIcon,
+  PackageCheckIcon,
+  RotateCcwIcon,
   ScanTextIcon,
   SearchIcon,
   SettingsIcon,
@@ -143,6 +147,17 @@ export class AppSidebarComponent {
       items: [
         { title: 'Citas', url: '/agenda', icon: CalendarCheckIcon },
         { title: 'Catálogo', url: '/agenda/catalogo', icon: FolderKanbanIcon },
+      ],
+    },
+    {
+      title: 'Proveedores',
+      url: '/proveedores',
+      icon: BriefcaseBusinessIcon,
+      items: [
+        { title: 'Proveedores', url: '/proveedores', icon: BriefcaseBusinessIcon },
+        { title: 'Pedidos', url: '/proveedores/pedidos', icon: PackageCheckIcon },
+        { title: 'Recepciones', url: '/proveedores/recepciones', icon: ClipboardCheckIcon },
+        { title: 'Devoluciones', url: '/proveedores/devoluciones', icon: RotateCcwIcon },
       ],
     },
     {

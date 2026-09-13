@@ -76,6 +76,29 @@ export const PERMISOS = {
     /** Aceptar/rechazar una oferta propia; iniciar/completar la propia. */
     responderOferta: ['citas.responder_oferta'],
   },
+  proveedores: {
+    leer: ['proveedores.leer'],
+    crear: ['proveedores.crear'],
+    editar: ['proveedores.editar'],
+    /** Vincular/desvincular productos a un proveedor, marcar principal. */
+    productoProveedor: ['producto_proveedor.gestionar'],
+  },
+  pedidoProveedor: {
+    leer: ['pedido_proveedor.leer'],
+    gestionar: ['pedido_proveedor.gestionar'],
+    /** Disparar el motor de reorden. */
+    generarManual: ['pedido_proveedor.generar_manual'],
+    /** Autorizar que el pedido salga (borrador -> enviado). Sólo admin/gerente. */
+    confirmarEnvio: ['pedido_proveedor.confirmar_envio'],
+  },
+  recepcionProveedor: {
+    leer: ['recepcion_proveedor.leer'],
+    registrar: ['recepcion_proveedor.registrar'],
+  },
+  devolucionProveedor: {
+    leer: ['devolucion_proveedor.leer'],
+    gestionar: ['devolucion_proveedor.gestionar'],
+  },
   reportes: {
     leer: ['reportes.leer', 'REP_VER'],
   },

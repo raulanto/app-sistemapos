@@ -1,0 +1,70 @@
+<div class="p-6 w-full space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-6xl font-extrabold">Devoluciones</h1>
+      <p class="text-muted-foreground">Mercancía defectuosa que se regresa al proveedor. Se crean desde una recepción.</p>
+    </div>
+  </div>
+
+  <!-- Contadores -->
+  <div class="flex flex-wrap gap-2 text-xs">
+    @for (e of estados; track e.value) {
+      <button type="button"
+              class="rounded-lg border px-2.5 py-1.5 transition-colors hover:bg-muted"
+              [class.border-primary]="estado() === e.value"
+              [class.bg-muted]="estado() === e.value"
+              (click)="setEstado(estado() === e.value ? '' : e.value)">
+        {{ e.label }}
+      </button>
+    }
+    @if (hayFiltros()) {
+      <button z-button zType="ghost" zSize="sm" (click)="limpiarFiltros()">
+        <ng-icon name="lucideX" class="mr-1.5 size-3.5" /> Limpiar
+      </button>
+    }
+    <button z-button zType="outline" zSize="sm" class="ml-auto" [zLoading]="loading()" (click)="cargar()">
+      <ng-icon name="lucideRefreshCw" class="mr-1.5 size-3.5" /> Actualizar
+    </button>
+  </div>
+
+  <div class="overflow-hidden rounded-xl border">
+    <div class="overflow-x-auto">
+      <table z-table>
+        <thead z-table-header class="bg-muted/50">
+          <tr z-table-row>
+            <th z-table-head>Folio</th>
+            <th z-table-head>Fecha</th>
+            <th z-table-head>Proveedor</th>
+            <th z-table-head>Estado</th>
+            <th z-table-head>Resultado</th>
+          </tr>
+        </thead>
+        <tbody z-table-body>
+          @if (loading()) {
+            @for (i of [1,2,3,4,5]; track i) {
+              <tr z-table-row><td z-table-cell colspan="5"><z-skeleton class="h-5 w-full" /></td></tr>
+            }
+          } @else {
+            @for (d of devoluciones(); track d.id) {
+              <tr z-table-row class="cursor-pointer hover:bg-muted/40" [routerLink]="['/proveedores/devoluciones', d.id]">
+                <td z-table-cell class="font-mono text-xs text-primary">{{ d.folio }}</td>
+                <td z-table-cell class="whitespace-nowrap text-xs text-muted-foreground">{{ d.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td z-table-cell class="font-medium">{{ nombreProveedor(d.proveedor_id) }}</td>
+                <td z-table-cell><z-badge [zType]="estadoBadge(d.estado)">{{ labelEstado(d.estado) }}</z-badge></td>
+                <td z-table-cell class="text-sm text-muted-foreground">
+                  {{ d.resultado === 'aceptada_proveedor' ? 'Aceptada' : d.resultado === 'rechazada_proveedor' ? 'Rechazada' : '—' }}
+                </td>
+              </tr>
+            } @empty {
+              <tr z-table-row>
+                <td z-table-cell colspan="5" class="p-0">
+                  <z-empty zIcon="lucideRotateCcw" zTitle="Sin devoluciones" zDescription="Se crean desde el detalle de una recepción con defectuosos." class="py-12" />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

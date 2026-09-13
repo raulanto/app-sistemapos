@@ -1,0 +1,179 @@
+<div class="p-6 w-full max-w-5xl mx-auto space-y-6">
+  <a routerLink="/proveedores" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+    <ng-icon name="lucideArrowLeft" class="size-4" /> Proveedores
+  </a>
+
+  @if (loading()) {
+    <z-skeleton class="h-10 w-72" />
+    <z-skeleton class="h-56 w-full" />
+  } @else if (error() || !proveedor()) {
+    <z-empty zIcon="lucideBan" zTitle="Proveedor no encontrado" zDescription="El proveedor no existe o no tienes acceso." class="py-16" />
+  } @else if (proveedor(); as p) {
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div class="space-y-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <h1 class="text-2xl font-bold tracking-tight">{{ p.razon_social }}</h1>
+          <z-badge [zType]="p.activo ? 'default' : 'outline'">{{ p.activo ? 'Activo' : 'Inactivo' }}</z-badge>
+        </div>
+        <p class="font-mono text-xs text-muted-foreground">{{ p.codigo }}</p>
+      </div>
+      @if (canEditar()) {
+        <div class="flex items-center gap-2">
+          <button z-button zType="outline" zSize="sm" (click)="editar()">
+            <ng-icon name="lucidePencil" class="mr-2 size-4" /> Editar
+          </button>
+          <button z-button zType="outline" zSize="sm" [class.text-destructive]="p.activo" (click)="toggleActivo()">
+            <ng-icon [name]="p.activo ? 'lucideBan' : 'lucideCircleCheck'" class="mr-2 size-4" />
+            {{ p.activo ? 'Desactivar' : 'Activar' }}
+          </button>
+        </div>
+      }
+    </div>
+
+    <z-tab-group class="w-full">
+      <z-tab label="Resumen">
+        <div class="pt-4">
+          @if (resumen(); as r) {
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div z-card class="p-4">
+                <p class="text-xs text-muted-foreground">Defectuoso</p>
+                <p class="text-xl font-bold tabular-nums">{{ r.pct_defectuoso }}%</p>
+              </div>
+              <div z-card class="p-4">
+                <p class="text-xs text-muted-foreground">Unidades recibidas</p>
+                <p class="text-xl font-bold tabular-nums">{{ r.total_unidades_recibidas }}</p>
+              </div>
+              <div z-card class="p-4">
+                <p class="text-xs text-muted-foreground">Entrega prometida</p>
+                <p class="text-xl font-bold tabular-nums">{{ r.tiempo_entrega_prometido_dias ?? '—' }}d</p>
+              </div>
+              <div z-card class="p-4">
+                <p class="text-xs text-muted-foreground">Entrega real</p>
+                <p class="text-xl font-bold tabular-nums">{{ r.tiempo_entrega_real_promedio_dias ?? '—' }}d</p>
+              </div>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-2 text-sm">
+              <z-badge zType="outline">Devoluciones pendientes: {{ r.devoluciones_pendientes }}</z-badge>
+              <z-badge zType="default">Aceptadas: {{ r.devoluciones_aceptadas }}</z-badge>
+              <z-badge zType="destructive">Rechazadas: {{ r.devoluciones_rechazadas }}</z-badge>
+            </div>
+          } @else {
+            <z-empty zIcon="lucideClipboardList" zTitle="Sin datos suficientes" zDescription="Aún no hay recepciones ni devoluciones registradas." class="py-10" />
+          }
+
+          <div class="mt-6 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+            <div class="flex justify-between gap-3"><span class="text-muted-foreground">Condiciones</span><span>{{ p.condiciones_pago === 'credito' ? ('Crédito · ' + p.dias_credito + ' días') : 'Contado' }}</span></div>
+            <div class="flex justify-between gap-3"><span class="text-muted-foreground">Moneda</span><span>{{ p.moneda }}</span></div>
+            <div class="flex justify-between gap-3"><span class="text-muted-foreground">RFC</span><span>{{ p.rfc || '—' }}</span></div>
+            <div class="flex justify-between gap-3"><span class="text-muted-foreground">Contacto</span><span>{{ p.contacto_principal || '—' }}</span></div>
+            <div class="flex justify-between gap-3"><span class="text-muted-foreground">Teléfono</span><span>{{ p.telefono || '—' }}</span></div>
+            <div class="flex justify-between gap-3"><span class="text-muted-foreground">Email</span><span>{{ p.email || '—' }}</span></div>
+          </div>
+        </div>
+      </z-tab>
+
+      <z-tab label="Productos">
+        <div class="space-y-3 pt-4">
+          <p class="text-sm text-muted-foreground">
+            Para vincular un nuevo producto a este proveedor, hazlo desde la ficha del producto (pestaña «Proveedores»).
+          </p>
+          @if (cargandoProductos()) {
+            <z-skeleton class="h-24 w-full" />
+          } @else {
+            <div z-card class="overflow-hidden py-0">
+              <div class="overflow-x-auto">
+                <table z-table>
+                  <thead z-table-header class="bg-muted/50">
+                    <tr z-table-row>
+                      <th z-table-head>Producto</th>
+                      <th z-table-head class="text-right">Precio compra</th>
+                      <th z-table-head class="text-right">Stock mínimo</th>
+                      <th z-table-head class="text-right">Reorden</th>
+                      <th z-table-head>Estado</th>
+                      <th z-table-head class="w-28 text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody z-table-body>
+                    @for (f of productos(); track f.link.id) {
+                      <tr z-table-row>
+                        <td z-table-cell class="font-medium">
+                          <a [routerLink]="['/inventario/productos', f.link.producto_id]" class="text-primary hover:underline">
+                            {{ f.nombre }}
+                          </a>
+                          @if (f.link.es_proveedor_principal) {
+                            <z-badge zType="secondary" class="ml-2">Principal</z-badge>
+                          }
+                        </td>
+                        <td z-table-cell class="text-right tabular-nums">{{ f.link.precio_compra | currency }}</td>
+                        <td z-table-cell class="text-right tabular-nums">{{ f.link.stock_minimo }}</td>
+                        <td z-table-cell class="text-right tabular-nums">{{ f.link.cantidad_reorden }}</td>
+                        <td z-table-cell><z-badge [zType]="f.link.activo ? 'default' : 'outline'">{{ f.link.activo ? 'Activo' : 'Inactivo' }}</z-badge></td>
+                        <td z-table-cell class="text-center">
+                          @if (canGestionarVinculo() && f.link.activo) {
+                            @if (!f.link.es_proveedor_principal) {
+                              <button z-button zType="ghost" zSize="icon-sm" title="Marcar principal" (click)="marcarPrincipal(f)">
+                                <ng-icon name="lucideStar" class="size-4" />
+                              </button>
+                            }
+                            <button z-button zType="ghost" zSize="icon-sm" class="text-destructive hover:bg-destructive/10" title="Desvincular" (click)="desvincular(f)">
+                              <ng-icon name="lucideTrash" class="size-4" />
+                            </button>
+                          }
+                        </td>
+                      </tr>
+                    } @empty {
+                      <tr z-table-row>
+                        <td z-table-cell colspan="6" class="p-0">
+                          <z-empty zIcon="lucideClipboardList" zTitle="Sin productos vinculados" class="py-10" />
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        </div>
+      </z-tab>
+
+      <z-tab label="Pedidos">
+        <div class="space-y-3 pt-4">
+          @if (cargandoPedidos()) {
+            <z-skeleton class="h-24 w-full" />
+          } @else {
+            <div z-card class="overflow-hidden py-0">
+              <div class="overflow-x-auto">
+                <table z-table>
+                  <thead z-table-header class="bg-muted/50">
+                    <tr z-table-row>
+                      <th z-table-head>Folio</th>
+                      <th z-table-head>Fecha</th>
+                      <th z-table-head>Estado</th>
+                      <th z-table-head class="text-right">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody z-table-body>
+                    @for (ped of pedidos(); track ped.id) {
+                      <tr z-table-row class="cursor-pointer hover:bg-muted/40" [routerLink]="['/proveedores/pedidos', ped.id]">
+                        <td z-table-cell class="font-mono text-xs text-primary">{{ ped.folio }}</td>
+                        <td z-table-cell class="text-xs text-muted-foreground">{{ ped.fecha_pedido | date:'dd/MM/yyyy' }}</td>
+                        <td z-table-cell><z-badge [zType]="estadoPedidoBadge(ped.estado)">{{ labelEstadoPedido(ped.estado) }}</z-badge></td>
+                        <td z-table-cell class="text-right tabular-nums">{{ ped.subtotal | currency }}</td>
+                      </tr>
+                    } @empty {
+                      <tr z-table-row>
+                        <td z-table-cell colspan="4" class="p-0">
+                          <z-empty zIcon="lucideClipboardList" zTitle="Sin pedidos" zDescription="Aún no se le ha hecho ningún pedido a este proveedor." class="py-10" />
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        </div>
+      </z-tab>
+    </z-tab-group>
+  }
+</div>

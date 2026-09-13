@@ -1,0 +1,64 @@
+<form [formGroup]="form" class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto" (ngSubmit)="save()">
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label>Proveedor *</label>
+      <z-select formControlName="proveedor_id" placeholder="Selecciona un proveedor">
+        @for (p of proveedores(); track p.id) {
+          <z-select-item [zValue]="p.id">{{ p.codigo }} · {{ p.razon_social }}</z-select-item>
+        }
+      </z-select>
+    </div>
+    <div z-field>
+      <label z-field-label for="fecha_estimada_entrega">Entrega estimada</label>
+      <input z-input id="fecha_estimada_entrega" type="date" formControlName="fecha_estimada_entrega" />
+    </div>
+  </div>
+
+  <div class="space-y-2">
+    <div class="flex items-center justify-between">
+      <h3 class="text-sm font-semibold">Líneas del pedido</h3>
+      <button type="button" z-button zType="outline" zSize="sm" (click)="agregarLinea()">
+        <ng-icon name="lucidePlus" class="mr-1.5 size-3.5" /> Agregar línea
+      </button>
+    </div>
+
+    <div class="divide-y rounded-lg border" formArrayName="lineas">
+      @for (linea of lineas.controls; track $index; let i = $index) {
+        <div [formGroupName]="i" class="grid grid-cols-12 items-end gap-2 p-3">
+          <div z-field class="col-span-6">
+            @if (i === 0) { <label z-field-label>Producto</label> }
+            <z-select formControlName="producto_id" placeholder="Producto">
+              @for (p of productos(); track p.id) {
+                <z-select-item [zValue]="p.id">{{ p.sku }} · {{ p.nombre }}</z-select-item>
+              }
+            </z-select>
+          </div>
+          <div z-field class="col-span-2">
+            @if (i === 0) { <label z-field-label>Cantidad</label> }
+            <input z-input type="number" min="0.01" step="0.01" formControlName="cantidad_solicitada" />
+          </div>
+          <div z-field class="col-span-3">
+            @if (i === 0) { <label z-field-label>Precio unitario</label> }
+            <input z-input type="number" min="0" step="0.01" formControlName="precio_unitario" />
+          </div>
+          <div class="col-span-1 flex justify-end">
+            <button type="button" z-button zType="ghost" zSize="icon-sm" class="text-destructive"
+                    [disabled]="lineas.length === 1" (click)="quitarLinea(i)">
+              <ng-icon name="lucideTrash" class="size-4" />
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="flex justify-end text-sm">
+      <span class="text-muted-foreground">Subtotal estimado:</span>
+      <span class="ml-2 font-semibold tabular-nums">{{ totalPedido() | number:'1.2-2' }}</span>
+    </div>
+  </div>
+
+  <div z-field>
+    <label z-field-label for="notas">Notas</label>
+    <textarea z-textarea id="notas" formControlName="notas" rows="2" placeholder="Opcional"></textarea>
+  </div>
+</form>

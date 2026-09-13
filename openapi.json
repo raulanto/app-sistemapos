@@ -1937,6 +1937,15 @@
             "description": "Sólo productos con existencia en esa(s) sucursal(es)"
           },
           {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "$ref": "#/components/schemas/TipoProducto" }, { "type": "null" }],
+              "title": "Tipo"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -4109,11 +4118,11 @@
         }
       }
     },
-    "/api/v1/clientes/": {
+    "/api/v1/clientes": {
       "post": {
         "tags": ["clientes"],
         "summary": "Crear Cliente",
-        "operationId": "crear_cliente_api_v1_clientes__post",
+        "operationId": "crear_cliente_api_v1_clientes_post",
         "security": [{ "OAuth2PasswordBearer": [] }],
         "requestBody": {
           "required": true,
@@ -4143,7 +4152,7 @@
       "get": {
         "tags": ["clientes"],
         "summary": "Listar Clientes",
-        "operationId": "listar_clientes_api_v1_clientes__get",
+        "operationId": "listar_clientes_api_v1_clientes_get",
         "security": [{ "OAuth2PasswordBearer": [] }],
         "parameters": [
           {
@@ -5069,11 +5078,11 @@
         }
       }
     },
-    "/api/v1/ventas/": {
+    "/api/v1/ventas": {
       "post": {
         "tags": ["ventas"],
         "summary": "Crear Venta",
-        "operationId": "crear_venta_api_v1_ventas__post",
+        "operationId": "crear_venta_api_v1_ventas_post",
         "security": [{ "OAuth2PasswordBearer": [] }],
         "parameters": [
           {
@@ -5114,7 +5123,7 @@
       "get": {
         "tags": ["ventas"],
         "summary": "Listar Ventas",
-        "operationId": "listar_ventas_api_v1_ventas__get",
+        "operationId": "listar_ventas_api_v1_ventas_get",
         "security": [{ "OAuth2PasswordBearer": [] }],
         "parameters": [
           {
@@ -5520,11 +5529,11 @@
         }
       }
     },
-    "/api/v1/pedidos/": {
+    "/api/v1/pedidos": {
       "post": {
         "tags": ["pedidos"],
         "summary": "Crear Pedido",
-        "operationId": "crear_pedido_api_v1_pedidos__post",
+        "operationId": "crear_pedido_api_v1_pedidos_post",
         "security": [{ "OAuth2PasswordBearer": [] }],
         "parameters": [
           {
@@ -5565,7 +5574,7 @@
       "get": {
         "tags": ["pedidos"],
         "summary": "Listar Pedidos",
-        "operationId": "listar_pedidos_api_v1_pedidos__get",
+        "operationId": "listar_pedidos_api_v1_pedidos_get",
         "security": [{ "OAuth2PasswordBearer": [] }],
         "parameters": [
           {
@@ -7258,11 +7267,1181 @@
         }
       }
     },
-    "/api/v1/cajas/": {
+    "/api/v1/proveedores": {
+      "post": {
+        "tags": ["proveedores"],
+        "summary": "Crear Proveedor",
+        "operationId": "crear_proveedor_api_v1_proveedores_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProveedorCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ProveedorResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["proveedores"],
+        "summary": "Listar Proveedores",
+        "operationId": "listar_proveedores_api_v1_proveedores_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "activo",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Activo" }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Busca en código, razón social y RFC",
+              "title": "Q"
+            },
+            "description": "Busca en código, razón social y RFC"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Número de página (1-indexada)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Número de página (1-indexada)"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Tamaño de página",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Tamaño de página"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Orden `campo:asc|desc`. Campos: codigo, razon_social",
+              "default": "razon_social:asc",
+              "title": "Sort"
+            },
+            "description": "Orden `campo:asc|desc`. Campos: codigo, razon_social"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_list_ProveedorResponse__" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proveedores/{proveedor_id}": {
+      "get": {
+        "tags": ["proveedores"],
+        "summary": "Obtener Proveedor",
+        "operationId": "obtener_proveedor_api_v1_proveedores__proveedor_id__get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "proveedor_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Proveedor Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ProveedorResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["proveedores"],
+        "summary": "Actualizar Proveedor",
+        "operationId": "actualizar_proveedor_api_v1_proveedores__proveedor_id__patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "proveedor_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Proveedor Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProveedorUpdateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ProveedorResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proveedores/{proveedor_id}/desactivar": {
+      "patch": {
+        "tags": ["proveedores"],
+        "summary": "Desactivar Proveedor",
+        "operationId": "desactivar_proveedor_api_v1_proveedores__proveedor_id__desactivar_patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "proveedor_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Proveedor Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ProveedorResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proveedores/{proveedor_id}/activar": {
+      "patch": {
+        "tags": ["proveedores"],
+        "summary": "Activar Proveedor",
+        "operationId": "activar_proveedor_api_v1_proveedores__proveedor_id__activar_patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "proveedor_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Proveedor Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ProveedorResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proveedores/{proveedor_id}/productos": {
+      "get": {
+        "tags": ["proveedores"],
+        "summary": "Listar Productos De Proveedor",
+        "operationId": "listar_productos_de_proveedor_api_v1_proveedores__proveedor_id__productos_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "proveedor_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Proveedor Id" }
+          },
+          {
+            "name": "incluir_inactivos",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": false, "title": "Incluir Inactivos" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_list_ProductoProveedorResponse__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proveedores/{proveedor_id}/resumen": {
+      "get": {
+        "tags": ["proveedores"],
+        "summary": "Resumen Proveedor",
+        "operationId": "resumen_proveedor_api_v1_proveedores__proveedor_id__resumen_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "proveedor_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Proveedor Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ResumenProveedorResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proveedores/reorden/evaluar": {
+      "post": {
+        "tags": ["proveedores"],
+        "summary": "Evaluar Reorden",
+        "operationId": "evaluar_reorden_api_v1_proveedores_reorden_evaluar_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "sucursal_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Sucursal Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_list_ReordenGeneradoResponse__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/productos/{producto_id}/proveedores": {
+      "post": {
+        "tags": ["proveedores"],
+        "summary": "Vincular Proveedor",
+        "operationId": "vincular_proveedor_api_v1_inventario_productos__producto_id__proveedores_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "producto_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Producto Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProductoProveedorCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ProductoProveedorResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["proveedores"],
+        "summary": "Listar Proveedores De Producto",
+        "operationId": "listar_proveedores_de_producto_api_v1_inventario_productos__producto_id__proveedores_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "producto_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Producto Id" }
+          },
+          {
+            "name": "incluir_inactivos",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": false, "title": "Incluir Inactivos" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_list_ProductoProveedorResponse__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/productos/{producto_id}/proveedores/{id_}": {
+      "delete": {
+        "tags": ["proveedores"],
+        "summary": "Desvincular Proveedor",
+        "operationId": "desvincular_proveedor_api_v1_inventario_productos__producto_id__proveedores__id___delete",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "producto_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Producto Id" }
+          },
+          {
+            "name": "id_",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id " }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ProductoProveedorResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/productos/{producto_id}/proveedores/{id_}/marcar-principal": {
+      "patch": {
+        "tags": ["proveedores"],
+        "summary": "Marcar Proveedor Principal",
+        "operationId": "marcar_proveedor_principal_api_v1_inventario_productos__producto_id__proveedores__id___marcar_principal_patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "producto_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Producto Id" }
+          },
+          {
+            "name": "id_",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id " }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ProductoProveedorResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pedidos-proveedor": {
+      "post": {
+        "tags": ["proveedores"],
+        "summary": "Crear Pedido Proveedor",
+        "operationId": "crear_pedido_proveedor_api_v1_pedidos_proveedor_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PedidoProveedorCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_PedidoProveedorResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["proveedores"],
+        "summary": "Listar Pedidos Proveedor",
+        "operationId": "listar_pedidos_proveedor_api_v1_pedidos_proveedor_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "proveedor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Proveedor Id"
+            }
+          },
+          {
+            "name": "sucursal_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Sucursal Id"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/EstadoPedidoProveedor" },
+                { "type": "null" }
+              ],
+              "title": "Estado"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Número de página (1-indexada)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Número de página (1-indexada)"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Tamaño de página",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Tamaño de página"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Orden `campo:asc|desc`. Campos: fecha_pedido",
+              "default": "fecha_pedido:desc",
+              "title": "Sort"
+            },
+            "description": "Orden `campo:asc|desc`. Campos: fecha_pedido"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_list_PedidoProveedorResponse__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pedidos-proveedor/{pedido_id}": {
+      "get": {
+        "tags": ["proveedores"],
+        "summary": "Obtener Pedido Proveedor",
+        "operationId": "obtener_pedido_proveedor_api_v1_pedidos_proveedor__pedido_id__get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Pedido Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_PedidoProveedorResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pedidos-proveedor/{pedido_id}/confirmar-envio": {
+      "post": {
+        "tags": ["proveedores"],
+        "summary": "Confirmar Envio Pedido",
+        "operationId": "confirmar_envio_pedido_api_v1_pedidos_proveedor__pedido_id__confirmar_envio_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Pedido Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_PedidoProveedorResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pedidos-proveedor/{pedido_id}/cancelar": {
+      "post": {
+        "tags": ["proveedores"],
+        "summary": "Cancelar Pedido Proveedor",
+        "operationId": "cancelar_pedido_proveedor_api_v1_pedidos_proveedor__pedido_id__cancelar_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Pedido Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_PedidoProveedorResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recepciones-proveedor": {
+      "post": {
+        "tags": ["proveedores"],
+        "summary": "Registrar Recepcion",
+        "operationId": "registrar_recepcion_api_v1_recepciones_proveedor_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RecepcionProveedorCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_RecepcionProveedorResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["proveedores"],
+        "summary": "Listar Recepciones",
+        "operationId": "listar_recepciones_api_v1_recepciones_proveedor_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "proveedor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Proveedor Id"
+            }
+          },
+          {
+            "name": "sucursal_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Sucursal Id"
+            }
+          },
+          {
+            "name": "pedido_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Pedido Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Número de página (1-indexada)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Número de página (1-indexada)"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Tamaño de página",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Tamaño de página"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Orden `campo:asc|desc`. Campos: fecha_recepcion",
+              "default": "fecha_recepcion:desc",
+              "title": "Sort"
+            },
+            "description": "Orden `campo:asc|desc`. Campos: fecha_recepcion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_list_RecepcionProveedorResponse__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recepciones-proveedor/{recepcion_id}": {
+      "get": {
+        "tags": ["proveedores"],
+        "summary": "Obtener Recepcion",
+        "operationId": "obtener_recepcion_api_v1_recepciones_proveedor__recepcion_id__get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "recepcion_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Recepcion Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_RecepcionProveedorResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devoluciones-proveedor": {
+      "post": {
+        "tags": ["proveedores"],
+        "summary": "Crear Devolucion",
+        "operationId": "crear_devolucion_api_v1_devoluciones_proveedor_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DevolucionProveedorCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_DevolucionProveedorResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["proveedores"],
+        "summary": "Listar Devoluciones",
+        "operationId": "listar_devoluciones_api_v1_devoluciones_proveedor_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "proveedor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Proveedor Id"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/EstadoDevolucionProveedor" },
+                { "type": "null" }
+              ],
+              "title": "Estado"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Número de página (1-indexada)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Número de página (1-indexada)"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Tamaño de página",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Tamaño de página"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Orden `campo:asc|desc`. Campos: created_at",
+              "default": "created_at:desc",
+              "title": "Sort"
+            },
+            "description": "Orden `campo:asc|desc`. Campos: created_at"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_list_DevolucionProveedorResponse__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devoluciones-proveedor/{devolucion_id}": {
+      "get": {
+        "tags": ["proveedores"],
+        "summary": "Obtener Devolucion",
+        "operationId": "obtener_devolucion_api_v1_devoluciones_proveedor__devolucion_id__get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "devolucion_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Devolucion Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_DevolucionProveedorResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devoluciones-proveedor/{devolucion_id}/enviar": {
+      "post": {
+        "tags": ["proveedores"],
+        "summary": "Enviar Devolucion",
+        "operationId": "enviar_devolucion_api_v1_devoluciones_proveedor__devolucion_id__enviar_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "devolucion_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Devolucion Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_DevolucionProveedorResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devoluciones-proveedor/{devolucion_id}/cerrar": {
+      "post": {
+        "tags": ["proveedores"],
+        "summary": "Cerrar Devolucion",
+        "operationId": "cerrar_devolucion_api_v1_devoluciones_proveedor__devolucion_id__cerrar_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "devolucion_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Devolucion Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CerrarDevolucionRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_DevolucionProveedorResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cajas": {
       "post": {
         "tags": ["caja"],
         "summary": "Crear Caja",
-        "operationId": "crear_caja_api_v1_cajas__post",
+        "operationId": "crear_caja_api_v1_cajas_post",
         "security": [{ "OAuth2PasswordBearer": [] }],
         "requestBody": {
           "required": true,
@@ -7292,7 +8471,7 @@
       "get": {
         "tags": ["caja"],
         "summary": "Listar Cajas",
-        "operationId": "listar_cajas_api_v1_cajas__get",
+        "operationId": "listar_cajas_api_v1_cajas_get",
         "security": [{ "OAuth2PasswordBearer": [] }],
         "parameters": [
           {
@@ -8521,6 +9700,11 @@
         "type": "object",
         "title": "AbrirInstanciaRequest"
       },
+      "AccionDefecto": {
+        "type": "string",
+        "enum": ["devolucion", "merma", "aceptado_con_descuento"],
+        "title": "AccionDefecto"
+      },
       "ActualizarCategoriaRequest": {
         "properties": {
           "nombre": {
@@ -9475,6 +10659,17 @@
         "required": ["data"],
         "title": "ApiResponse[DesgloseStockResponse]"
       },
+      "ApiResponse_DevolucionProveedorResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/DevolucionProveedorResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[DevolucionProveedorResponse]"
+      },
       "ApiResponse_DevolucionResponse_": {
         "properties": {
           "success": { "type": "boolean", "title": "Success", "default": true },
@@ -9662,6 +10857,17 @@
         "required": ["data"],
         "title": "ApiResponse[PedidoPagoResponse]"
       },
+      "ApiResponse_PedidoProveedorResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/PedidoProveedorResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[PedidoProveedorResponse]"
+      },
       "ApiResponse_PedidoResponse_": {
         "properties": {
           "success": { "type": "boolean", "title": "Success", "default": true },
@@ -9684,6 +10890,17 @@
         "required": ["data"],
         "title": "ApiResponse[ProductoKpisResponse]"
       },
+      "ApiResponse_ProductoProveedorResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/ProductoProveedorResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[ProductoProveedorResponse]"
+      },
       "ApiResponse_ProductoResponse_": {
         "properties": {
           "success": { "type": "boolean", "title": "Success", "default": true },
@@ -9705,6 +10922,28 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[PromocionResponse]"
+      },
+      "ApiResponse_ProveedorResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/ProveedorResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[ProveedorResponse]"
+      },
+      "ApiResponse_RecepcionProveedorResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/RecepcionProveedorResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[RecepcionProveedorResponse]"
       },
       "ApiResponse_RecursoResponse_": {
         "properties": {
@@ -9749,6 +10988,17 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[ResumenPedidosResponse]"
+      },
+      "ApiResponse_ResumenProveedorResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/ResumenProveedorResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[ResumenProveedorResponse]"
       },
       "ApiResponse_ResumenTurnoResponse_": {
         "properties": {
@@ -9949,6 +11199,21 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[list[ComponenteResponse]]"
+      },
+      "ApiResponse_list_DevolucionProveedorResponse__": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": {
+            "items": { "$ref": "#/components/schemas/DevolucionProveedorResponse" },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[list[DevolucionProveedorResponse]]"
       },
       "ApiResponse_list_DevolucionResponse__": {
         "properties": {
@@ -10175,6 +11440,21 @@
         "required": ["data"],
         "title": "ApiResponse[list[PedidoListItem]]"
       },
+      "ApiResponse_list_PedidoProveedorResponse__": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": {
+            "items": { "$ref": "#/components/schemas/PedidoProveedorResponse" },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[list[PedidoProveedorResponse]]"
+      },
       "ApiResponse_list_PermisoResponse__": {
         "properties": {
           "success": { "type": "boolean", "title": "Success", "default": true },
@@ -10189,6 +11469,21 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[list[PermisoResponse]]"
+      },
+      "ApiResponse_list_ProductoProveedorResponse__": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": {
+            "items": { "$ref": "#/components/schemas/ProductoProveedorResponse" },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[list[ProductoProveedorResponse]]"
       },
       "ApiResponse_list_ProductoRankingResponse__": {
         "properties": {
@@ -10235,6 +11530,36 @@
         "required": ["data"],
         "title": "ApiResponse[list[PromocionResponse]]"
       },
+      "ApiResponse_list_ProveedorResponse__": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": {
+            "items": { "$ref": "#/components/schemas/ProveedorResponse" },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[list[ProveedorResponse]]"
+      },
+      "ApiResponse_list_RecepcionProveedorResponse__": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": {
+            "items": { "$ref": "#/components/schemas/RecepcionProveedorResponse" },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[list[RecepcionProveedorResponse]]"
+      },
       "ApiResponse_list_RecursoResponse__": {
         "properties": {
           "success": { "type": "boolean", "title": "Success", "default": true },
@@ -10249,6 +11574,21 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[list[RecursoResponse]]"
+      },
+      "ApiResponse_list_ReordenGeneradoResponse__": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": {
+            "items": { "$ref": "#/components/schemas/ReordenGeneradoResponse" },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[list[ReordenGeneradoResponse]]"
       },
       "ApiResponse_list_RolResponse__": {
         "properties": {
@@ -10853,6 +12193,21 @@
         "required": ["saldo_final_declarado"],
         "title": "CerrarCajaTurnoRequest"
       },
+      "CerrarDevolucionRequest": {
+        "properties": {
+          "resultado": { "$ref": "#/components/schemas/ResultadoDevolucion" },
+          "tipo_resolucion": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TipoResolucionDevolucion" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["resultado"],
+        "title": "CerrarDevolucionRequest"
+      },
       "CitaAsignacionResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -11083,6 +12438,11 @@
         "additionalProperties": false,
         "type": "object",
         "title": "ConciliarTurnoRequest"
+      },
+      "CondicionesPago": {
+        "type": "string",
+        "enum": ["contado", "credito"],
+        "title": "CondicionesPago"
       },
       "ConfigurarUmbralesRequest": {
         "properties": {
@@ -12184,6 +13544,88 @@
         "required": ["id", "detalle_venta_id", "cantidad", "monto"],
         "title": "DevolucionLineaResponse"
       },
+      "DevolucionProveedorCreateRequest": {
+        "properties": {
+          "proveedor_id": { "type": "string", "format": "uuid", "title": "Proveedor Id" },
+          "recepcion_id": { "type": "string", "format": "uuid", "title": "Recepcion Id" },
+          "lineas": {
+            "items": { "$ref": "#/components/schemas/LineaDevolucionRequest" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Lineas"
+          },
+          "notas": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Notas" }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["proveedor_id", "recepcion_id", "lineas"],
+        "title": "DevolucionProveedorCreateRequest"
+      },
+      "DevolucionProveedorLineaResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "recepcion_detalle_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Recepcion Detalle Id"
+          },
+          "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
+          "cantidad": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cantidad"
+          }
+        },
+        "type": "object",
+        "required": ["id", "recepcion_detalle_id", "producto_id", "cantidad"],
+        "title": "DevolucionProveedorLineaResponse"
+      },
+      "DevolucionProveedorResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "folio": { "type": "string", "title": "Folio" },
+          "proveedor_id": { "type": "string", "format": "uuid", "title": "Proveedor Id" },
+          "recepcion_id": { "type": "string", "format": "uuid", "title": "Recepcion Id" },
+          "creado_por": { "type": "string", "format": "uuid", "title": "Creado Por" },
+          "estado": { "$ref": "#/components/schemas/EstadoDevolucionProveedor" },
+          "resultado": {
+            "anyOf": [{ "$ref": "#/components/schemas/ResultadoDevolucion" }, { "type": "null" }]
+          },
+          "tipo_resolucion": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TipoResolucionDevolucion" },
+              { "type": "null" }
+            ]
+          },
+          "fecha_envio": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Fecha Envio"
+          },
+          "fecha_cierre": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Fecha Cierre"
+          },
+          "notas": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Notas" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "lineas": {
+            "items": { "$ref": "#/components/schemas/DevolucionProveedorLineaResponse" },
+            "type": "array",
+            "title": "Lineas",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "folio",
+          "proveedor_id",
+          "recepcion_id",
+          "creado_por",
+          "estado",
+          "created_at"
+        ],
+        "title": "DevolucionProveedorResponse"
+      },
       "DevolucionResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -12330,6 +13772,11 @@
         ],
         "title": "EstadoCita"
       },
+      "EstadoDevolucionProveedor": {
+        "type": "string",
+        "enum": ["pendiente", "enviada", "cerrada"],
+        "title": "EstadoDevolucionProveedor"
+      },
       "EstadoEntrega": {
         "type": "string",
         "enum": ["pendiente", "en_preparacion", "en_reparto", "entregado", "fallido"],
@@ -12345,6 +13792,16 @@
         "type": "string",
         "enum": ["borrador", "confirmado", "facturado", "cancelado"],
         "title": "EstadoPedido"
+      },
+      "EstadoPedidoProveedor": {
+        "type": "string",
+        "enum": ["borrador", "enviado", "confirmado", "parcial", "recibido", "cancelado"],
+        "title": "EstadoPedidoProveedor"
+      },
+      "EstadoRecepcion": {
+        "type": "string",
+        "enum": ["completa", "parcial", "con_defectos"],
+        "title": "EstadoRecepcion"
       },
       "EstadoVenta": {
         "type": "string",
@@ -12700,6 +14157,49 @@
         "required": ["sucursal_id", "categoria_id", "valor_total", "por_categoria"],
         "title": "InventarioValorizadoResponse"
       },
+      "LineaDevolucionRequest": {
+        "properties": {
+          "recepcion_detalle_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Recepcion Detalle Id"
+          },
+          "cantidad": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Cantidad"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["recepcion_detalle_id", "cantidad"],
+        "title": "LineaDevolucionRequest"
+      },
+      "LineaPedidoProveedorRequest": {
+        "properties": {
+          "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
+          "cantidad_solicitada": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Cantidad Solicitada"
+          },
+          "precio_unitario": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Precio Unitario"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["producto_id", "cantidad_solicitada", "precio_unitario"],
+        "title": "LineaPedidoProveedorRequest"
+      },
       "LineaPedidoRequest": {
         "properties": {
           "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
@@ -12746,6 +14246,51 @@
         "type": "object",
         "required": ["producto_id", "cantidad", "precio_unitario"],
         "title": "LineaPedidoRequest"
+      },
+      "LineaRecepcionRequest": {
+        "properties": {
+          "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
+          "cantidad_recibida_buena": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Cantidad Recibida Buena"
+          },
+          "cantidad_defectuosa": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Cantidad Defectuosa",
+            "default": "0"
+          },
+          "cantidad_esperada": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Cantidad Esperada"
+          },
+          "motivo_defecto": {
+            "anyOf": [{ "$ref": "#/components/schemas/MotivoDefecto" }, { "type": "null" }]
+          },
+          "accion_defecto": {
+            "anyOf": [{ "$ref": "#/components/schemas/AccionDefecto" }, { "type": "null" }]
+          },
+          "fotos_evidencia_keys": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Fotos Evidencia Keys",
+            "default": []
+          },
+          "notas": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Notas" }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["producto_id", "cantidad_recibida_buena"],
+        "title": "LineaRecepcionRequest"
       },
       "LineaVentaRequest": {
         "properties": {
@@ -13070,6 +14615,11 @@
         "required": ["id", "telefono", "saldo", "activo", "created_at"],
         "title": "MonederoResponse"
       },
+      "MotivoDefecto": {
+        "type": "string",
+        "enum": ["danado", "caducado", "incompleto", "error_proveedor", "otro"],
+        "title": "MotivoDefecto"
+      },
       "MovimientoCajaRequest": {
         "properties": {
           "tipo": { "$ref": "#/components/schemas/TipoMovimientoCaja" },
@@ -13376,6 +14926,117 @@
         "required": ["id", "monto", "metodo_pago", "reembolsado", "created_at"],
         "title": "PedidoPagoResponse"
       },
+      "PedidoProveedorCreateRequest": {
+        "properties": {
+          "proveedor_id": { "type": "string", "format": "uuid", "title": "Proveedor Id" },
+          "lineas": {
+            "items": { "$ref": "#/components/schemas/LineaPedidoProveedorRequest" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Lineas"
+          },
+          "fecha_estimada_entrega": {
+            "anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+            "title": "Fecha Estimada Entrega"
+          },
+          "notas": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Notas" }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["proveedor_id", "lineas"],
+        "title": "PedidoProveedorCreateRequest"
+      },
+      "PedidoProveedorLineaResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
+          "cantidad_solicitada": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cantidad Solicitada"
+          },
+          "cantidad_recibida": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cantidad Recibida"
+          },
+          "precio_unitario": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Precio Unitario"
+          },
+          "subtotal": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Subtotal"
+          },
+          "pendiente": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Pendiente"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "producto_id",
+          "cantidad_solicitada",
+          "cantidad_recibida",
+          "precio_unitario",
+          "subtotal",
+          "pendiente"
+        ],
+        "title": "PedidoProveedorLineaResponse"
+      },
+      "PedidoProveedorResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "folio": { "type": "string", "title": "Folio" },
+          "proveedor_id": { "type": "string", "format": "uuid", "title": "Proveedor Id" },
+          "sucursal_id": { "type": "string", "format": "uuid", "title": "Sucursal Id" },
+          "estado": { "$ref": "#/components/schemas/EstadoPedidoProveedor" },
+          "generado_automaticamente": { "type": "boolean", "title": "Generado Automaticamente" },
+          "generado_por": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Generado Por"
+          },
+          "confirmado_por": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Confirmado Por"
+          },
+          "fecha_pedido": { "type": "string", "format": "date-time", "title": "Fecha Pedido" },
+          "fecha_estimada_entrega": {
+            "anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+            "title": "Fecha Estimada Entrega"
+          },
+          "subtotal": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Subtotal"
+          },
+          "notas": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Notas" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "lineas": {
+            "items": { "$ref": "#/components/schemas/PedidoProveedorLineaResponse" },
+            "type": "array",
+            "title": "Lineas",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "folio",
+          "proveedor_id",
+          "sucursal_id",
+          "estado",
+          "generado_automaticamente",
+          "fecha_pedido",
+          "subtotal",
+          "created_at"
+        ],
+        "title": "PedidoProveedorResponse"
+      },
       "PedidoResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -13631,6 +15292,115 @@
           "bajo_stock"
         ],
         "title": "ProductoKpisResponse"
+      },
+      "ProductoProveedorCreateRequest": {
+        "properties": {
+          "proveedor_id": { "type": "string", "format": "uuid", "title": "Proveedor Id" },
+          "precio_compra": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Precio Compra"
+          },
+          "tiempo_entrega_dias": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Tiempo Entrega Dias"
+          },
+          "stock_minimo": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Stock Minimo"
+          },
+          "cantidad_reorden": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" }
+            ],
+            "title": "Cantidad Reorden"
+          },
+          "codigo_proveedor": {
+            "anyOf": [{ "type": "string", "maxLength": 60 }, { "type": "null" }],
+            "title": "Codigo Proveedor"
+          },
+          "stock_maximo": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Stock Maximo"
+          },
+          "es_proveedor_principal": {
+            "type": "boolean",
+            "title": "Es Proveedor Principal",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "proveedor_id",
+          "precio_compra",
+          "tiempo_entrega_dias",
+          "stock_minimo",
+          "cantidad_reorden"
+        ],
+        "title": "ProductoProveedorCreateRequest"
+      },
+      "ProductoProveedorResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
+          "proveedor_id": { "type": "string", "format": "uuid", "title": "Proveedor Id" },
+          "codigo_proveedor": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Codigo Proveedor"
+          },
+          "precio_compra": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Precio Compra"
+          },
+          "tiempo_entrega_dias": { "type": "integer", "title": "Tiempo Entrega Dias" },
+          "stock_minimo": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Stock Minimo"
+          },
+          "stock_maximo": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Stock Maximo"
+          },
+          "cantidad_reorden": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cantidad Reorden"
+          },
+          "es_proveedor_principal": { "type": "boolean", "title": "Es Proveedor Principal" },
+          "activo": { "type": "boolean", "title": "Activo" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "producto_id",
+          "proveedor_id",
+          "precio_compra",
+          "tiempo_entrega_dias",
+          "stock_minimo",
+          "cantidad_reorden",
+          "es_proveedor_principal",
+          "activo",
+          "created_at"
+        ],
+        "title": "ProductoProveedorResponse"
       },
       "ProductoRankingResponse": {
         "properties": {
@@ -13928,6 +15698,336 @@
         "required": ["id", "nombre", "tipo", "activo", "prioridad", "combinable", "created_at"],
         "title": "PromocionResponse"
       },
+      "ProveedorCreateRequest": {
+        "properties": {
+          "codigo": { "type": "string", "maxLength": 30, "minLength": 1, "title": "Codigo" },
+          "razon_social": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Razon Social"
+          },
+          "tipo_persona": { "$ref": "#/components/schemas/TipoPersona" },
+          "condiciones_pago": { "$ref": "#/components/schemas/CondicionesPago" },
+          "dias_credito": {
+            "anyOf": [{ "type": "integer", "exclusiveMinimum": 0.0 }, { "type": "null" }],
+            "title": "Dias Credito"
+          },
+          "nombre_comercial": {
+            "anyOf": [{ "type": "string", "maxLength": 200 }, { "type": "null" }],
+            "title": "Nombre Comercial"
+          },
+          "rfc": {
+            "anyOf": [{ "type": "string", "maxLength": 20 }, { "type": "null" }],
+            "title": "Rfc"
+          },
+          "moneda": { "type": "string", "maxLength": 3, "title": "Moneda", "default": "MXN" },
+          "contacto_principal": {
+            "anyOf": [{ "type": "string", "maxLength": 150 }, { "type": "null" }],
+            "title": "Contacto Principal"
+          },
+          "telefono": {
+            "anyOf": [{ "type": "string", "maxLength": 30 }, { "type": "null" }],
+            "title": "Telefono"
+          },
+          "email": {
+            "anyOf": [{ "type": "string", "maxLength": 150 }, { "type": "null" }],
+            "title": "Email"
+          },
+          "direccion_calle": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Calle"
+          },
+          "direccion_numero": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Numero"
+          },
+          "direccion_colonia": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Colonia"
+          },
+          "direccion_ciudad": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Ciudad"
+          },
+          "direccion_estado": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Estado"
+          },
+          "direccion_codigo_postal": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Codigo Postal"
+          },
+          "notas": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Notas" }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["codigo", "razon_social", "tipo_persona", "condiciones_pago"],
+        "title": "ProveedorCreateRequest"
+      },
+      "ProveedorResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "codigo": { "type": "string", "title": "Codigo" },
+          "razon_social": { "type": "string", "title": "Razon Social" },
+          "nombre_comercial": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Nombre Comercial"
+          },
+          "rfc": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Rfc" },
+          "tipo_persona": { "$ref": "#/components/schemas/TipoPersona" },
+          "condiciones_pago": { "$ref": "#/components/schemas/CondicionesPago" },
+          "dias_credito": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Dias Credito"
+          },
+          "moneda": { "type": "string", "title": "Moneda" },
+          "contacto_principal": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Contacto Principal"
+          },
+          "telefono": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Telefono" },
+          "email": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Email" },
+          "direccion_calle": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Calle"
+          },
+          "direccion_numero": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Numero"
+          },
+          "direccion_colonia": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Colonia"
+          },
+          "direccion_ciudad": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Ciudad"
+          },
+          "direccion_estado": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Estado"
+          },
+          "direccion_codigo_postal": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Codigo Postal"
+          },
+          "activo": { "type": "boolean", "title": "Activo" },
+          "notas": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Notas" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "codigo",
+          "razon_social",
+          "tipo_persona",
+          "condiciones_pago",
+          "moneda",
+          "activo",
+          "created_at"
+        ],
+        "title": "ProveedorResponse"
+      },
+      "ProveedorUpdateRequest": {
+        "properties": {
+          "razon_social": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Razon Social"
+          },
+          "tipo_persona": {
+            "anyOf": [{ "$ref": "#/components/schemas/TipoPersona" }, { "type": "null" }]
+          },
+          "condiciones_pago": {
+            "anyOf": [{ "$ref": "#/components/schemas/CondicionesPago" }, { "type": "null" }]
+          },
+          "dias_credito": {
+            "anyOf": [{ "type": "integer", "exclusiveMinimum": 0.0 }, { "type": "null" }],
+            "title": "Dias Credito"
+          },
+          "cambiar_dias_credito": {
+            "type": "boolean",
+            "title": "Cambiar Dias Credito",
+            "default": false
+          },
+          "moneda": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Moneda" },
+          "nombre_comercial": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Nombre Comercial"
+          },
+          "cambiar_nombre_comercial": {
+            "type": "boolean",
+            "title": "Cambiar Nombre Comercial",
+            "default": false
+          },
+          "rfc": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Rfc" },
+          "cambiar_rfc": { "type": "boolean", "title": "Cambiar Rfc", "default": false },
+          "contacto_principal": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Contacto Principal"
+          },
+          "cambiar_contacto_principal": {
+            "type": "boolean",
+            "title": "Cambiar Contacto Principal",
+            "default": false
+          },
+          "telefono": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Telefono" },
+          "cambiar_telefono": { "type": "boolean", "title": "Cambiar Telefono", "default": false },
+          "email": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Email" },
+          "cambiar_email": { "type": "boolean", "title": "Cambiar Email", "default": false },
+          "notas": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Notas" },
+          "cambiar_notas": { "type": "boolean", "title": "Cambiar Notas", "default": false },
+          "direccion_calle": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Calle"
+          },
+          "direccion_numero": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Numero"
+          },
+          "direccion_colonia": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Colonia"
+          },
+          "direccion_ciudad": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Ciudad"
+          },
+          "direccion_estado": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Estado"
+          },
+          "direccion_codigo_postal": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Direccion Codigo Postal"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ProveedorUpdateRequest"
+      },
+      "RecepcionProveedorCreateRequest": {
+        "properties": {
+          "proveedor_id": { "type": "string", "format": "uuid", "title": "Proveedor Id" },
+          "lineas": {
+            "items": { "$ref": "#/components/schemas/LineaRecepcionRequest" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Lineas"
+          },
+          "pedido_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Pedido Id"
+          },
+          "numero_factura": {
+            "anyOf": [{ "type": "string", "maxLength": 60 }, { "type": "null" }],
+            "title": "Numero Factura"
+          },
+          "numero_remision": {
+            "anyOf": [{ "type": "string", "maxLength": 60 }, { "type": "null" }],
+            "title": "Numero Remision"
+          },
+          "transportista": {
+            "anyOf": [{ "type": "string", "maxLength": 120 }, { "type": "null" }],
+            "title": "Transportista"
+          },
+          "notas": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Notas" }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["proveedor_id", "lineas"],
+        "title": "RecepcionProveedorCreateRequest"
+      },
+      "RecepcionProveedorLineaResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "producto_id": { "type": "string", "format": "uuid", "title": "Producto Id" },
+          "cantidad_esperada": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Cantidad Esperada"
+          },
+          "cantidad_recibida_buena": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cantidad Recibida Buena"
+          },
+          "cantidad_defectuosa": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cantidad Defectuosa"
+          },
+          "motivo_defecto": {
+            "anyOf": [{ "$ref": "#/components/schemas/MotivoDefecto" }, { "type": "null" }]
+          },
+          "accion_defecto": {
+            "anyOf": [{ "$ref": "#/components/schemas/AccionDefecto" }, { "type": "null" }]
+          },
+          "fotos_evidencia_keys": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Fotos Evidencia Keys",
+            "default": []
+          },
+          "notas": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Notas" }
+        },
+        "type": "object",
+        "required": ["id", "producto_id", "cantidad_recibida_buena", "cantidad_defectuosa"],
+        "title": "RecepcionProveedorLineaResponse"
+      },
+      "RecepcionProveedorResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "folio": { "type": "string", "title": "Folio" },
+          "pedido_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Pedido Id"
+          },
+          "proveedor_id": { "type": "string", "format": "uuid", "title": "Proveedor Id" },
+          "sucursal_id": { "type": "string", "format": "uuid", "title": "Sucursal Id" },
+          "numero_factura": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Numero Factura"
+          },
+          "numero_remision": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Numero Remision"
+          },
+          "transportista": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Transportista"
+          },
+          "recibido_por": { "type": "string", "format": "uuid", "title": "Recibido Por" },
+          "fecha_recepcion": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fecha Recepcion"
+          },
+          "estado": { "$ref": "#/components/schemas/EstadoRecepcion" },
+          "notas": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Notas" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "lineas": {
+            "items": { "$ref": "#/components/schemas/RecepcionProveedorLineaResponse" },
+            "type": "array",
+            "title": "Lineas",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "folio",
+          "proveedor_id",
+          "sucursal_id",
+          "recibido_por",
+          "fecha_recepcion",
+          "estado",
+          "created_at"
+        ],
+        "title": "RecepcionProveedorResponse"
+      },
       "RecursoCreateRequest": {
         "properties": {
           "nombre": { "type": "string", "maxLength": 80, "minLength": 1, "title": "Nombre" },
@@ -14001,6 +16101,15 @@
         "type": "object",
         "required": ["monto", "metodo_pago"],
         "title": "RegistrarAnticipoRequest"
+      },
+      "ReordenGeneradoResponse": {
+        "properties": {
+          "pedido": { "$ref": "#/components/schemas/PedidoProveedorResponse" },
+          "fue_creado": { "type": "boolean", "title": "Fue Creado" }
+        },
+        "type": "object",
+        "required": ["pedido", "fue_creado"],
+        "title": "ReordenGeneradoResponse"
       },
       "ReporteVentasResponse": {
         "properties": {
@@ -14076,6 +16185,11 @@
         ],
         "title": "ResolucionCodigoResponse"
       },
+      "ResultadoDevolucion": {
+        "type": "string",
+        "enum": ["aceptada_proveedor", "rechazada_proveedor"],
+        "title": "ResultadoDevolucion"
+      },
       "ResumenPedidosResponse": {
         "properties": {
           "por_estado": {
@@ -14092,6 +16206,54 @@
         "type": "object",
         "required": ["por_estado", "por_estado_entrega"],
         "title": "ResumenPedidosResponse"
+      },
+      "ResumenProveedorResponse": {
+        "properties": {
+          "proveedor_id": { "type": "string", "format": "uuid", "title": "Proveedor Id" },
+          "total_unidades_recibidas": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Unidades Recibidas"
+          },
+          "total_unidades_defectuosas": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Unidades Defectuosas"
+          },
+          "pct_defectuoso": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Pct Defectuoso"
+          },
+          "tiempo_entrega_prometido_dias": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Tiempo Entrega Prometido Dias"
+          },
+          "tiempo_entrega_real_promedio_dias": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+              { "type": "null" }
+            ],
+            "title": "Tiempo Entrega Real Promedio Dias"
+          },
+          "devoluciones_pendientes": { "type": "integer", "title": "Devoluciones Pendientes" },
+          "devoluciones_aceptadas": { "type": "integer", "title": "Devoluciones Aceptadas" },
+          "devoluciones_rechazadas": { "type": "integer", "title": "Devoluciones Rechazadas" }
+        },
+        "type": "object",
+        "required": [
+          "proveedor_id",
+          "total_unidades_recibidas",
+          "total_unidades_defectuosas",
+          "pct_defectuoso",
+          "devoluciones_pendientes",
+          "devoluciones_aceptadas",
+          "devoluciones_rechazadas"
+        ],
+        "title": "ResumenProveedorResponse"
       },
       "ResumenTurnoResponse": {
         "properties": {
@@ -14287,6 +16449,7 @@
         "enum": ["mostrador", "domicilio", "recoger"],
         "title": "TipoPedido"
       },
+      "TipoPersona": { "type": "string", "enum": ["fisica", "moral"], "title": "TipoPersona" },
       "TipoProducto": {
         "type": "string",
         "enum": ["simple", "fraccionable", "kit", "servicio"],
@@ -14296,6 +16459,11 @@
         "type": "string",
         "enum": ["nxm", "porcentaje", "precio_fijo"],
         "title": "TipoPromocion"
+      },
+      "TipoResolucionDevolucion": {
+        "type": "string",
+        "enum": ["reemplazo", "nota_credito", "reembolso"],
+        "title": "TipoResolucionDevolucion"
       },
       "TipoSucursal": {
         "type": "string",

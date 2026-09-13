@@ -1,0 +1,146 @@
+<div class="p-6 w-full space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-6xl font-extrabold">Proveedores</h1>
+      <p class="text-muted-foreground">Catálogo de proveedores, sus productos y condiciones de compra.</p>
+    </div>
+    @if (canCrear()) {
+      <button z-button zType="default" (click)="nuevo()">
+        <ng-icon name="lucidePlus" class="mr-2" /> Nuevo proveedor
+      </button>
+    }
+  </div>
+
+  <!-- Filtros -->
+  <div class="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Buscar
+      <input z-input class="w-56" placeholder="Código, razón social, RFC…"
+             [ngModel]="q()" (ngModelChange)="q.set($event)"
+             (keyup.enter)="setQ(q())" (blur)="setQ(q())" />
+    </label>
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Estado
+      <z-select class="w-36" [ngModel]="activo()" (ngModelChange)="setActivo($event)">
+        <z-select-item zValue="true">Activos</z-select-item>
+        <z-select-item zValue="false">Inactivos</z-select-item>
+        <z-select-item zValue="">Todos</z-select-item>
+      </z-select>
+    </label>
+    @if (hayFiltros()) {
+      <button z-button zType="ghost" zSize="sm" (click)="limpiarFiltros()">
+        <ng-icon name="lucideX" class="mr-1.5 size-3.5" /> Limpiar
+      </button>
+    }
+    <button z-button zType="outline" zSize="sm" class="ml-auto" [zLoading]="loading()" (click)="cargar()">
+      <ng-icon name="lucideRefreshCw" class="mr-1.5 size-3.5" /> Actualizar
+    </button>
+  </div>
+
+  <div class="overflow-hidden rounded-xl border">
+    <div class="overflow-x-auto">
+      <table z-table>
+        <thead z-table-header class="bg-muted/50">
+          <tr z-table-row>
+            <th z-table-head>Código</th>
+            <th z-table-head>Razón social</th>
+            <th z-table-head>RFC</th>
+            <th z-table-head>Condiciones</th>
+            <th z-table-head>Contacto</th>
+            <th z-table-head>Estado</th>
+            <th z-table-head class="text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody z-table-body>
+          @if (loading()) {
+            @for (i of [1,2,3,4,5,6]; track i) {
+              <tr z-table-row><td z-table-cell colspan="7"><z-skeleton class="h-5 w-full" /></td></tr>
+            }
+          } @else {
+            @for (p of proveedores(); track p.id) {
+              <tr z-table-row class="cursor-pointer hover:bg-muted/40" [routerLink]="['/proveedores', p.id]">
+                <td z-table-cell class="font-mono text-xs text-primary">{{ p.codigo }}</td>
+                <td z-table-cell class="font-medium">{{ p.razon_social }}</td>
+                <td z-table-cell class="text-sm text-muted-foreground">{{ p.rfc || '—' }}</td>
+                <td z-table-cell class="text-sm text-muted-foreground">
+                  {{ p.condiciones_pago === 'credito' ? ('Crédito ' + p.dias_credito + 'd') : 'Contado' }}
+                </td>
+                <td z-table-cell class="text-sm text-muted-foreground">{{ p.telefono || p.email || '—' }}</td>
+                <td z-table-cell>
+                  <z-badge [zType]="p.activo ? 'default' : 'outline'">{{ p.activo ? 'Activo' : 'Inactivo' }}</z-badge>
+                </td>
+                <td z-table-cell class="text-right" (click)="$event.stopPropagation()">
+                  <div class="flex items-center justify-end gap-1">
+                    @if (canEditar()) {
+                      <button z-button zType="ghost" zSize="icon-sm" title="Editar" (click)="editar(p, $event)">
+                        <ng-icon name="lucidePencil" class="size-4" />
+                      </button>
+                      <button z-button zType="ghost" zSize="icon-sm"
+                              [class.text-destructive]="p.activo"
+                              [title]="p.activo ? 'Desactivar' : 'Activar'" (click)="toggleActivo(p, $event)">
+                        <ng-icon [name]="p.activo ? 'lucideBan' : 'lucideCircleCheck'" class="size-4" />
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr z-table-row>
+                <td z-table-cell colspan="7" class="p-0">
+                  <z-empty
+                    zIcon="lucideBan"
+                    zTitle="Sin proveedores"
+                    [zDescription]="hayFiltros() ? 'Ningún proveedor coincide con los filtros.' : 'Todavía no hay proveedores registrados.'"
+                    class="py-12"
+                  />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (!loading() && totalItems() > 0) {
+      <div class="flex flex-col items-center justify-between gap-4 border-t p-3 sm:flex-row">
+        <div class="text-sm text-muted-foreground tabular-nums">
+          {{ totalItems() }} proveedor(es) · página {{ page() }} de {{ totalPages() }}
+        </div>
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium">Filas</span>
+            <z-select [ngModel]="pageSize().toString()" (ngModelChange)="setPageSize($event)">
+              <z-select-item zValue="20">20</z-select-item>
+              <z-select-item zValue="50">50</z-select-item>
+              <z-select-item zValue="100">100</z-select-item>
+            </z-select>
+          </div>
+          @if (totalPages() > 1) {
+            <z-pagination [zTotal]="totalPages()" [zPageIndex]="page()" [zContent]="content" />
+            <ng-template #content>
+              <ul z-pagination-content>
+                <li z-pagination-item>
+                  <z-pagination-previous (click)="prev()" [zDisabled]="page() === 1" />
+                </li>
+                @for (p of pages(); track p) {
+                  <li z-pagination-item>
+                    <button type="button" z-pagination-button [zActive]="p === page()" (click)="irAPagina(p)">
+                      <span class="sr-only">Ir a página</span>
+                      {{ p }}
+                    </button>
+                  </li>
+                }
+                @if (pages().length > 0 && pages()[pages().length - 1] < totalPages()) {
+                  <li z-pagination-item><z-pagination-ellipsis /></li>
+                }
+                <li z-pagination-item>
+                  <z-pagination-next (click)="next()" [zDisabled]="page() === totalPages()" />
+                </li>
+              </ul>
+            </ng-template>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>
