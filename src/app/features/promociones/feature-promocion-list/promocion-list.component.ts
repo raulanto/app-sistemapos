@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucidePlus, lucidePencil, lucideBan, lucideCircleCheck, lucideTag, lucideTicket } from '@ng-icons/lucide';
+import { lucidePlus, lucidePencil, lucideBan, lucideCircleCheck, lucideTag, lucideTicket, lucideRefreshCw } from '@ng-icons/lucide';
 
 import { PromocionService } from '../data-access/promocion.service';
 import { PromocionResponse, TipoPromocion, TIPOS_PROMOCION } from '../data-access/promociones.models';
@@ -36,7 +36,7 @@ import { PromocionFormSheetComponent } from '../ui/promocion-form-sheet/promocio
     ZardEmptyComponent,
     ZardSkeletonComponent,
   ],
-  viewProviders: [provideIcons({ lucidePlus, lucidePencil, lucideBan, lucideCircleCheck, lucideTag, lucideTicket })],
+  viewProviders: [provideIcons({ lucidePlus, lucidePencil, lucideBan, lucideCircleCheck, lucideTag, lucideTicket, lucideRefreshCw })],
   templateUrl: './promocion-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -52,8 +52,8 @@ export class PromocionListComponent {
   readonly tipos = TIPOS_PROMOCION;
   readonly promociones = signal<PromocionResponse[]>([]);
   readonly loading = signal(true);
-  readonly filtroTipo = signal<TipoPromocion | ''>('');
-  readonly filtroActivo = signal<'' | 'true' | 'false'>('');
+  readonly filtroTipo = signal<TipoPromocion | 'todos'>('todos');
+  readonly filtroActivo = signal<'todas' | 'true' | 'false'>('todas');
 
   constructor() {
     this.cargar();
@@ -63,8 +63,8 @@ export class PromocionListComponent {
     this.loading.set(true);
     this.promocionService
       .listar({
-        tipo: this.filtroTipo() || undefined,
-        activo: this.filtroActivo() === '' ? undefined : this.filtroActivo() === 'true',
+        tipo: this.filtroTipo() === 'todos' ? undefined : (this.filtroTipo() as TipoPromocion),
+        activo: this.filtroActivo() === 'todas' ? undefined : this.filtroActivo() === 'true',
         page_size: 100,
         sort: 'prioridad:asc',
       })

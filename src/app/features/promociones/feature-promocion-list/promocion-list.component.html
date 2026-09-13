@@ -13,14 +13,19 @@
 
   <div class="flex flex-wrap items-center gap-3">
     <z-select class="w-44" [ngModel]="filtroTipo()" (ngModelChange)="filtroTipo.set($event); cargar()">
-      <z-select-item zValue="">Todos los tipos</z-select-item>
+      <z-select-item zValue="todos">Todos los tipos</z-select-item>
       @for (t of tipos; track t.value) { <z-select-item [zValue]="t.value">{{ t.label }}</z-select-item> }
     </z-select>
     <z-select class="w-40" [ngModel]="filtroActivo()" (ngModelChange)="filtroActivo.set($event); cargar()">
-      <z-select-item zValue="">Todas</z-select-item>
+      <z-select-item zValue="todas">Todas</z-select-item>
       <z-select-item zValue="true">Activas</z-select-item>
       <z-select-item zValue="false">Inactivas</z-select-item>
     </z-select>
+    
+    <div class="flex-1"></div>
+    <button z-button zType="outline" zSize="icon" (click)="cargar()" title="Recargar ofertas" [disabled]="loading()">
+      <ng-icon name="lucideRefreshCw" class="size-4" [class.animate-spin]="loading()" />
+    </button>
   </div>
 
   <div class="overflow-hidden rounded-xl border">
