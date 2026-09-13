@@ -12,6 +12,7 @@ import {
   lucideLayoutGrid,
   lucideList,
   lucideMapPin,
+  lucideClock,
   lucideMinus,
   lucidePackage,
   lucidePlus,
@@ -94,6 +95,7 @@ interface LineaCarrito {
       lucideLayoutGrid,
       lucideList,
       lucideMapPin,
+      lucideClock,
       lucideMinus,
       lucidePackage,
       lucidePlus,
@@ -142,6 +144,9 @@ export class PedidoFormComponent {
   readonly direccionTexto = signal('');
   readonly referenciaDireccion = signal('');
   readonly fechaPromesa = signal('');
+
+  /** Cliente encontrado por el teléfono (para descuentos por segmento). */
+  readonly cliente = signal<{ id: string; nombre: string; segmento: string | null } | null>(null);
 
   // --- Catálogo (se carga una vez y se filtra en memoria, como la tienda) ---
   readonly productos = signal<ProductoResponse[]>([]);
@@ -264,6 +269,7 @@ export class PedidoFormComponent {
       l: this.carrito().map(l => [l.producto.id, l.unidad?.id ?? null, l.cantidad, l.precio_unitario, l.descuento_linea]),
       c: this.codigoCupon().trim(),
       t: this.telefono().trim(),
+      s: this.cliente()?.segmento ?? '',
     }),
   );
 
@@ -293,6 +299,7 @@ export class PedidoFormComponent {
               lineas: lineas.map(l => this.aLineaRequest(l)),
               ...(this.codigoCupon().trim() ? { codigo_cupon: this.codigoCupon().trim() } : {}),
               ...(this.telefono().trim() ? { telefono: this.telefono().trim() } : {}),
+              ...(this.cliente()?.segmento ? { cliente_segmento: this.cliente()!.segmento } : {}),
             })
             .pipe(catchError(() => of(null)));
         }),
@@ -301,6 +308,30 @@ export class PedidoFormComponent {
       .subscribe(res => {
         this.cotizando.set(false);
         this.cotizacion.set(res);
+      });
+
+    // Búsqueda de cliente por teléfono para cargar su segmento
+    toObservable(this.telefono)
+      .pipe(
+        debounceTime(400),
+        switchMap(tel => {
+          const t = tel.trim();
+          if (t.length < 7) {
+            this.cliente.set(null);
+            return of([]);
+          }
+          return this.ventaService.buscarClientes(t).pipe(catchError(() => of([])));
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe(clientes => {
+        const tel = this.telefono().trim();
+        const exact = clientes.find(c => c.telefono === tel) || clientes[0];
+        if (exact) {
+          this.cliente.set({ id: exact.id, nombre: exact.nombre, segmento: exact.segmento ?? null });
+        } else {
+          this.cliente.set(null);
+        }
       });
   }
 
@@ -549,6 +580,8 @@ export class PedidoFormComponent {
     return {
       lineas: this.construirLineas(),
       telefono: this.telefono().trim() || null,
+      cliente_id: this.cliente()?.id ?? null,
+      cliente_segmento: this.cliente()?.segmento ?? null,
       descuento_total: this.round(Math.max(0, this.descuentoTotal())),
       motivo_descuento: this.motivoDescuento().trim() || null,
       codigo_cupon: this.codigoCupon().trim() || null,
@@ -574,6 +607,12 @@ export class PedidoFormComponent {
 
     const telefono = this.telefono().trim() || null;
     if (telefono !== (o?.telefono ?? null)) req.telefono = telefono;
+
+    const clienteId = this.cliente()?.id ?? null;
+    if (clienteId !== (o?.cliente_id ?? null)) req.cliente_id = clienteId;
+
+    const clienteSegmento = this.cliente()?.segmento ?? null;
+    if (clienteSegmento !== (o?.cliente_segmento ?? null)) req.cliente_segmento = clienteSegmento;
 
     const descuento = this.round(Math.max(0, this.descuentoTotal()));
     if (descuento !== Number(o?.descuento_total ?? 0)) req.descuento_total = descuento;

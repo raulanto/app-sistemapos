@@ -15,6 +15,17 @@
       <span>Saldo por cobrar</span>
       <span class="tabular-nums">{{ saldoPorCobrar | currency }}</span>
     </div>
+    @if (sheetData.pedido.telefono) {
+      <div class="flex gap-2 rounded-md bg-muted/50 p-2 mt-2 text-xs text-muted-foreground">
+        <ng-icon name="lucidePhone" class="size-4 shrink-0" />
+        <div class="flex flex-col gap-0.5">
+          <span>Teléfono asociado: <strong>{{ sheetData.pedido.telefono }}</strong> (Suma puntos)</span>
+          @if (monederoSaldo() > 0) {
+            <span class="text-primary font-medium">Saldo de monedero disponible: {{ monederoSaldo() | currency }}</span>
+          }
+        </div>
+      </div>
+    }
   </div>
 
   <!-- Pagos -->
@@ -25,6 +36,11 @@
         @for (m of metodos; track m.value) {
           <button z-button type="button" zType="outline" zSize="sm" (click)="agregarPago(m.value)">
             <ng-icon name="lucidePlus" class="mr-1 size-3" /> {{ m.label }}
+          </button>
+        }
+        @if (monederoSaldo() > 0) {
+          <button z-button type="button" zType="outline" zSize="sm" (click)="agregarPago('monedero')">
+            <ng-icon name="lucideWallet" class="mr-1 size-3.5" /> Monedero ({{ monederoSaldo() | currency }})
           </button>
         }
       </div>

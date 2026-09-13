@@ -39,7 +39,12 @@
                 </z-select>
               </label>
               <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-                Teléfono
+                <span class="flex items-center justify-between">
+                  Teléfono
+                  @if (cliente()) {
+                    <span class="text-primary">{{ cliente()!.nombre }}</span>
+                  }
+                </span>
                 <input z-input inputmode="tel" placeholder="Monedero / historial"
                        [ngModel]="telefono()" (ngModelChange)="telefono.set($event)" />
               </label>
@@ -48,30 +53,35 @@
             @if (esEntrega()) {
               <div class="space-y-3 rounded-lg border bg-muted/30 p-3">
                 <div class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                  <ng-icon name="lucideMapPin" class="size-3.5" /> Entrega
+                  <ng-icon [name]="esDomicilio() ? 'lucideMapPin' : 'lucideClock'" class="size-3.5" /> 
+                  {{ esDomicilio() ? 'Entrega' : 'Recolección' }}
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
-                  <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground sm:col-span-2">
-                    Dirección {{ esDomicilio() ? '*' : '' }}
-                    <input z-input [ngModel]="direccionTexto()" (ngModelChange)="direccionTexto.set($event)"
-                           placeholder="Calle, número, colonia" />
-                    @if (faltaDireccion()) {
-                      <span class="text-[0.8rem] font-medium text-destructive">Obligatoria para envío a domicilio.</span>
-                    }
-                  </label>
-                  <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-                    Referencia
-                    <input z-input [ngModel]="referenciaDireccion()" (ngModelChange)="referenciaDireccion.set($event)"
-                           placeholder="Entre calles, portón…" />
-                  </label>
+                  @if (esDomicilio()) {
+                    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground sm:col-span-2">
+                      Dirección *
+                      <input z-input [ngModel]="direccionTexto()" (ngModelChange)="direccionTexto.set($event)"
+                             placeholder="Calle, número, colonia" />
+                      @if (faltaDireccion()) {
+                        <span class="text-[0.8rem] font-medium text-destructive">Obligatoria para envío a domicilio.</span>
+                      }
+                    </label>
+                    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+                      Referencia
+                      <input z-input [ngModel]="referenciaDireccion()" (ngModelChange)="referenciaDireccion.set($event)"
+                             placeholder="Entre calles, portón…" />
+                    </label>
+                  }
                   <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
                     Fecha promesa
                     <input z-input type="datetime-local" [ngModel]="fechaPromesa()" (ngModelChange)="fechaPromesa.set($event)" />
                   </label>
                 </div>
-                <p class="text-[0.8rem] text-muted-foreground">
-                  El envío es una línea de servicio del catálogo: agrégala desde «Buscar producto» y asígnale un responsable.
-                </p>
+                @if (esDomicilio()) {
+                  <p class="text-[0.8rem] text-muted-foreground">
+                    El envío es una línea de servicio del catálogo: agrégala desde «Buscar producto» y asígnale un responsable.
+                  </p>
+                }
               </div>
             }
           </div>
