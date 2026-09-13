@@ -469,13 +469,15 @@ export class PedidoFormStore {
       this.setCantidad(key, existe.cantidad + 1);
       return;
     }
+    // Fraccionable (peso/volumen): arranca en 0 para forzar capturar el peso real, no "1 kg".
+    const cantidad = p.permite_venta_fraccionada ? 0 : 1;
     this.carrito.update((list) => [
       ...list,
       {
         key,
         producto: p,
         unidad: u,
-        cantidad: 1,
+        cantidad,
         precio_unitario: this.precioDe(p, u),
         descuento_linea: 0,
         esServicio: p.tipo === 'servicio',
