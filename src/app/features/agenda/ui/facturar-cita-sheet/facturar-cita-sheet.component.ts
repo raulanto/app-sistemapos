@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucideX } from '@ng-icons/lucide';
 
-import { AgendaService } from '../../data-access/agenda.service';
+import { CitaService } from '../../data-access/services/cita.service';
 import { CitaResponse, FacturarCitaRequest, MetodoPago, VentaResponse } from '../../data-access/agenda.models';
 import { METODOS_PAGO } from '../../../ventas/data-access/ventas.models';
 import { injectSheetData } from '../../../../shared/components/sheet/sheet.service';
@@ -37,7 +37,7 @@ interface PagoFila {
   host: { style: 'display: contents' },
 })
 export class FacturarCitaSheetComponent {
-  private agendaService = inject(AgendaService);
+  private citaService = inject(CitaService);
   readonly sheetData = injectSheetData<FacturarCitaSheetData>();
 
   readonly metodos = METODOS_PAGO;
@@ -95,6 +95,6 @@ export class FacturarCitaSheetComponent {
             : {}),
         })),
     };
-    return this.agendaService.facturar(this.sheetData.cita.id, req, this.idemKey);
+    return this.citaService.facturar(this.sheetData.cita.id, req, this.idemKey);
   }
 }

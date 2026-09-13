@@ -4,7 +4,8 @@ import { Observable } from 'rxjs';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideSearch, lucideX } from '@ng-icons/lucide';
 
-import { AgendaService } from '../../data-access/agenda.service';
+import { CitaService } from '../../data-access/services/cita.service';
+import { RecursoService } from '../../data-access/services/recurso.service';
 import { CitaResponse, CrearCitaRequest, RecursoResponse } from '../../data-access/agenda.models';
 import { ProductoService } from '../../../inventario/data-access/producto.service';
 import { ProductoResponse } from '../../../inventario/data-access/models/producto.model';
@@ -37,7 +38,8 @@ import { ZardSkeletonComponent } from '../../../../shared/components/skeleton/sk
   host: { style: 'display: contents' },
 })
 export class CrearCitaSheetComponent {
-  private agendaService = inject(AgendaService);
+  private citaService = inject(CitaService);
+  private recursoService = inject(RecursoService);
   private productoService = inject(ProductoService);
   private clienteService = inject(ClienteService);
 
@@ -73,7 +75,7 @@ export class CrearCitaSheetComponent {
       },
       error: () => this.cargandoServicios.set(false),
     });
-    this.agendaService.listarRecursos({ incluir_inactivos: false }).subscribe({
+    this.recursoService.listarRecursos({ incluir_inactivos: false }).subscribe({
       next: r => this.recursos.set(r),
       error: () => {},
     });
@@ -115,6 +117,6 @@ export class CrearCitaSheetComponent {
       recurso_id: this.recursoId() || null,
       disponibilidad_cruzada: this.permiteCruzada() ? this.disponibilidadCruzada() : false,
     };
-    return this.agendaService.crearCita(req);
+    return this.citaService.crearCita(req);
   }
 }

@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormField } from '@angular/forms/signals';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -14,17 +13,16 @@ import { createLoginForm } from './login.form';
 @Component({
   selector: 'app-login',
   imports: [
-    NgOptimizedImage,
     FormField,
     NgIcon,
     ZardButtonComponent,
     ZardInputComponent,
     ZardAlertComponent,
-    ...ZardFieldImports
+    ...ZardFieldImports,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucideGalleryVerticalEnd })],
-  templateUrl: './login.component.html'
+  templateUrl: './login.component.html',
 })
 export class LoginComponent {
   private authService = inject(AuthService);
@@ -56,11 +54,13 @@ export class LoginComponent {
       error: (err) => {
         this.isLoading.set(false);
         if (err.error?.detail) {
-           this.errorMessage.set(typeof err.error.detail === 'string' ? err.error.detail : 'Credenciales inválidas');
+          this.errorMessage.set(
+            typeof err.error.detail === 'string' ? err.error.detail : 'Credenciales inválidas',
+          );
         } else {
-           this.errorMessage.set('Ha ocurrido un error al iniciar sesión. Intenta nuevamente.');
+          this.errorMessage.set('Ha ocurrido un error al iniciar sesión. Intenta nuevamente.');
         }
-      }
+      },
     });
   }
 }

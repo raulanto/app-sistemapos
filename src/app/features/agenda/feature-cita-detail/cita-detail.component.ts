@@ -15,7 +15,8 @@ import {
   lucideX,
 } from '@ng-icons/lucide';
 
-import { AgendaService } from '../data-access/agenda.service';
+import { CitaService } from '../data-access/services/cita.service';
+import { RecursoService } from '../data-access/services/recurso.service';
 import {
   CitaResponse,
   EstadoAsignacion,
@@ -78,7 +79,8 @@ import { FacturarCitaSheetComponent } from '../ui/facturar-cita-sheet/facturar-c
 export class CitaDetailComponent {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private agendaService = inject(AgendaService);
+  private citaService = inject(CitaService);
+  private recursoService = inject(RecursoService);
   private productoService = inject(ProductoService);
   private usuarioService = inject(UsuarioAdminService);
   private clienteService = inject(ClienteService);
@@ -116,7 +118,7 @@ export class CitaDetailComponent {
   private cargar() {
     this.loading.set(true);
     this.error.set(false);
-    this.agendaService.obtenerCita(this.id).subscribe({
+    this.citaService.obtenerCita(this.id).subscribe({
       next: c => {
         this.cita.set(c);
         this.loading.set(false);
@@ -139,7 +141,7 @@ export class CitaDetailComponent {
         }
         this.resolverEmpleados(c);
         if (c.recurso_id) {
-          this.agendaService.listarRecursos({ incluir_inactivos: true }).subscribe({
+          this.recursoService.listarRecursos({ incluir_inactivos: true }).subscribe({
             next: recursos => this.recursoNombre.set(recursos.find((r: RecursoResponse) => r.id === c.recurso_id)?.nombre ?? null),
             error: () => this.recursoNombre.set(null),
           });
@@ -211,22 +213,22 @@ export class CitaDetailComponent {
   }
 
   aceptar() {
-    this.run(this.agendaService.aceptar(this.id), 'Cita aceptada', 'No se pudo aceptar la cita');
+    this.run(this.citaService.aceptar(this.id), 'Cita aceptada', 'No se pudo aceptar la cita');
   }
   rechazar() {
-    this.run(this.agendaService.rechazar(this.id), 'Oferta rechazada', 'No se pudo rechazar la oferta');
+    this.run(this.citaService.rechazar(this.id), 'Oferta rechazada', 'No se pudo rechazar la oferta');
   }
   ofertar() {
-    this.run(this.agendaService.ofertar(this.id), 'Oferta reintentada', 'No se pudo reofertar la cita');
+    this.run(this.citaService.ofertar(this.id), 'Oferta reintentada', 'No se pudo reofertar la cita');
   }
   iniciar() {
-    this.run(this.agendaService.iniciar(this.id), 'Cita iniciada', 'No se pudo iniciar la cita');
+    this.run(this.citaService.iniciar(this.id), 'Cita iniciada', 'No se pudo iniciar la cita');
   }
   completar() {
-    this.run(this.agendaService.completar(this.id), 'Cita completada', 'No se pudo completar la cita');
+    this.run(this.citaService.completar(this.id), 'Cita completada', 'No se pudo completar la cita');
   }
   noShow() {
-    this.run(this.agendaService.noShow(this.id), 'Marcada como no-show', 'No se pudo marcar no-show');
+    this.run(this.citaService.noShow(this.id), 'Marcada como no-show', 'No se pudo marcar no-show');
   }
 
   /**

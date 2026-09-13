@@ -12,7 +12,7 @@ import {
   lucideX,
 } from '@ng-icons/lucide';
 
-import { AgendaService } from '../data-access/agenda.service';
+import { CitaService } from '../data-access/services/cita.service';
 import { CitaResponse, ESTADOS_CITA, EstadoCita, mensajeCitaError } from '../data-access/agenda.models';
 import { ProductoService } from '../../inventario/data-access/producto.service';
 import { ProductoResponse } from '../../inventario/data-access/models/producto.model';
@@ -60,7 +60,7 @@ function hoyISO(): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CitaListComponent {
-  private agendaService = inject(AgendaService);
+  private citaService = inject(CitaService);
   private productoService = inject(ProductoService);
   private authService = inject(AuthService);
   private sheetService = inject(ZardSheetService);
@@ -114,7 +114,7 @@ export class CitaListComponent {
 
   cargar() {
     this.loading.set(true);
-    this.agendaService
+    this.citaService
       .listarCitas({
         estado: this.estado() || undefined,
         servicio_id: this.servicioId() || undefined,
@@ -143,7 +143,7 @@ export class CitaListComponent {
 
   private cargarMisOfertas() {
     if (!this.canResponder()) return;
-    this.agendaService.listarCitas({ estado: 'por_asignar', page_size: 50, sort: 'fecha_hora_inicio:asc' }).subscribe({
+    this.citaService.listarCitas({ estado: 'por_asignar', page_size: 50, sort: 'fecha_hora_inicio:asc' }).subscribe({
       next: res => {
         const miId = this.authService.currentUser()?.id;
         this.misOfertas.set(
@@ -235,7 +235,7 @@ export class CitaListComponent {
   aceptar(cita: CitaResponse) {
     if (this.respondiendo()) return;
     this.respondiendo.set(cita.id);
-    this.agendaService.aceptar(cita.id).subscribe({
+    this.citaService.aceptar(cita.id).subscribe({
       next: () => {
         this.sonner.success('Cita aceptada');
         this.respondiendo.set(null);
@@ -252,7 +252,7 @@ export class CitaListComponent {
   rechazar(cita: CitaResponse) {
     if (this.respondiendo()) return;
     this.respondiendo.set(cita.id);
-    this.agendaService.rechazar(cita.id).subscribe({
+    this.citaService.rechazar(cita.id).subscribe({
       next: () => {
         this.sonner.success('Oferta rechazada');
         this.respondiendo.set(null);
