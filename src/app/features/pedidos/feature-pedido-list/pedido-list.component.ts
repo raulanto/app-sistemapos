@@ -3,7 +3,19 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucidePlus, lucideRefreshCw, lucideX, lucideClipboardList, lucideReceiptText, lucideTruck } from '@ng-icons/lucide';
+import {
+  lucidePlus,
+  lucideRefreshCw,
+  lucideX,
+  lucideClipboardList,
+  lucideReceiptText,
+  lucideTruck,
+  lucideCalendar,
+  lucideClock,
+  lucideCheckCircle2,
+  lucideAlertCircle,
+  lucideShoppingBag,
+} from '@ng-icons/lucide';
 
 import { PedidoService } from '../data-access/pedido.service';
 import {
@@ -28,6 +40,9 @@ import { ZardEmptyComponent } from '../../../shared/components/empty/empty.compo
 import { ZardSkeletonComponent } from '../../../shared/components/skeleton/skeleton.component';
 import { ZardInputComponent } from '../../../shared/components/input/input.component';
 import { ZardSelectImports } from '../../../shared/components/select/select.imports';
+import { ZardCardImports } from '../../../shared/components/card/card.imports';
+import { ZardPopoverImports } from '../../../shared/components/popover/popover.imports';
+import { ZardCalendarComponent } from '../../../shared/components/calendar/calendar.component';
 import { ZardPaginationImports } from '../../../shared/components/pagination/pagination.imports';
 
 @Component({
@@ -41,14 +56,31 @@ import { ZardPaginationImports } from '../../../shared/components/pagination/pag
     NgIconComponent,
     ...ZardTableImports,
     ...ZardSelectImports,
+    ...ZardCardImports,
+    ...ZardPopoverImports,
     ...ZardPaginationImports,
+    ZardCalendarComponent,
     ZardButtonComponent,
     ZardBadgeComponent,
     ZardEmptyComponent,
     ZardSkeletonComponent,
     ZardInputComponent,
   ],
-  viewProviders: [provideIcons({ lucidePlus, lucideRefreshCw, lucideX, lucideClipboardList, lucideReceiptText, lucideTruck })],
+  viewProviders: [
+    provideIcons({
+      lucidePlus,
+      lucideRefreshCw,
+      lucideX,
+      lucideClipboardList,
+      lucideReceiptText,
+      lucideTruck,
+      lucideCalendar,
+      lucideClock,
+      lucideCheckCircle2,
+      lucideAlertCircle,
+      lucideShoppingBag,
+    }),
+  ],
   templateUrl: './pedido-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -75,6 +107,29 @@ export class PedidoListComponent {
   readonly hasta = signal('');
   readonly telefono = signal('');
   readonly sort = signal<'created_at:desc' | 'fecha_promesa:asc'>('created_at:desc');
+
+  readonly dateRange = signal<Date[] | null>(null);
+
+  readonly rangoTexto = computed(() => {
+    const range = this.dateRange();
+    if (!range || range.length === 0) return 'Filtrar por fechas';
+    const dp = new DatePipe('en-US');
+    const startStr = dp.transform(range[0], 'dd/MM/yyyy');
+    if (range.length === 1) return startStr;
+    const endStr = dp.transform(range[1], 'dd/MM/yyyy');
+    return `${startStr} - ${endStr}`;
+  });
+
+  // KPIs calculados
+  readonly totalMonto = computed(() =>
+    this.pedidos().reduce((acc, p) => acc + (Number(p.total) || 0), 0),
+  );
+  readonly pendientesCobroCount = computed(() =>
+    this.pedidos().filter((p) => Number(p.saldo_por_cobrar) > 0).length,
+  );
+  readonly entregadosCount = computed(() =>
+    this.pedidos().filter((p) => p.estado_entrega === 'entregado').length,
+  );
 
   readonly hayFiltros = computed(
     () =>
@@ -152,6 +207,27 @@ export class PedidoListComponent {
     this.cargar();
   }
 
+  onDateRangeChange(val: any) {
+    if (Array.isArray(val) && val.length > 0) {
+      this.dateRange.set(val);
+      const dp = new DatePipe('en-US');
+      const start = val[0] ? (dp.transform(val[0], 'yyyy-MM-dd') ?? '') : '';
+      const end = val.length > 1 && val[1] ? (dp.transform(val[1], 'yyyy-MM-dd') ?? start) : start;
+      this.desde.set(start);
+      this.hasta.set(end);
+      this.recargarDesdeInicio();
+    } else {
+      this.limpiarFechas();
+    }
+  }
+
+  limpiarFechas() {
+    this.dateRange.set(null);
+    this.desde.set('');
+    this.hasta.set('');
+    this.recargarDesdeInicio();
+  }
+
   setEstado(v: string) {
     this.estado.set(v as EstadoPedido | '');
     this.recargarDesdeInicio();
@@ -192,6 +268,7 @@ export class PedidoListComponent {
     this.desde.set('');
     this.hasta.set('');
     this.telefono.set('');
+    this.dateRange.set(null);
     this.recargarDesdeInicio();
   }
 

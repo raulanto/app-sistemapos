@@ -11,34 +11,101 @@
     }
   </div>
 
-  <!-- Contadores -->
+  <!-- Grid de KPIs con el diseño moderno del Dashboard -->
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:shadow-xs">
+    <z-card class="transition-shadow duration-200 hover:shadow-md">
+      <z-card-header>
+        <z-card-description zDescription="TOTAL MONTO (PÁGINA)" class="text-xs font-medium uppercase tracking-wide" />
+        <z-card-title [zTitle]="((totalMonto() | currency) ?? '$0.00')" class="mt-1 text-2xl font-semibold tabular-nums lg:text-3xl" />
+        <z-card-action>
+          <span class="grid size-9 place-items-center rounded-full bg-primary/10 text-primary">
+            <ng-icon name="lucideShoppingBag" class="size-5" />
+          </span>
+        </z-card-action>
+      </z-card-header>
+      <z-card-footer class="border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        Valor acumulado en la lista
+      </z-card-footer>
+    </z-card>
+
+    <z-card class="transition-shadow duration-200 hover:shadow-md">
+      <z-card-header>
+        <z-card-description zDescription="ENTREGADOS" class="text-xs font-medium uppercase tracking-wide" />
+        <z-card-title [zTitle]="entregadosCount().toString()" class="mt-1 text-2xl font-semibold tabular-nums lg:text-3xl" />
+        <z-card-action>
+          <span class="grid size-9 place-items-center rounded-full bg-emerald-500/10 text-emerald-600">
+            <ng-icon name="lucideCheckCircle2" class="size-5" />
+          </span>
+        </z-card-action>
+      </z-card-header>
+      <z-card-footer class="border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        Pedidos entregados al cliente
+      </z-card-footer>
+    </z-card>
+
+    <z-card class="transition-shadow duration-200 hover:shadow-md">
+      <z-card-header>
+        <z-card-description zDescription="CON SALDO PENDIENTE" class="text-xs font-medium uppercase tracking-wide" />
+        <z-card-title [zTitle]="pendientesCobroCount().toString()" class="mt-1 text-2xl font-semibold tabular-nums lg:text-3xl" />
+        <z-card-action>
+          <span class="grid size-9 place-items-center rounded-full bg-amber-500/10 text-amber-600">
+            <ng-icon name="lucideAlertCircle" class="size-5" />
+          </span>
+        </z-card-action>
+      </z-card-header>
+      <z-card-footer class="border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        Órdenes por cobrar
+      </z-card-footer>
+    </z-card>
+
+    <z-card class="transition-shadow duration-200 hover:shadow-md">
+      <z-card-header>
+        <z-card-description zDescription="TOTAL PEDIDOS" class="text-xs font-medium uppercase tracking-wide" />
+        <z-card-title [zTitle]="totalItems().toString()" class="mt-1 text-2xl font-semibold tabular-nums lg:text-3xl" />
+        <z-card-action>
+          <span class="grid size-9 place-items-center rounded-full bg-blue-500/10 text-blue-600">
+            <ng-icon name="lucideClipboardList" class="size-5" />
+          </span>
+        </z-card-action>
+      </z-card-header>
+      <z-card-footer class="border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        Pedidos encontrados
+      </z-card-footer>
+    </z-card>
+  </div>
+
+  <!-- Contadores / Filtros Rápidos por Estado -->
   @if (resumen(); as r) {
-    <div class="flex flex-wrap gap-2 text-xs">
+    <div class="flex flex-wrap items-center gap-2 text-xs border rounded-xl bg-card p-3">
+      <span class="font-medium text-muted-foreground mr-1">Estado pedido:</span>
       @for (e of estados; track e.value) {
         <button type="button"
-                class="rounded-lg border px-2.5 py-1.5 transition-colors hover:bg-muted"
+                class="rounded-lg border px-2.5 py-1.5 transition-colors hover:bg-muted font-medium"
                 [class.border-primary]="estado() === e.value"
-                [class.bg-muted]="estado() === e.value"
+                [class.bg-primary/10]="estado() === e.value"
+                [class.text-primary]="estado() === e.value"
                 (click)="setEstado(estado() === e.value ? '' : e.value)">
           {{ e.label }}
-          <span class="ml-1 font-semibold tabular-nums">{{ r.por_estado[e.value] ?? 0 }}</span>
+          <span class="ml-1 font-semibold tabular-nums opacity-80">{{ r.por_estado[e.value] ?? 0 }}</span>
         </button>
       }
-      <span class="mx-1 self-center text-muted-foreground">·</span>
+      <span class="mx-2 text-border">|</span>
+      <span class="font-medium text-muted-foreground mr-1">Entrega:</span>
       @for (e of estadosEntrega; track e.value) {
         <button type="button"
-                class="rounded-lg border px-2.5 py-1.5 transition-colors hover:bg-muted"
+                class="rounded-lg border px-2.5 py-1.5 transition-colors hover:bg-muted font-medium"
                 [class.border-primary]="estadoEntrega() === e.value"
-                [class.bg-muted]="estadoEntrega() === e.value"
+                [class.bg-primary/10]="estadoEntrega() === e.value"
+                [class.text-primary]="estadoEntrega() === e.value"
                 (click)="setEstadoEntrega(estadoEntrega() === e.value ? '' : e.value)">
           {{ e.label }}
-          <span class="ml-1 font-semibold tabular-nums">{{ r.por_estado_entrega[e.value] ?? 0 }}</span>
+          <span class="ml-1 font-semibold tabular-nums opacity-80">{{ r.por_estado_entrega[e.value] ?? 0 }}</span>
         </button>
       }
     </div>
   }
 
-  <!-- Filtros -->
+  <!-- Filtros Principales -->
   <div class="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
     <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
       Tipo
@@ -54,14 +121,42 @@
         @for (c of canales; track c.value) { <z-select-item [zValue]="c.value">{{ c.label }}</z-select-item> }
       </z-select>
     </label>
-    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-      Desde
-      <input z-input type="date" class="w-40" [ngModel]="desde()" (ngModelChange)="setDesde($event)" [max]="hasta() || null" />
-    </label>
-    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-      Hasta
-      <input z-input type="date" class="w-40" [ngModel]="hasta()" (ngModelChange)="setHasta($event)" [min]="desde() || null" />
-    </label>
+
+    <!-- Rango de fechas con z-calendar (Popover) -->
+    <div class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      <span>Rango de fechas</span>
+      <button
+        z-button
+        zType="outline"
+        class="justify-start text-left font-normal"
+        [class.text-muted-foreground]="!dateRange()"
+        zPopover
+        [zContent]="calendarPopover"
+        zPlacement="bottom"
+        zAlign="start"
+      >
+        <ng-icon name="lucideCalendar" class="mr-2 size-4" />
+        <span>{{ rangoTexto() }}</span>
+      </button>
+
+      <ng-template #calendarPopover>
+        <div class="p-3 bg-popover text-popover-foreground rounded-lg border shadow-md">
+          <z-calendar
+            zMode="range"
+            [value]="dateRange()"
+            (valueChange)="onDateRangeChange($event)"
+          />
+          @if (dateRange()) {
+            <div class="mt-2 flex justify-end border-t pt-2">
+              <button z-button zType="ghost" zSize="sm" (click)="limpiarFechas()">
+                <ng-icon name="lucideX" class="mr-1 size-3.5" /> Limpiar fechas
+              </button>
+            </div>
+          }
+        </div>
+      </ng-template>
+    </div>
+
     <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
       Teléfono
       <input z-input class="w-40" inputmode="tel" placeholder="Cliente…"
