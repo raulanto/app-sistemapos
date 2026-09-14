@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { RouterOutlet } from '@angular/router';
 
 import { AuthService } from '@/core/auth/api/auth.service';
 import { PERMISOS } from '@/core/auth/permissions';
@@ -12,7 +12,7 @@ interface ReporteNavItem {
 @Component({
   selector: 'app-reportes-shell',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterOutlet],
   templateUrl: './reportes-shell.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
