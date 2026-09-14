@@ -6,6 +6,69 @@
     <h1 class="text-6xl font-extrabold">Historial de ventas</h1>
   </div>
 
+  <!-- Grid de KPIs con el diseño moderno del Dashboard -->
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:shadow-xs">
+    <z-card class="transition-shadow duration-200 hover:shadow-md">
+      <z-card-header>
+        <z-card-description zDescription="TOTAL VENTAS (PÁGINA)" class="text-xs font-medium uppercase tracking-wide" />
+        <z-card-title [zTitle]="((totalVentasMonto() | currency) ?? '$0.00')" class="mt-1 text-2xl font-semibold tabular-nums lg:text-3xl" />
+        <z-card-action>
+          <span class="grid size-9 place-items-center rounded-full bg-primary/10 text-primary">
+            <ng-icon name="lucideDollarSign" class="size-5" />
+          </span>
+        </z-card-action>
+      </z-card-header>
+      <z-card-footer class="border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        Monto acumulado en la vista
+      </z-card-footer>
+    </z-card>
+
+    <z-card class="transition-shadow duration-200 hover:shadow-md">
+      <z-card-header>
+        <z-card-description zDescription="VENTAS PAGADAS" class="text-xs font-medium uppercase tracking-wide" />
+        <z-card-title [zTitle]="pagadasCount().toString()" class="mt-1 text-2xl font-semibold tabular-nums lg:text-3xl" />
+        <z-card-action>
+          <span class="grid size-9 place-items-center rounded-full bg-emerald-500/10 text-emerald-600">
+            <ng-icon name="lucideCheckCircle2" class="size-5" />
+          </span>
+        </z-card-action>
+      </z-card-header>
+      <z-card-footer class="border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        Completadas con éxito
+      </z-card-footer>
+    </z-card>
+
+    <z-card class="transition-shadow duration-200 hover:shadow-md">
+      <z-card-header>
+        <z-card-description zDescription="PENDIENTES / CON SALDO" class="text-xs font-medium uppercase tracking-wide" />
+        <z-card-title [zTitle]="pendientesCount().toString()" class="mt-1 text-2xl font-semibold tabular-nums lg:text-3xl" />
+        <z-card-action>
+          <span class="grid size-9 place-items-center rounded-full bg-amber-500/10 text-amber-600">
+            <ng-icon name="lucideAlertCircle" class="size-5" />
+          </span>
+        </z-card-action>
+      </z-card-header>
+      <z-card-footer class="border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        Ventas pendientes de cobro
+      </z-card-footer>
+    </z-card>
+
+    <z-card class="transition-shadow duration-200 hover:shadow-md">
+      <z-card-header>
+        <z-card-description zDescription="TOTAL REGISTRADAS" class="text-xs font-medium uppercase tracking-wide" />
+        <z-card-title [zTitle]="totalItems().toString()" class="mt-1 text-2xl font-semibold tabular-nums lg:text-3xl" />
+        <z-card-action>
+          <span class="grid size-9 place-items-center rounded-full bg-blue-500/10 text-blue-600">
+            <ng-icon name="lucideReceipt" class="size-5" />
+          </span>
+        </z-card-action>
+      </z-card-header>
+      <z-card-footer class="border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        Ventas encontradas
+      </z-card-footer>
+    </z-card>
+  </div>
+
   <!-- Filtros -->
   <div class="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
     <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
@@ -19,14 +82,42 @@
         <z-select-item zValue="cancelada">Canceladas</z-select-item>
       </z-select>
     </label>
-    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-      Desde
-      <input z-input type="date" class="w-40" [ngModel]="desde()" (ngModelChange)="setDesde($event)" [max]="hasta() || null" />
-    </label>
-    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-      Hasta
-      <input z-input type="date" class="w-40" [ngModel]="hasta()" (ngModelChange)="setHasta($event)" [min]="desde() || null" />
-    </label>
+
+    <!-- Rango de fechas con z-calendar (Popover) -->
+    <div class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      <span>Rango de fechas</span>
+      <button
+        z-button
+        zType="outline"
+        class="justify-start text-left font-normal"
+        [class.text-muted-foreground]="!dateRange()"
+        zPopover
+        [zContent]="calendarPopover"
+        zPlacement="bottom"
+        zAlign="start"
+      >
+        <ng-icon name="lucideCalendar" class="mr-2 size-4" />
+        <span>{{ rangoTexto() }}</span>
+      </button>
+
+      <ng-template #calendarPopover>
+        <div class="p-3 bg-popover text-popover-foreground rounded-lg border shadow-md">
+          <z-calendar
+            zMode="range"
+            [value]="dateRange()"
+            (valueChange)="onDateRangeChange($event)"
+          />
+          @if (dateRange()) {
+            <div class="mt-2 flex justify-end border-t pt-2">
+              <button z-button zType="ghost" zSize="sm" (click)="limpiarFechas()">
+                <ng-icon name="lucideX" class="mr-1 size-3.5" /> Limpiar fechas
+              </button>
+            </div>
+          }
+        </div>
+      </ng-template>
+    </div>
+
     <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
       Teléfono
       <input z-input class="w-40" inputmode="tel" placeholder="Monedero…"

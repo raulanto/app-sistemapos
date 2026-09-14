@@ -3,7 +3,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideBan, lucideReceiptText, lucideRefreshCw, lucideX } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideBan, lucideReceiptText, lucideRefreshCw, lucideX, lucideCalendar, lucideReceipt, lucideDollarSign, lucideAlertCircle, lucideCheckCircle2 } from '@ng-icons/lucide';
 
 import { VentaService } from '../data-access/venta.service';
 import { VentaListItem, EstadoVenta } from '../data-access/ventas.models';
@@ -17,6 +17,9 @@ import { ZardEmptyComponent } from '../../../shared/components/empty/empty.compo
 import { ZardSkeletonComponent } from '../../../shared/components/skeleton/skeleton.component';
 import { ZardInputComponent } from '../../../shared/components/input/input.component';
 import { ZardSelectImports } from '../../../shared/components/select/select.imports';
+import { ZardCardImports } from '../../../shared/components/card/card.imports';
+import { ZardPopoverImports } from '../../../shared/components/popover/popover.imports';
+import { ZardCalendarComponent } from '../../../shared/components/calendar/calendar.component';
 import { ZardPaginationImports } from '../../../shared/components/pagination/pagination.imports';
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
 import { ZardSheetService } from '../../../shared/components/sheet/sheet.service';
@@ -33,14 +36,30 @@ import { AnularVentaSheetComponent } from '../ui/anular-venta-sheet/anular-venta
     NgIconComponent,
     ...ZardTableImports,
     ...ZardSelectImports,
+    ...ZardCardImports,
+    ...ZardPopoverImports,
     ...ZardPaginationImports,
+    ZardCalendarComponent,
     ZardButtonComponent,
     ZardBadgeComponent,
     ZardEmptyComponent,
     ZardSkeletonComponent,
     ZardInputComponent,
   ],
-  viewProviders: [provideIcons({ lucideArrowLeft, lucideBan, lucideReceiptText, lucideRefreshCw, lucideX })],
+  viewProviders: [
+    provideIcons({
+      lucideArrowLeft,
+      lucideBan,
+      lucideReceiptText,
+      lucideRefreshCw,
+      lucideX,
+      lucideCalendar,
+      lucideReceipt,
+      lucideDollarSign,
+      lucideAlertCircle,
+      lucideCheckCircle2,
+    }),
+  ],
   templateUrl: './ventas-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -59,6 +78,30 @@ export class VentasListComponent {
   readonly desde = signal('');
   readonly hasta = signal('');
   readonly telefono = signal('');
+
+  readonly dateRange = signal<Date[] | null>(null);
+
+  readonly rangoTexto = computed(() => {
+    const range = this.dateRange();
+    if (!range || range.length === 0) return 'Filtrar por fechas';
+    const dp = new DatePipe('en-US');
+    const startStr = dp.transform(range[0], 'dd/MM/yyyy');
+    if (range.length === 1) return startStr;
+    const endStr = dp.transform(range[1], 'dd/MM/yyyy');
+    return `${startStr} - ${endStr}`;
+  });
+
+  // KPIs calculados del listado actual
+  readonly totalVentasMonto = computed(() =>
+    this.ventas().reduce((acc, v) => acc + (Number(v.total) || 0), 0),
+  );
+  readonly pagadasCount = computed(() =>
+    this.ventas().filter((v) => v.estado === 'pagada').length,
+  );
+  readonly pendientesCount = computed(() =>
+    this.ventas().filter((v) => v.estado === 'pendiente_pago' || Number(v.saldo_pendiente) > 0).length,
+  );
+
   readonly hayFiltros = computed(
     () => !!this.estado() || !!this.desde() || !!this.hasta() || !!this.telefono().trim(),
   );
@@ -121,6 +164,27 @@ export class VentasListComponent {
     this.cargar();
   }
 
+  onDateRangeChange(val: any) {
+    if (Array.isArray(val) && val.length > 0) {
+      this.dateRange.set(val);
+      const dp = new DatePipe('en-US');
+      const start = val[0] ? (dp.transform(val[0], 'yyyy-MM-dd') ?? '') : '';
+      const end = val.length > 1 && val[1] ? (dp.transform(val[1], 'yyyy-MM-dd') ?? start) : start;
+      this.desde.set(start);
+      this.hasta.set(end);
+      this.recargarDesdeInicio();
+    } else {
+      this.limpiarFechas();
+    }
+  }
+
+  limpiarFechas() {
+    this.dateRange.set(null);
+    this.desde.set('');
+    this.hasta.set('');
+    this.recargarDesdeInicio();
+  }
+
   setEstado(v: string) {
     this.estado.set(v as EstadoVenta | '');
     this.recargarDesdeInicio();
@@ -142,6 +206,7 @@ export class VentasListComponent {
     this.desde.set('');
     this.hasta.set('');
     this.telefono.set('');
+    this.dateRange.set(null);
     this.recargarDesdeInicio();
   }
 
