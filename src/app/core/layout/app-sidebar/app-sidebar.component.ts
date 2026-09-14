@@ -100,11 +100,7 @@ export class AppSidebarComponent {
   }
 
   protected readonly navSecondary: readonly Sidebar07NavItem[] = [
-    {
-      title: 'Buscar',
-      url: '/buscar',
-      icon: SearchIcon,
-    },
+    
     {
       title: 'Configuración',
       url: '/config',
