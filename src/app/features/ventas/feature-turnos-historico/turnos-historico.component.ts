@@ -4,7 +4,7 @@ import { DatePipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideBanknote, lucideScale, lucideWallet } from '@ng-icons/lucide';
+import { lucideBanknote, lucideScale, lucideWallet, lucideCalendar, lucideX, lucideAlertTriangle, lucideCheckCircle2, lucideClock, lucideHistory } from '@ng-icons/lucide';
 
 import { CajaService } from '../data-access/caja.service';
 import { UsuarioAdminService } from '../../usuarios/data-access/usuario-admin.service';
@@ -28,8 +28,9 @@ import { ZardSkeletonComponent } from '../../../shared/components/skeleton/skele
 import { ZardCardImports } from '../../../shared/components/card/card.imports';
 import { ZardSheetService } from '../../../shared/components/sheet/sheet.service';
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
+import { ZardPopoverImports } from '../../../shared/components/popover/popover.imports';
+import { ZardCalendarComponent } from '../../../shared/components/calendar/calendar.component';
 import { ConciliarTurnoSheetComponent } from '../ui/conciliar-turno-sheet/conciliar-turno-sheet.component';
-
 
 @Component({
   selector: 'app-turnos-historico',
@@ -42,13 +43,26 @@ import { ConciliarTurnoSheetComponent } from '../ui/conciliar-turno-sheet/concil
     ...ZardTableImports,
     ...ZardSelectImports,
     ...ZardCardImports,
-    ZardInputComponent,
+    ...ZardPopoverImports,
+    ZardCalendarComponent,
     ZardButtonComponent,
     ZardBadgeComponent,
     ZardEmptyComponent,
     ZardSkeletonComponent,
   ],
-  viewProviders: [provideIcons({ lucideBanknote, lucideScale, lucideWallet })],
+  viewProviders: [
+    provideIcons({
+      lucideBanknote,
+      lucideScale,
+      lucideWallet,
+      lucideCalendar,
+      lucideX,
+      lucideAlertTriangle,
+      lucideCheckCircle2,
+      lucideClock,
+      lucideHistory,
+    }),
+  ],
   templateUrl: './turnos-historico.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -76,6 +90,34 @@ export class TurnosHistoricoComponent {
   readonly hasta = signal('');
   readonly refresh = signal(0);
 
+  readonly datePickerOpen = signal(false);
+  readonly dateRange = signal<Date[] | null>(null);
+
+  readonly rangoTexto = computed(() => {
+    const range = this.dateRange();
+    if (!range || range.length === 0) return 'Filtrar por fechas';
+    const dp = new DatePipe('en-US');
+    const startStr = dp.transform(range[0], 'dd/MM/yyyy');
+    if (range.length === 1) return startStr;
+    const endStr = dp.transform(range[1], 'dd/MM/yyyy');
+    return `${startStr} - ${endStr}`;
+  });
+
+  // KPIs derivados del listado cargado
+  readonly turnosAbiertosCount = computed(() =>
+    this.turnos().filter((t) => t.estado === 'abierto').length,
+  );
+  readonly turnosConDiferenciaCount = computed(() =>
+    this.turnos().filter((t) => t.estado === 'cerrado_con_diferencia').length,
+  );
+  readonly turnosConciliadosCount = computed(() =>
+    this.turnos().filter((t) => t.estado === 'conciliado' || t.estado === 'cerrado').length,
+  );
+
+  readonly hayFiltros = computed(
+    () => (!!this.filtroEstado() && this.filtroEstado() !== 'ALL') || !!this.desde() || !!this.hasta(),
+  );
+
   private readonly query = computed<TurnoHistoricoQuery>(() => {
     this.refresh();
     const estadoVal = this.filtroEstado();
@@ -87,6 +129,35 @@ export class TurnosHistoricoComponent {
       sort: 'abierto_en:desc',
     };
   });
+
+  onDateRangeChange(val: any) {
+    if (Array.isArray(val) && val.length > 0) {
+      this.dateRange.set(val);
+      const dp = new DatePipe('en-US');
+      const start = val[0] ? (dp.transform(val[0], 'yyyy-MM-dd') ?? '') : '';
+      const end = val.length > 1 && val[1] ? (dp.transform(val[1], 'yyyy-MM-dd') ?? start) : start;
+      this.desde.set(start);
+      this.hasta.set(end);
+      if (val.length === 2) {
+        this.datePickerOpen.set(false);
+      }
+    } else {
+      this.dateRange.set(null);
+      this.desde.set('');
+      this.hasta.set('');
+    }
+  }
+
+  limpiarFechas() {
+    this.dateRange.set(null);
+    this.desde.set('');
+    this.hasta.set('');
+  }
+
+  limpiarTodosFiltros() {
+    this.filtroEstado.set('ALL');
+    this.limpiarFechas();
+  }
 
   private usuarioAdminService = inject(UsuarioAdminService);
 
