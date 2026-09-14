@@ -7,6 +7,7 @@ import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideBanknote, lucideScale, lucideWallet } from '@ng-icons/lucide';
 
 import { CajaService } from '../data-access/caja.service';
+import { UsuarioAdminService } from '../../usuarios/data-access/usuario-admin.service';
 import {
   CajaTurnoResponse,
   EstadoCajaTurno,
@@ -28,6 +29,7 @@ import { ZardCardImports } from '../../../shared/components/card/card.imports';
 import { ZardSheetService } from '../../../shared/components/sheet/sheet.service';
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
 import { ConciliarTurnoSheetComponent } from '../ui/conciliar-turno-sheet/conciliar-turno-sheet.component';
+
 
 @Component({
   selector: 'app-turnos-historico',
@@ -58,50 +60,92 @@ export class TurnosHistoricoComponent {
   private sonner = inject(ZardSonnerService);
 
   readonly estados = ESTADOS_TURNO;
-  readonly canConciliar = computed(() => this.authService.hasPermission(...PERMISOS.caja.autorizarDiferencia));
+  readonly canConciliar = computed(() =>
+    this.authService.hasPermission(...PERMISOS.caja.autorizarDiferencia),
+  );
 
   readonly turnos = signal<CajaTurnoResponse[]>([]);
   readonly loading = signal(true);
   readonly efectivoActual = signal<string | null>(null);
 
-  readonly filtroEstado = signal<EstadoCajaTurno | ''>('');
+  readonly cajasMap = signal<Map<string, string>>(new Map());
+  readonly usuariosMap = signal<Map<string, string>>(new Map());
+
+  readonly filtroEstado = signal<EstadoCajaTurno | 'ALL'>('ALL');
   readonly desde = signal('');
   readonly hasta = signal('');
   readonly refresh = signal(0);
 
   private readonly query = computed<TurnoHistoricoQuery>(() => {
     this.refresh();
+    const estadoVal = this.filtroEstado();
     return {
-      estado: this.filtroEstado() || undefined,
-      desde: this.desde() || undefined,
-      hasta: this.hasta() || undefined,
+      estado: estadoVal && estadoVal !== 'ALL' ? estadoVal : undefined,
+      desde: this.desde() ? `${this.desde()}T00:00:00` : undefined,
+      hasta: this.hasta() ? `${this.hasta()}T23:59:59` : undefined,
       page_size: 100,
       sort: 'abierto_en:desc',
     };
   });
 
+  private usuarioAdminService = inject(UsuarioAdminService);
+
   constructor() {
+    this.cajaService.listarCajas(true).subscribe({
+      next: (cajas) => {
+        const map = new Map<string, string>();
+        cajas.forEach((c) => map.set(c.id, c.nombre));
+        this.cajasMap.set(map);
+      },
+      error: (err) => console.error('Error al cargar cajas', err),
+    });
+
+    this.usuarioAdminService.listar({ page_size: 100 }).subscribe({
+      next: (res) => {
+        const map = new Map<string, string>();
+        res.data.forEach((u) => map.set(u.id, u.nombre));
+        this.usuariosMap.set(map);
+      },
+      error: (err) => console.error('Error al cargar usuarios', err),
+    });
+
     toObservable(this.query)
       .pipe(
         tap(() => this.loading.set(true)),
         debounceTime(300),
-        switchMap(q => this.cajaService.historico(q)),
+        switchMap((q) => this.cajaService.historico(q)),
       )
       .subscribe({
-        next: res => {
+        next: (res) => {
           this.turnos.set(res.data);
           this.loading.set(false);
         },
-        error: err => {
+        error: (err) => {
           console.error('Error al cargar el histórico de turnos', err);
           this.loading.set(false);
         },
       });
 
     this.cajaService.efectivoActual(this.sucursalService.selectedSucursalId()).subscribe({
-      next: r => this.efectivoActual.set(r.efectivo_esperado),
+      next: (r) => this.efectivoActual.set(r.efectivo_esperado),
       error: () => this.efectivoActual.set(null),
     });
+  }
+
+  obtenerNombreTerminal(t: CajaTurnoResponse): string {
+    if (t.caja?.nombre) return t.caja.nombre;
+    if (t.caja_id && this.cajasMap().has(t.caja_id)) {
+      return this.cajasMap().get(t.caja_id)!;
+    }
+    return '—';
+  }
+
+  obtenerNombreCajero(t: CajaTurnoResponse): string {
+    if (t.usuario?.nombre) return t.usuario.nombre;
+    if (t.usuario_id && this.usuariosMap().has(t.usuario_id)) {
+      return this.usuariosMap().get(t.usuario_id)!;
+    }
+    return '—';
   }
 
   badgeTipo(estado: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -112,7 +156,7 @@ export class TurnosHistoricoComponent {
   }
 
   etiquetaEstado(estado: string): string {
-    return this.estados.find(e => e.value === estado)?.label ?? estado;
+    return this.estados.find((e) => e.value === estado)?.label ?? estado;
   }
 
   conciliar(turno: CajaTurnoResponse) {
@@ -130,7 +174,7 @@ export class TurnosHistoricoComponent {
           obs.subscribe({
             next: () => {
               this.sonner.success('Turno conciliado');
-              this.refresh.update(v => v + 1);
+              this.refresh.update((v) => v + 1);
               resolve();
             },
             error: (err: any) => {
