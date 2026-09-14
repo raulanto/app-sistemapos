@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
+  lucideCalendar,
   lucideCalendarClock,
   lucideCalendarDays,
   lucideCheck,
@@ -26,6 +27,8 @@ import { ZardEmptyComponent } from '../../../shared/components/empty/empty.compo
 import { ZardSkeletonComponent } from '../../../shared/components/skeleton/skeleton.component';
 import { ZardInputComponent } from '../../../shared/components/input/input.component';
 import { ZardSelectImports } from '../../../shared/components/select/select.imports';
+import { ZardPopoverImports } from '../../../shared/components/popover/popover.imports';
+import { ZardCalendarComponent } from '../../../shared/components/calendar/calendar.component';
 import { ZardPaginationImports } from '../../../shared/components/pagination/pagination.imports';
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
 import { ZardSheetService } from '../../../shared/components/sheet/sheet.service';
@@ -46,15 +49,16 @@ function hoyISO(): string {
     NgIconComponent,
     ...ZardTableImports,
     ...ZardSelectImports,
+    ...ZardPopoverImports,
     ...ZardPaginationImports,
+    ZardCalendarComponent,
     ZardButtonComponent,
     ZardBadgeComponent,
     ZardEmptyComponent,
     ZardSkeletonComponent,
-    ZardInputComponent,
   ],
   viewProviders: [
-    provideIcons({ lucideCalendarClock, lucideCalendarDays, lucideCheck, lucidePlus, lucideRefreshCw, lucideX }),
+    provideIcons({ lucideCalendar, lucideCalendarClock, lucideCalendarDays, lucideCheck, lucidePlus, lucideRefreshCw, lucideX }),
   ],
   templateUrl: './cita-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -81,8 +85,20 @@ export class CitaListComponent {
   readonly servicioNombre = computed(() => Object.fromEntries(this.servicios().map(s => [s.id, s.nombre])));
 
   readonly fecha = signal(hoyISO());
+  readonly selectedDate = signal<Date | null>(new Date());
   readonly estado = signal<EstadoCita | ''>('');
   readonly servicioId = signal('');
+
+  readonly fechaTexto = computed(() => {
+    const f = this.fecha();
+    if (!f) return 'Todas las fechas';
+    if (f === hoyISO()) return 'Hoy';
+    const parts = f.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return f;
+  });
 
   readonly hayFiltros = computed(() => !!this.estado() || !!this.servicioId() || this.fecha() !== hoyISO());
 
@@ -159,8 +175,34 @@ export class CitaListComponent {
     this.cargar();
   }
 
+  onDateChange(val: any) {
+    if (val instanceof Date) {
+      this.selectedDate.set(val);
+      const dp = new DatePipe('en-US');
+      const iso = dp.transform(val, 'yyyy-MM-dd') ?? '';
+      this.fecha.set(iso);
+      this.recargarDesdeInicio();
+    } else {
+      this.limpiarFechas();
+    }
+  }
+
+  limpiarFechas() {
+    this.selectedDate.set(null);
+    this.fecha.set('');
+    this.recargarDesdeInicio();
+  }
+
   setFecha(v: string) {
     this.fecha.set(v);
+    if (v) {
+      const parts = v.split('-');
+      if (parts.length === 3) {
+        this.selectedDate.set(new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
+      }
+    } else {
+      this.selectedDate.set(null);
+    }
     this.recargarDesdeInicio();
   }
   setEstado(v: string) {
@@ -173,12 +215,14 @@ export class CitaListComponent {
   }
   limpiarFiltros() {
     this.fecha.set(hoyISO());
+    this.selectedDate.set(new Date());
     this.estado.set('');
     this.servicioId.set('');
     this.recargarDesdeInicio();
   }
   verTodas() {
     this.fecha.set('');
+    this.selectedDate.set(null);
     this.recargarDesdeInicio();
   }
 

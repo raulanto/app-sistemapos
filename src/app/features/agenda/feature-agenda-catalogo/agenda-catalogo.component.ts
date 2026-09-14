@@ -1,6 +1,15 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArmchair, lucideBan, lucidePencil, lucidePlus, lucideRotateCcw } from '@ng-icons/lucide';
+import {
+  lucideArmchair,
+  lucideBan,
+  lucideCheckCircle2,
+  lucideLayers,
+  lucidePencil,
+  lucidePlus,
+  lucideRotateCcw,
+  lucideUsers,
+} from '@ng-icons/lucide';
 
 import { RecursoService } from '../data-access/services/recurso.service';
 import { RecursoResponse } from '../data-access/agenda.models';
@@ -30,7 +39,18 @@ import { EmpleadoAgendaEditorComponent } from '../ui/empleado-agenda-editor/empl
     ZardSkeletonComponent,
     EmpleadoAgendaEditorComponent,
   ],
-  viewProviders: [provideIcons({ lucideArmchair, lucideBan, lucidePencil, lucidePlus, lucideRotateCcw })],
+  viewProviders: [
+    provideIcons({
+      lucideArmchair,
+      lucideBan,
+      lucideCheckCircle2,
+      lucideLayers,
+      lucidePencil,
+      lucidePlus,
+      lucideRotateCcw,
+      lucideUsers,
+    }),
+  ],
   templateUrl: './agenda-catalogo.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -42,6 +62,11 @@ export class AgendaCatalogoComponent {
 
   readonly recursos = signal<RecursoResponse[]>([]);
   readonly loading = signal(true);
+
+  readonly totalRecursos = computed(() => this.recursos().length);
+  readonly recursosActivos = computed(() => this.recursos().filter(r => r.activo).length);
+  readonly recursosInactivos = computed(() => this.recursos().filter(r => !r.activo).length);
+  readonly tiposCount = computed(() => new Set(this.recursos().map(r => r.tipo).filter(Boolean)).size);
 
   constructor() {
     this.cargar();

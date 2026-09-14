@@ -40,10 +40,43 @@
 
   <!-- Filtros -->
   <div class="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
-    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-      Fecha
-      <input z-input type="date" class="w-40" [ngModel]="fecha()" (ngModelChange)="setFecha($event)" />
-    </label>
+    <!-- Fecha con z-calendar (Popover) -->
+    <div class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      <span>Fecha</span>
+      <button
+        z-button
+        zType="outline"
+        class="justify-start text-left font-normal"
+        [class.text-muted-foreground]="!fecha()"
+        zPopover
+        [zContent]="calendarPopover"
+        zPlacement="bottom"
+        zAlign="start"
+      >
+        <ng-icon name="lucideCalendar" class="mr-2 size-4" />
+        <span>{{ fechaTexto() }}</span>
+      </button>
+
+      <ng-template #calendarPopover>
+        <div class="p-3 bg-popover text-popover-foreground rounded-lg border shadow-md">
+          <z-calendar
+            [value]="selectedDate()"
+            (valueChange)="onDateChange($event)"
+          />
+          <div class="mt-2 flex items-center justify-between border-t pt-2">
+            <button z-button zType="ghost" zSize="sm" (click)="verTodas()">
+              Ver todas
+            </button>
+            @if (fecha()) {
+              <button z-button zType="ghost" zSize="sm" (click)="limpiarFechas()">
+                <ng-icon name="lucideX" class="mr-1 size-3.5" /> Limpiar
+              </button>
+            }
+          </div>
+        </div>
+      </ng-template>
+    </div>
+
     <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
       Estado
       <z-select class="w-48" [ngModel]="estado()" (ngModelChange)="setEstado($event)">
@@ -58,11 +91,8 @@
         @for (s of servicios(); track s.id) { <z-select-item [zValue]="s.id">{{ s.nombre }}</z-select-item> }
       </z-select>
     </label>
-    @if (fecha()) {
-      <button z-button zType="ghost" zSize="sm" (click)="verTodas()">Ver todas las fechas</button>
-    }
     @if (hayFiltros()) {
-      <button z-button zType="ghost" zSize="sm" (click)="limpiarFiltros()">
+      <button z-button zType="destructive" zSize="sm" (click)="limpiarFiltros()">
         <ng-icon name="lucideX" class="mr-1.5 size-3.5" /> Limpiar
       </button>
     }
