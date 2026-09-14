@@ -9,6 +9,7 @@ import { ZardInputComponent } from '../../../shared/components/input/input.compo
 import { ZardAlertComponent } from '../../../shared/components/alert/alert.component';
 import { AuthService } from '@/core/auth/api/auth.service';
 import { createLoginForm } from './login.form';
+import { ZardCardImports } from '@/shared/components/card/card.imports';
 
 @Component({
   selector: 'app-login',
@@ -18,6 +19,7 @@ import { createLoginForm } from './login.form';
     ZardButtonComponent,
     ZardInputComponent,
     ZardAlertComponent,
+    ...ZardCardImports,
     ...ZardFieldImports,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
