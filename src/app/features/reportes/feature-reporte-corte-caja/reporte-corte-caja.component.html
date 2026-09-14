@@ -1,0 +1,46 @@
+<div class="space-y-4">
+  <p class="text-xs text-muted-foreground">Corte de caja es por turno puntual: no usa el rango de fechas ni la sucursal compartidos.</p>
+
+  <div class="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      ID de turno de caja
+      <input
+        z-input
+        class="w-80 font-mono text-xs"
+        placeholder="uuid del turno"
+        [ngModel]="turnoIdInput()"
+        (ngModelChange)="turnoIdInput.set($event)"
+        (keyup.enter)="buscar()"
+      />
+    </label>
+    <button z-button zSize="sm" [zLoading]="cargando()" (click)="buscar()">
+      <ng-icon name="lucideSearch" class="mr-1.5 size-3.5" /> Buscar
+    </button>
+  </div>
+
+  @if (error()) {
+    <z-empty zIcon="lucideBan" zTitle="No se encontró el turno" [zDescription]="error()!" class="py-10" />
+  } @else if (corte(); as c) {
+    <div class="flex justify-end">
+      <app-reporte-exportar [path]="'corte-caja/' + c.caja_turno_id" />
+    </div>
+
+    <app-reporte-kpi-grid [kpis]="kpis()" />
+
+    <div class="overflow-hidden rounded-xl border">
+      <p class="border-b bg-muted/50 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Ajustes del turno</p>
+      <dl class="divide-y">
+        @for (d of detalle(); track d.label) {
+          <div class="flex items-center justify-between px-4 py-2 text-sm">
+            <dt class="text-muted-foreground">{{ d.label }}</dt>
+            <dd class="tabular-nums font-medium">{{ d.value }}</dd>
+          </div>
+        }
+      </dl>
+    </div>
+
+    <p class="text-xs text-muted-foreground">{{ c.nota }}</p>
+  } @else {
+    <z-empty zIcon="lucideLandmark" zTitle="Busca un turno de caja" zDescription="Ingresa el ID del turno para ver su corte." class="py-10" />
+  }
+</div>

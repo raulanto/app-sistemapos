@@ -1,0 +1,29 @@
+<div class="w-full space-y-6 p-6">
+  <div>
+    <h1 class="text-3xl font-bold tracking-tight">Reportes</h1>
+    <p class="text-muted-foreground">Ventas, inventario y clientes, exportables, más el envío programado por correo.</p>
+  </div>
+
+  <nav class="inline-flex w-fit flex-wrap items-center gap-1 rounded-lg bg-muted p-1 text-muted-foreground">
+    @for (item of nav; track item.path) {
+      <a
+        [routerLink]="item.path"
+        routerLinkActive="bg-background text-foreground shadow-sm"
+        class="rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors hover:text-foreground"
+      >
+        {{ item.label }}
+      </a>
+    }
+    @if (canProgramar()) {
+      <a
+        routerLink="programados"
+        routerLinkActive="bg-background text-foreground shadow-sm"
+        class="rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors hover:text-foreground"
+      >
+        Programados
+      </a>
+    }
+  </nav>
+
+  <router-outlet />
+</div>

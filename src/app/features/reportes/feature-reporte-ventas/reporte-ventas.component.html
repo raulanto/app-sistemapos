@@ -1,0 +1,38 @@
+<div class="space-y-4">
+  <app-reporte-filtros
+    [cargando]="cargando()"
+    (recargar)="cargar()"
+    ayuda="Fecha y sucursal aplican a Ventas, Métodos de pago, Por vendedor, Productos más vendidos y Mermas."
+  >
+    <app-reporte-exportar path="ventas" [query]="filtros.rango()" [disabled]="!reporte()" />
+  </app-reporte-filtros>
+
+  @if (cargando()) {
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <z-skeleton class="h-24" />
+      }
+    </div>
+    <z-skeleton class="h-72 w-full" />
+  } @else if (reporte(); as v) {
+    <app-reporte-kpi-grid [kpis]="kpis()" />
+
+    @if (ventasPorDiaData().length) {
+      <div class="rounded-xl border bg-card p-4">
+        <p class="mb-3 text-sm font-medium text-muted-foreground">Ventas por día</p>
+        <z-chart
+          class="block w-full"
+          zType="bar"
+          [zData]="ventasPorDiaData()"
+          [zSeries]="ventasPorDiaSeries"
+          [zConfig]="ventasPorDiaConfig"
+          zXAxisKey="dia"
+        >
+          <z-chart-tooltip />
+        </z-chart>
+      </div>
+    } @else {
+      <z-empty zIcon="lucideReceiptText" zTitle="Sin ventas en el rango" zDescription="Ajusta las fechas para ver resultados." class="py-10" />
+    }
+  }
+</div>

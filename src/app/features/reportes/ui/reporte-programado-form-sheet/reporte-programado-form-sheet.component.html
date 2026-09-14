@@ -1,0 +1,65 @@
+<form class="grid min-h-0 flex-1 auto-rows-min gap-6 px-4 pb-4 overflow-y-auto">
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Reporte *</label>
+      <z-select [formField]="programadoForm.tipo_reporte" placeholder="Selecciona el reporte">
+        <z-select-item zValue="ventas">Ventas por período</z-select-item>
+        <z-select-item zValue="ventas_por_metodo_pago">Ventas por método de pago</z-select-item>
+        <z-select-item zValue="inventario_valorizado">Inventario valorizado</z-select-item>
+        <z-select-item zValue="mermas_ajustes">Mermas y ajustes</z-select-item>
+        <z-select-item zValue="clientes_con_saldo">Clientes con saldo</z-select-item>
+      </z-select>
+      <p class="text-[0.8rem] text-muted-foreground">Sólo reportes "de período" son programables (sin id puntual como un turno de caja).</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div z-field>
+      <label z-field-label>Frecuencia *</label>
+      <z-select [formField]="programadoForm.frecuencia" placeholder="Selecciona la frecuencia">
+        <z-select-item zValue="diaria">Diaria</z-select-item>
+        <z-select-item zValue="semanal">Semanal</z-select-item>
+        <z-select-item zValue="mensual">Mensual</z-select-item>
+      </z-select>
+    </div>
+
+    <div z-field>
+      <label z-field-label>Formato *</label>
+      <z-select [formField]="programadoForm.formato_salida" placeholder="Selecciona el formato">
+        <z-select-item zValue="csv">CSV</z-select-item>
+        <z-select-item zValue="excel">Excel</z-select-item>
+        <z-select-item zValue="pdf">PDF</z-select-item>
+      </z-select>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Sucursal</label>
+      <z-select [formField]="programadoForm.sucursal_id" placeholder="Todas las sucursales">
+        <z-select-item zValue="">Todas las sucursales</z-select-item>
+        @for (s of sucursalService.sucursales(); track s.id) {
+          <z-select-item [zValue]="s.id">{{ s.nombre }}</z-select-item>
+        }
+      </z-select>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    @let destinatarios = programadoForm.destinatarios();
+    @let destinatariosInvalid = destinatarios.invalid() && destinatarios.touched();
+    <div z-field [attr.data-invalid]="destinatariosInvalid || null">
+      <label z-field-label>Destinatarios *</label>
+      <textarea
+        z-textarea
+        rows="3"
+        placeholder="Un correo por línea o separados por coma"
+        [formField]="programadoForm.destinatarios"
+        [attr.aria-invalid]="destinatariosInvalid || null"
+      ></textarea>
+      @if (destinatariosInvalid) {
+        <z-field-error [zErrors]="destinatarios.errors()" />
+      }
+    </div>
+  </div>
+</form>

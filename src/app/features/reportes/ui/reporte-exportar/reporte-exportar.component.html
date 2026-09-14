@@ -1,0 +1,13 @@
+@if (puedeExportar()) {
+  <div class="flex items-center gap-1">
+    <button z-button zType="ghost" zSize="sm" [disabled]="disabled() || !!exportando()" [zLoading]="exportando() === 'csv'" (click)="exportar('csv')">
+      <ng-icon name="lucideDownload" class="mr-1.5 size-3.5" /> CSV
+    </button>
+    <button z-button zType="ghost" zSize="sm" [disabled]="disabled() || !!exportando()" [zLoading]="exportando() === 'excel'" (click)="exportar('excel')">
+      <ng-icon name="lucideDownload" class="mr-1.5 size-3.5" /> Excel
+    </button>
+    <button z-button zType="ghost" zSize="sm" [disabled]="disabled() || !!exportando()" [zLoading]="exportando() === 'pdf'" (click)="exportar('pdf')">
+      <ng-icon name="lucideDownload" class="mr-1.5 size-3.5" /> PDF
+    </button>
+  </div>
+}

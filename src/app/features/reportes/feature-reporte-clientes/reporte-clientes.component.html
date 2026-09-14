@@ -1,0 +1,72 @@
+<div class="space-y-4">
+  <app-reporte-filtros
+    [mostrarFechas]="false"
+    [cargando]="cargando()"
+    (recargar)="cargar()"
+    ayuda="Clientes con saldo sólo usa la sucursal (sin rango de fechas)."
+  >
+    <app-reporte-exportar
+      path="clientes-con-saldo"
+      [query]="{ sucursal_id: filtros.sucursalParaQuery(), page: page(), page_size: pageSize() }"
+      [disabled]="!data().length"
+    />
+  </app-reporte-filtros>
+
+  @if (cargando() && !data().length) {
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <z-skeleton class="h-24" />
+      }
+    </div>
+  } @else {
+    <app-reporte-kpi-grid [kpis]="kpis()" />
+  }
+
+  <div class="overflow-hidden rounded-xl border">
+    <div class="overflow-x-auto">
+      <table z-table>
+        <thead z-table-header class="bg-muted/50">
+          <tr z-table-row>
+            <th z-table-head>Cliente</th>
+            <th z-table-head class="text-right">Límite</th>
+            <th z-table-head class="text-right">Saldo</th>
+            <th z-table-head class="text-right">Disponible</th>
+          </tr>
+        </thead>
+        <tbody z-table-body>
+          @if (cargando()) {
+            @for (i of [1, 2, 3, 4, 5]; track i) {
+              <tr z-table-row>
+                <td z-table-cell colspan="4"><z-skeleton class="h-5 w-full" /></td>
+              </tr>
+            }
+          } @else {
+            @for (c of data(); track c.cliente_id) {
+              <tr z-table-row>
+                <td z-table-cell class="text-sm font-medium">{{ c.nombre }}</td>
+                <td z-table-cell class="text-right tabular-nums text-muted-foreground">{{ c.limite_credito | currency }}</td>
+                <td z-table-cell class="text-right tabular-nums text-amber-600">{{ c.saldo_credito | currency }}</td>
+                <td z-table-cell class="text-right tabular-nums font-medium">{{ disponible(c) | currency }}</td>
+              </tr>
+            } @empty {
+              <tr z-table-row>
+                <td z-table-cell colspan="4" class="p-0">
+                  <z-empty zIcon="lucideWallet" zTitle="Sin clientes con saldo pendiente" class="py-10" />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-reporte-paginacion
+      [page]="page()"
+      [totalPages]="totalPages()"
+      [totalItems]="totalItems()"
+      [pageSize]="pageSize()"
+      etiqueta="cliente(s)"
+      (pageChange)="onPage($event)"
+      (pageSizeChange)="onPageSize($event)"
+    />
+  </div>
+</div>

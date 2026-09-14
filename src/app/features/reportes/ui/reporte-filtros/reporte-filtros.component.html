@@ -1,0 +1,46 @@
+<div class="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
+  @if (mostrarFechas()) {
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Desde
+      <input
+        z-input
+        type="date"
+        class="w-40"
+        [ngModel]="filtros.desde()"
+        (ngModelChange)="filtros.setDesde($event)"
+        [max]="filtros.hasta() || null"
+      />
+    </label>
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Hasta
+      <input
+        z-input
+        type="date"
+        class="w-40"
+        [ngModel]="filtros.hasta()"
+        (ngModelChange)="filtros.setHasta($event)"
+        [min]="filtros.desde() || null"
+      />
+    </label>
+  }
+  @if (filtros.esGlobal()) {
+    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      Sucursal
+      <z-select class="w-48" [ngModel]="filtros.sucursalId()" (ngModelChange)="filtros.setSucursal($event)">
+        <z-select-item zValue="">Todas las sucursales</z-select-item>
+        @for (s of sucursalService.sucursales(); track s.id) {
+          <z-select-item [zValue]="s.id">{{ s.nombre }}</z-select-item>
+        }
+      </z-select>
+    </label>
+  }
+  <div class="ml-auto flex flex-wrap items-center gap-2">
+    <ng-content />
+    <button z-button zType="outline" zSize="sm" [zLoading]="cargando()" (click)="recargar.emit()">
+      <ng-icon name="lucideRefreshCw" class="mr-1.5 size-3.5" /> Actualizar
+    </button>
+  </div>
+  @if (ayuda()) {
+    <p class="w-full text-xs text-muted-foreground">{{ ayuda() }}</p>
+  }
+</div>

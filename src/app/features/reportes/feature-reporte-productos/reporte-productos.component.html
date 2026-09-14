@@ -1,0 +1,68 @@
+<div class="space-y-4">
+  <app-reporte-filtros [cargando]="cargando()" (recargar)="cargar()" ayuda="Fecha y sucursal aplican a Ventas, Métodos de pago, Por vendedor, Productos más vendidos y Mermas.">
+    <app-reporte-exportar path="productos-mas-vendidos" [query]="{ ...filtros.rango(), page: page(), page_size: pageSize() }" [disabled]="!data().length" />
+  </app-reporte-filtros>
+
+  @if (cargando() && !data().length) {
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      @for (i of [1, 2, 3]; track i) {
+        <z-skeleton class="h-24" />
+      }
+    </div>
+  } @else {
+    <app-reporte-kpi-grid [kpis]="kpis()" />
+  }
+
+  <div class="overflow-hidden rounded-xl border">
+    <div class="overflow-x-auto">
+      <table z-table>
+        <thead z-table-header class="bg-muted/50">
+          <tr z-table-row>
+            <th z-table-head>SKU</th>
+            <th z-table-head>Producto</th>
+            <th z-table-head class="text-right">Cantidad vendida</th>
+            <th z-table-head class="text-right">Monto total</th>
+          </tr>
+        </thead>
+        <tbody z-table-body>
+          @if (cargando()) {
+            @for (i of [1, 2, 3, 4, 5]; track i) {
+              <tr z-table-row>
+                <td z-table-cell colspan="4"><z-skeleton class="h-5 w-full" /></td>
+              </tr>
+            }
+          } @else {
+            @for (p of data(); track p.producto_id; let i = $index) {
+              <tr z-table-row>
+                <td z-table-cell class="font-mono text-xs text-muted-foreground">{{ p.sku }}</td>
+                <td z-table-cell class="text-sm font-medium">
+                  {{ p.nombre }}
+                  @if (esTop(i)) {
+                    <z-badge zType="secondary" class="ml-2">Top</z-badge>
+                  }
+                </td>
+                <td z-table-cell class="text-right tabular-nums">{{ p.cantidad_vendida | number: '1.0-4' }}</td>
+                <td z-table-cell class="text-right tabular-nums font-medium">{{ p.monto_total | currency }}</td>
+              </tr>
+            } @empty {
+              <tr z-table-row>
+                <td z-table-cell colspan="4" class="p-0">
+                  <z-empty zIcon="lucideBoxes" zTitle="Sin ventas en el rango" class="py-10" />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-reporte-paginacion
+      [page]="page()"
+      [totalPages]="totalPages()"
+      [totalItems]="totalItems()"
+      [pageSize]="pageSize()"
+      etiqueta="producto(s)"
+      (pageChange)="onPage($event)"
+      (pageSizeChange)="onPageSize($event)"
+    />
+  </div>
+</div>

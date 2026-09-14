@@ -1,0 +1,45 @@
+<div class="space-y-4">
+  <app-reporte-filtros [cargando]="cargando()" (recargar)="cargar()" ayuda="Fecha y sucursal aplican a Ventas, Métodos de pago, Por vendedor, Productos más vendidos y Mermas.">
+    <app-reporte-exportar path="mermas-ajustes" [query]="filtros.rango()" [disabled]="!reporte()" />
+  </app-reporte-filtros>
+
+  @if (cargando()) {
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      @for (i of [1, 2, 3]; track i) {
+        <z-skeleton class="h-24" />
+      }
+    </div>
+    <z-skeleton class="h-48 w-full" />
+  } @else if (reporte(); as m) {
+    <app-reporte-kpi-grid [kpis]="kpis()" />
+
+    <div class="overflow-hidden rounded-xl border">
+      <table z-table>
+        <thead z-table-header class="bg-muted/50">
+          <tr z-table-row>
+            <th z-table-head>Tipo</th>
+            <th z-table-head class="text-right">Movimientos</th>
+            <th z-table-head class="text-right">Cantidad</th>
+            <th z-table-head class="text-right">Valor estimado</th>
+          </tr>
+        </thead>
+        <tbody z-table-body>
+          @for (d of m.detalle; track d.tipo) {
+            <tr z-table-row>
+              <td z-table-cell class="text-sm capitalize">{{ d.tipo }}</td>
+              <td z-table-cell class="text-right tabular-nums">{{ d.numero_movimientos }}</td>
+              <td z-table-cell class="text-right tabular-nums">{{ d.cantidad_total | number: '1.0-4' }}</td>
+              <td z-table-cell class="text-right tabular-nums font-medium">{{ d.valor_estimado | currency }}</td>
+            </tr>
+          } @empty {
+            <tr z-table-row>
+              <td z-table-cell colspan="4" class="p-0">
+                <z-empty zIcon="lucideAlertTriangle" zTitle="Sin mermas ni ajustes en el rango" class="py-10" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

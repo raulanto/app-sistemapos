@@ -1,0 +1,62 @@
+<div class="space-y-4">
+  <app-reporte-filtros
+    [mostrarFechas]="false"
+    [cargando]="cargando()"
+    (recargar)="cargar()"
+    ayuda="Inventario valorizado sólo usa la sucursal (sin rango de fechas)."
+  >
+    <app-reporte-exportar
+      path="inventario-valorizado"
+      [query]="{ sucursal_id: filtros.sucursalParaQuery(), categoria_id: categoriaId() || undefined }"
+      [disabled]="!reporte()"
+    />
+  </app-reporte-filtros>
+
+  <label class="flex w-56 flex-col gap-1 text-xs font-medium text-muted-foreground">
+    Categoría
+    <z-select [ngModel]="categoriaId()" (ngModelChange)="setCategoria($event)">
+      <z-select-item zValue="">Todas las categorías</z-select-item>
+      @for (c of categorias(); track c.id) {
+        <z-select-item [zValue]="c.id">{{ c.nombre }}</z-select-item>
+      }
+    </z-select>
+  </label>
+
+  @if (cargando()) {
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      @for (i of [1, 2, 3]; track i) {
+        <z-skeleton class="h-24" />
+      }
+    </div>
+    <z-skeleton class="h-48 w-full" />
+  } @else if (reporte(); as inv) {
+    <app-reporte-kpi-grid [kpis]="kpis()" />
+
+    <div class="overflow-hidden rounded-xl border">
+      <table z-table>
+        <thead z-table-header class="bg-muted/50">
+          <tr z-table-row>
+            <th z-table-head>Categoría</th>
+            <th z-table-head class="text-right">Productos</th>
+            <th z-table-head class="text-right">Valor</th>
+          </tr>
+        </thead>
+        <tbody z-table-body>
+          @for (c of inv.por_categoria; track c.categoria_id) {
+            <tr z-table-row>
+              <td z-table-cell class="text-sm font-medium">{{ c.nombre }}</td>
+              <td z-table-cell class="text-right tabular-nums">{{ c.numero_productos }}</td>
+              <td z-table-cell class="text-right tabular-nums font-medium">{{ c.valor | currency }}</td>
+            </tr>
+          } @empty {
+            <tr z-table-row>
+              <td z-table-cell colspan="3" class="p-0">
+                <z-empty zIcon="lucideBoxes" zTitle="Sin existencias valorizadas" class="py-10" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

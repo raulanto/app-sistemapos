@@ -1,0 +1,48 @@
+@if (totalItems() > 0) {
+  <div class="flex flex-col items-center justify-between gap-4 border-t p-3 sm:flex-row">
+    <div class="text-sm text-muted-foreground tabular-nums">
+      {{ totalItems() }} {{ etiqueta() }} · página {{ page() }} de {{ totalPages() }}
+    </div>
+
+    <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-medium">Filas</span>
+        <z-select [ngModel]="pageSize().toString()" (ngModelChange)="setPageSize($event)">
+          <z-select-item zValue="20">20</z-select-item>
+          <z-select-item zValue="50">50</z-select-item>
+          <z-select-item zValue="100">100</z-select-item>
+        </z-select>
+      </div>
+
+      @if (totalPages() > 1) {
+        <z-pagination [zTotal]="totalPages()" [zPageIndex]="page()" [zContent]="content" />
+        <ng-template #content>
+          <ul z-pagination-content>
+            <li z-pagination-item>
+              <z-pagination-previous (click)="prev()" [zDisabled]="page() === 1" />
+            </li>
+
+            @for (p of pages(); track p) {
+              <li z-pagination-item>
+                <button type="button" z-pagination-button [zActive]="p === page()" (click)="irA(p)">
+                  <span class="sr-only">Ir a página</span>
+                  {{ p }}
+                </button>
+              </li>
+            }
+
+            @if (pages().length > 0 && pages()[pages().length - 1] < totalPages()) {
+              <li z-pagination-item>
+                <z-pagination-ellipsis />
+              </li>
+            }
+
+            <li z-pagination-item>
+              <z-pagination-next (click)="next()" [zDisabled]="page() === totalPages()" />
+            </li>
+          </ul>
+        </ng-template>
+      }
+    </div>
+  </div>
+}
