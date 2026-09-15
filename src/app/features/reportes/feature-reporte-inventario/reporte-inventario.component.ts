@@ -5,7 +5,8 @@ import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { provideIcons } from '@ng-icons/core';
-import { lucideBoxes } from '@ng-icons/lucide';
+import { NgIcon } from '@ng-icons/core';
+import { lucideBoxes, lucideLayers } from '@ng-icons/lucide';
 
 import { CategoriaService } from '@/features/inventario/data-access/categoria.service';
 import { CategoriaResponse } from '@/features/inventario/data-access/models/categoria.model';
@@ -28,6 +29,7 @@ import { ReporteExportarComponent } from '../ui/reporte-exportar/reporte-exporta
   imports: [
     CurrencyPipe,
     FormsModule,
+    NgIcon,
     ...ZardSelectImports,
     ...ZardTableImports,
     ZardEmptyComponent,
@@ -36,7 +38,7 @@ import { ReporteExportarComponent } from '../ui/reporte-exportar/reporte-exporta
     ReporteKpiGridComponent,
     ReporteExportarComponent,
   ],
-  viewProviders: [provideIcons({ lucideBoxes })],
+  viewProviders: [provideIcons({ lucideBoxes, lucideLayers })],
   templateUrl: './reporte-inventario.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
