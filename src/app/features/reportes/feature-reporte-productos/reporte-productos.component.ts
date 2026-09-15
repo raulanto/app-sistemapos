@@ -4,7 +4,8 @@ import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { provideIcons } from '@ng-icons/core';
-import { lucideBoxes } from '@ng-icons/lucide';
+import { NgIcon } from '@ng-icons/core';
+import { lucideBoxes, lucideShoppingBag } from '@ng-icons/lucide';
 
 import { ZardBadgeComponent } from '@/shared/components/badge/badge.component';
 import { ZardEmptyComponent } from '@/shared/components/empty/empty.component';
@@ -26,6 +27,7 @@ import { ReporteExportarComponent } from '../ui/reporte-exportar/reporte-exporta
   imports: [
     CurrencyPipe,
     DecimalPipe,
+    NgIcon,
     ...ZardTableImports,
     ZardBadgeComponent,
     ZardEmptyComponent,
@@ -35,7 +37,7 @@ import { ReporteExportarComponent } from '../ui/reporte-exportar/reporte-exporta
     ReportePaginacionComponent,
     ReporteExportarComponent,
   ],
-  viewProviders: [provideIcons({ lucideBoxes })],
+  viewProviders: [provideIcons({ lucideBoxes, lucideShoppingBag })],
   templateUrl: './reporte-productos.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
