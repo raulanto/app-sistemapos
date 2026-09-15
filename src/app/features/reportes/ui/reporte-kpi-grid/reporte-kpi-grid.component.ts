@@ -12,6 +12,7 @@ import {
   lucidePercent,
   lucideReceiptText,
   lucideTag,
+  lucideTrendingDown,
   lucideTrendingUp,
   lucideTrophy,
   lucideUsers,
@@ -49,6 +50,7 @@ export interface ReporteKpi {
       lucidePercent,
       lucideReceiptText,
       lucideTag,
+      lucideTrendingDown,
       lucideTrendingUp,
       lucideTrophy,
       lucideUsers,
@@ -66,5 +68,22 @@ export class ReporteKpiGridComponent {
     if (tono === 'positive') return 'text-emerald-600';
     if (tono === 'warning') return 'text-amber-600';
     return '';
+  }
+
+  iconBadgeBg(tono: ReporteKpiTono | undefined): string {
+    if (tono === 'accent') return 'bg-primary/10 text-primary';
+    if (tono === 'positive') return 'bg-emerald-500/10 text-emerald-600';
+    if (tono === 'warning') return 'bg-amber-500/10 text-amber-600';
+    return 'bg-muted text-muted-foreground';
+  }
+
+  /**
+   * Flex en vez de grid: la cantidad de KPIs varía por vista (y por datos, cuando alguno es
+   * condicional), así que un grid de columnas fijas deja huecos en la última fila. Con
+   * `flex-wrap` + `grow`, las tarjetas de la fila incompleta se estiran para llenar el ancho.
+   */
+  cardClasses(k: ReporteKpi): string {
+    const base = 'grow basis-full gap-3 transition-shadow duration-200 hover:shadow-md';
+    return k.destacado ? `${base} sm:basis-full lg:basis-[calc(50%-0.5rem)]` : `${base} sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(25%-0.75rem)]`;
   }
 }

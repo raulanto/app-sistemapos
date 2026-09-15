@@ -1,18 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
-import { of } from 'rxjs';
+import { RouterLink } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-
 import { provideIcons } from '@ng-icons/core';
-import { lucideReceiptText } from '@ng-icons/lucide';
-
+import { lucideBarChart3, lucideLineChart, lucideReceiptText, lucideShoppingBag, lucideTrendingUp } from '@ng-icons/lucide';
 import { ZardChartImports } from '@/shared/components/chart/chart.imports';
+import { ZardChartOptionOverride } from '@/shared/components/chart/chart.types';
+import { ZardTabsImports } from '@/shared/components/tabs/tabs.imports';
 import { ZardEmptyComponent } from '@/shared/components/empty/empty.component';
 import { ZardSkeletonComponent } from '@/shared/components/skeleton/skeleton.component';
-
 import { fmtCurrency, fmtNum, fmtPct } from '../data-access/reporte-format.util';
 import { ReporteFiltrosService } from '../data-access/reporte-filtros.service';
 import { ReporteService } from '../data-access/reporte.service';
-import { VentasReporte } from '../data-access/reporte.models';
+import { ProductoMasVendidoItem, VentasReporte } from '../data-access/reporte.models';
 import { ReporteFiltrosComponent } from '../ui/reporte-filtros/reporte-filtros.component';
 import { ReporteKpi, ReporteKpiGridComponent } from '../ui/reporte-kpi-grid/reporte-kpi-grid.component';
 import { ReporteExportarComponent } from '../ui/reporte-exportar/reporte-exportar.component';
@@ -20,9 +20,17 @@ import { ReporteExportarComponent } from '../ui/reporte-exportar/reporte-exporta
 @Component({
   selector: 'app-reporte-ventas',
   standalone: true,
-  imports: [...ZardChartImports, ZardEmptyComponent, ZardSkeletonComponent, ReporteFiltrosComponent, ReporteKpiGridComponent, ReporteExportarComponent],
-  /** `z-empty` no auto-registra iconos: el que la usa debe darle el nombre vía viewProviders. */
-  viewProviders: [provideIcons({ lucideReceiptText })],
+  imports: [
+    RouterLink,
+    ...ZardChartImports,
+    ...ZardTabsImports,
+    ZardEmptyComponent,
+    ZardSkeletonComponent,
+    ReporteFiltrosComponent,
+    ReporteKpiGridComponent,
+    ReporteExportarComponent,
+  ],
+  viewProviders: [provideIcons({ lucideReceiptText, lucideLineChart, lucideBarChart3, lucideTrendingUp, lucideShoppingBag })],
   templateUrl: './reporte-ventas.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -32,6 +40,13 @@ export class ReporteVentasComponent {
 
   readonly cargando = signal(true);
   readonly reporte = signal<VentasReporte | null>(null);
+  readonly activeTab = signal<'ventas' | 'top'>('ventas');
+  readonly chartType = signal<'area' | 'bar'>('area');
+  readonly topProductos = signal<ProductoMasVendidoItem[]>([]);
+
+  onTabChange(event: { index: number }) {
+    this.activeTab.set(event.index === 0 ? 'ventas' : 'top');
+  }
 
   constructor() {
     effect(() => {
@@ -44,13 +59,16 @@ export class ReporteVentasComponent {
 
   cargar() {
     this.cargando.set(true);
-    this.reporteService
-      .ventas(this.filtros.rango())
-      .pipe(catchError(() => of(null)))
-      .subscribe(r => {
-        this.reporte.set(r);
-        this.cargando.set(false);
-      });
+    const query = this.filtros.rango();
+
+    forkJoin({
+      ventas: this.reporteService.ventas(query).pipe(catchError(() => of(null))),
+      top: this.reporteService.productosMasVendidos({ ...query, page_size: 5 }).pipe(catchError(() => of(null))),
+    }).subscribe(({ ventas, top }) => {
+      this.reporte.set(ventas);
+      this.topProductos.set(top?.data ?? []);
+      this.cargando.set(false);
+    });
   }
 
   private readonly mejorDia = computed(() => {
@@ -80,7 +98,49 @@ export class ReporteVentasComponent {
     ];
   });
 
-  readonly ventasPorDiaData = computed(() => (this.reporte()?.por_dia ?? []).map(d => ({ dia: d.dia.slice(5), total: Number(d.total) })));
-  readonly ventasPorDiaSeries = [{ dataKey: 'total' }];
-  readonly ventasPorDiaConfig = { total: { label: 'Ventas', color: '#10b981' } };
+  readonly ventasPorDiaData = computed(() =>
+    (this.reporte()?.por_dia ?? []).map(d => ({
+      dia: d.dia.slice(5),
+      ventasCount: d.numero_ventas,
+      totalMonto: Number(d.total),
+    }))
+  );
+
+  readonly ventasPorDiaSeries = [
+    { dataKey: 'ventasCount', type: 'bar' as const, yAxisIndex: 1 },
+    { dataKey: 'totalMonto', type: 'area' as const, yAxisIndex: 0 },
+  ];
+
+  readonly ventasPorDiaConfig = {
+    ventasCount: { label: 'Nº de Ventas', color: '#8b5cf6' }, // Vívido Violeta / Indigo
+    totalMonto: { label: 'Monto Total ($)', color: '#10b981' }, // Vívido Verde Esmeralda
+  };
+
+  readonly ventasPorDiaOption: ZardChartOptionOverride = {
+    yAxis: [
+      {
+        type: 'value',
+        name: 'Monto ($)',
+        splitLine: { show: true, lineStyle: { opacity: 0.15 } },
+        axisLabel: { formatter: '${value}' },
+      },
+      {
+        type: 'value',
+        name: 'Nº Ventas',
+        splitLine: { show: false },
+        axisLabel: { formatter: '{value}' },
+      },
+    ],
+  };
+
+  readonly topProductosData = computed(() =>
+    this.topProductos().map(p => ({
+      nombre: p.nombre,
+      unidades: Number(p.cantidad_vendida),
+      total: Number(p.monto_total),
+    }))
+  );
+  readonly topProductosSeries = [{ dataKey: 'unidades' }];
+  readonly topProductosConfig = { unidades: { label: 'Unidades vendidas', color: '#06b6d4' } }; // Vívido Cyan
 }
+
