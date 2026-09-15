@@ -36,11 +36,13 @@ export class ProductoFiltrosComponent {
   q = input<string>('');
   categorias = input<CategoriaResponse[]>([]);
   categoriaId = input<string[]>([]);
+  tipo = input<string[]>([]);
   activo = input<string[]>([]);
   todasLasSucursales = input<boolean>(false);
 
   qChange = output<string>();
   categoriaIdChange = output<string[]>();
+  tipoChange = output<string[]>();
   activoChange = output<string[]>();
   todasLasSucursalesChange = output<boolean>();
 
@@ -48,6 +50,13 @@ export class ProductoFiltrosComponent {
     { value: '', label: 'Todos' },
     { value: 'true', label: 'Activos' },
     { value: 'false', label: 'Inactivos' },
+  ];
+
+  readonly tipoOptions: ZardComboboxOption[] = [
+    { value: 'simple', label: 'Simple' },
+    { value: 'fraccionable', label: 'Fraccionable' },
+    { value: 'kit', label: 'Kit' },
+    { value: 'servicio', label: 'Servicio' },
   ];
 
   readonly categoriaOptions = computed<ZardComboboxOption[]>(() =>
@@ -58,7 +67,7 @@ export class ProductoFiltrosComponent {
   readonly estadoValue = computed(() => (this.activo().length === 1 ? this.activo()[0] : ''));
 
   readonly hayFiltrosActivos = computed(
-    () => !!this.q() || this.categoriaId().length > 0 || this.activo().length > 0,
+    () => !!this.q() || this.categoriaId().length > 0 || this.tipo().length > 0 || this.activo().length > 0,
   );
 
   onEstadoChange(value: string | string[]): void {
@@ -73,6 +82,7 @@ export class ProductoFiltrosComponent {
   limpiarFiltros(): void {
     this.qChange.emit('');
     this.categoriaIdChange.emit([]);
+    this.tipoChange.emit([]);
     this.activoChange.emit([]);
   }
 }

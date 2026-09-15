@@ -32,6 +32,18 @@
     emptyText="Sin resultados"
   />
 
+  <!-- Tipo de Producto (buscable, multi) -->
+  <z-combobox
+    class="w-full sm:w-48"
+    [zMultiple]="true"
+    [options]="tipoOptions"
+    [ngModel]="tipo()"
+    (ngModelChange)="tipoChange.emit($event)"
+    placeholder="Tipo de producto"
+    searchPlaceholder="Buscar tipo..."
+    emptyText="Sin resultados"
+  />
+
   <!-- Estado (segmentado) -->
   <z-toggle-group
     zMode="single"
@@ -43,7 +55,7 @@
   />
 
   @if (hayFiltrosActivos()) {
-    <button z-button zType="ghost" zSize="sm" (click)="limpiarFiltros()">
+    <button z-button zType="destructive" zSize="xs" (click)="limpiarFiltros()">
       <ng-icon name="lucideFilterX" class="mr-1.5 size-4" />
       Limpiar filtros
     </button>
