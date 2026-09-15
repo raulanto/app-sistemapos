@@ -1,8 +1,7 @@
 # Guía: consumir `/api/v1/reportes` desde el frontend
 
-> Módulo mayormente de lectura (agrega ventas, inventario y clientes) + un
-> CRUD chico para programar el envío periódico de algunos reportes por
-> correo. Todo cuelga de `/api/v1/reportes`.
+> Módulo de **solo lectura**: agrega datos de ventas, inventario y clientes.
+> No hay POST/PUT/DELETE en este módulo. Todo cuelga de `/api/v1/reportes`.
 
 ---
 
@@ -11,15 +10,13 @@
 **Auth**: header `Authorization: Bearer <token>` en toda request (login en
 `POST /api/v1/usuarios/login`).
 
-**Permisos** (3, cada uno gatilla una parte distinta de la UI):
-- `reportes.leer`: ver cualquier reporte en JSON (los 9 endpoints de lectura,
-  dashboard incluido). Sin esto, ocultar toda la sección "Reportes".
+**Permisos** (2, cada uno gatilla una parte distinta de la UI):
+- `reportes.leer`: ver cualquier reporte en JSON (los 9 endpoints, dashboard
+  incluido). Sin esto, ocultar toda la sección "Reportes".
 - `reportes.exportar`: además de leer, descargar en CSV/Excel/PDF (`?formato=`,
   ver sección 3). Sin esto, ocultar el botón "Exportar" pero dejar la vista
   JSON normal — el backend devuelve `403` solo en la rama de export, `leer`
   sigue funcionando igual.
-- `reportes.programar`: CRUD de reportes programados (sección 4). Sin esto,
-  ocultar esa pantalla entera.
 
 **Sucursal**: los reportes con filtro `sucursal_id` se comportan así:
 - Roles **globales** (admin/gerente): pueden mandar `sucursal_id` o
@@ -259,38 +256,7 @@ error, no el archivo). El resto de los query params (`desde`, `hasta`,
 
 ---
 
-## 4. Reportes programados — `/programados` (permiso `reportes.programar`)
-
-CRUD chico para que un reporte se genere solo cada tanto y se mande por
-correo (hoy: el envío está stubeado en el backend — se loguea pero no sale
-un correo real todavía; no bloquea armar la UI, el registro se crea y
-funciona igual).
-
-| Método | Endpoint | Qué hace |
-|---|---|---|
-| `POST` | `/programados` | crear |
-| `GET` | `/programados` | listar (paginado) |
-| `PATCH` | `/programados/{id}/activo` | activar/pausar sin borrar |
-| `DELETE` | `/programados/{id}` | eliminar |
-
-```json
-// POST /programados
-{
-  "tipo_reporte": "ventas",              // ventas | ventas_por_metodo_pago | inventario_valorizado | mermas_ajustes | clientes_con_saldo
-  "frecuencia": "diaria",                // diaria | semanal | mensual
-  "formato_salida": "pdf",               // csv | excel | pdf (no "json": esto siempre genera un archivo)
-  "destinatarios": ["gerente@negocio.com"],
-  "sucursal_id": null                     // opcional
-}
-```
-`tipo_reporte` está limitado a esos 5 (los reportes "de período", sin un id
-puntual como `caja_turno_id`) — no todo lo de la tabla de la sección 2 es
-programable. La respuesta (`ReporteProgramadoResponse`) agrega
-`ultima_ejecucion` (null hasta la primera corrida) y `activo`.
-
----
-
-## 5. Todos los `Decimal` viajan como **string**
+## 4. Todos los `Decimal` viajan como **string**
 
 Cada monto/cantidad (`total_vendido`, `cantidad_vendida`, `saldo_credito`,
 etc.) serializa como **string** (`"1200.50"`), no como `number` de JSON —
@@ -302,10 +268,9 @@ estos endpoints ya hacen).
 
 ---
 
-## 6. Qué falta (no construir UI para esto todavía)
+## 5. Qué falta (no construir UI para esto todavía)
 
 - Ventas por categoría, comparativo de período, valorización a precio de
   venta → ver [reportes-pendientes.md](reportes-pendientes.md).
-- El envío real de correo de los reportes programados (hoy solo se loguea
-  del lado del servidor). No afecta la UI del CRUD (sección 4), sí afecta si
-  le prometés al usuario "te va a llegar un correo".
+- Reportes programados / envío por correo (dashboard y export sí existen;
+  esto no se llegó a construir).
