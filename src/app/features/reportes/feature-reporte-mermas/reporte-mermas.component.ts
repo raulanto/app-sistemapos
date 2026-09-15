@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { provideIcons } from '@ng-icons/core';
+import { NgIcon } from '@ng-icons/core';
 import { lucideAlertTriangle } from '@ng-icons/lucide';
 
 import { ZardEmptyComponent } from '@/shared/components/empty/empty.component';
@@ -24,6 +25,7 @@ import { ReporteExportarComponent } from '../ui/reporte-exportar/reporte-exporta
   imports: [
     CurrencyPipe,
     DecimalPipe,
+    NgIcon,
     ...ZardTableImports,
     ZardEmptyComponent,
     ZardSkeletonComponent,
