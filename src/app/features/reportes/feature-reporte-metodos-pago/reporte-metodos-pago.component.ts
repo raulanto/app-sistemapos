@@ -4,7 +4,8 @@ import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { provideIcons } from '@ng-icons/core';
-import { lucideWallet } from '@ng-icons/lucide';
+import { NgIcon } from '@ng-icons/core';
+import { lucideCreditCard, lucideWallet } from '@ng-icons/lucide';
 
 import { ZardChartImports } from '@/shared/components/chart/chart.imports';
 import { ZardEmptyComponent } from '@/shared/components/empty/empty.component';
@@ -34,6 +35,7 @@ const ETIQUETAS: Record<string, string> = {
   standalone: true,
   imports: [
     CurrencyPipe,
+    NgIcon,
     ...ZardChartImports,
     ...ZardTableImports,
     ZardEmptyComponent,
@@ -42,7 +44,7 @@ const ETIQUETAS: Record<string, string> = {
     ReporteKpiGridComponent,
     ReporteExportarComponent,
   ],
-  viewProviders: [provideIcons({ lucideWallet })],
+  viewProviders: [provideIcons({ lucideWallet, lucideCreditCard })],
   templateUrl: './reporte-metodos-pago.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
