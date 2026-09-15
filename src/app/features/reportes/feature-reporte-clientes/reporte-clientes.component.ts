@@ -4,7 +4,8 @@ import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { provideIcons } from '@ng-icons/core';
-import { lucideWallet } from '@ng-icons/lucide';
+import { NgIcon } from '@ng-icons/core';
+import { lucideCreditCard, lucideDollarSign, lucideUsers, lucideWallet } from '@ng-icons/lucide';
 
 import { ZardEmptyComponent } from '@/shared/components/empty/empty.component';
 import { ZardSkeletonComponent } from '@/shared/components/skeleton/skeleton.component';
@@ -24,6 +25,7 @@ import { ReporteExportarComponent } from '../ui/reporte-exportar/reporte-exporta
   standalone: true,
   imports: [
     CurrencyPipe,
+    NgIcon,
     ...ZardTableImports,
     ZardEmptyComponent,
     ZardSkeletonComponent,
@@ -32,7 +34,7 @@ import { ReporteExportarComponent } from '../ui/reporte-exportar/reporte-exporta
     ReporteExportarComponent,
     ReportePaginacionComponent,
   ],
-  viewProviders: [provideIcons({ lucideWallet })],
+  viewProviders: [provideIcons({ lucideWallet, lucideUsers, lucideCreditCard, lucideDollarSign })],
   templateUrl: './reporte-clientes.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
