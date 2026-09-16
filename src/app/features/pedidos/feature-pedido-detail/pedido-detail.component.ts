@@ -12,6 +12,14 @@ import {
   lucideRotateCcw,
   lucideTruck,
   lucideWallet,
+  lucideMapPin,
+  lucideUser,
+  lucidePackage,
+  lucideCreditCard,
+  lucideStickyNote,
+  lucideTag,
+  lucideCheck,
+  lucideExternalLink,
 } from '@ng-icons/lucide';
 
 import { PedidoService } from '../data-access/pedido.service';
@@ -29,6 +37,7 @@ import {
 import { CajaService } from '../../ventas/data-access/caja.service';
 import { VentaService } from '../../ventas/data-access/venta.service';
 import { ProductoService } from '../../inventario/data-access/producto.service';
+import { ProductoResponse } from '../../inventario/data-access/inventario.models';
 import { UsuarioAdminService } from '../../usuarios/data-access/usuario-admin.service';
 import { AuthService } from '@/core/auth/api/auth.service';
 import { PERMISOS } from '@/core/auth/permissions';
@@ -39,7 +48,6 @@ import { ZardButtonComponent } from '../../../shared/components/button/button.co
 import { ZardBadgeComponent } from '../../../shared/components/badge/badge.component';
 import { ZardEmptyComponent } from '../../../shared/components/empty/empty.component';
 import { ZardSkeletonComponent } from '../../../shared/components/skeleton/skeleton.component';
-import { ZardSeparatorComponent } from '../../../shared/components/separator/separator.component';
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
 import { ZardSheetService } from '../../../shared/components/sheet/sheet.service';
 import { FacturarSheetComponent } from '../ui/facturar-sheet/facturar-sheet.component';
@@ -62,7 +70,6 @@ import { PedidoEntregaTimelineComponent } from '../ui/pedido-entrega-timeline/pe
     ZardBadgeComponent,
     ZardEmptyComponent,
     ZardSkeletonComponent,
-    ZardSeparatorComponent,
     PedidoEntregaTimelineComponent,
   ],
   viewProviders: [
@@ -76,6 +83,14 @@ import { PedidoEntregaTimelineComponent } from '../ui/pedido-entrega-timeline/pe
       lucideRotateCcw,
       lucideTruck,
       lucideWallet,
+      lucideMapPin,
+      lucideUser,
+      lucidePackage,
+      lucideCreditCard,
+      lucideStickyNote,
+      lucideTag,
+      lucideCheck,
+      lucideExternalLink,
     }),
   ],
   templateUrl: './pedido-detail.component.html',
@@ -94,10 +109,18 @@ export class PedidoDetailComponent {
   private authService = inject(AuthService);
 
   readonly canEditar = computed(() => this.authService.hasPermission(...PERMISOS.pedidos.editar));
-  readonly canConfirmar = computed(() => this.authService.hasPermission(...PERMISOS.pedidos.confirmar));
-  readonly canCancelar = computed(() => this.authService.hasPermission(...PERMISOS.pedidos.cancelar));
-  readonly canFacturar = computed(() => this.authService.hasPermission(...PERMISOS.pedidos.facturar));
-  readonly canRepartir = computed(() => this.authService.hasPermission(...PERMISOS.pedidos.repartir));
+  readonly canConfirmar = computed(() =>
+    this.authService.hasPermission(...PERMISOS.pedidos.confirmar),
+  );
+  readonly canCancelar = computed(() =>
+    this.authService.hasPermission(...PERMISOS.pedidos.cancelar),
+  );
+  readonly canFacturar = computed(() =>
+    this.authService.hasPermission(...PERMISOS.pedidos.facturar),
+  );
+  readonly canRepartir = computed(() =>
+    this.authService.hasPermission(...PERMISOS.pedidos.repartir),
+  );
 
   readonly pedido = signal<PedidoResponse | null>(null);
   readonly loading = signal(true);
@@ -120,12 +143,14 @@ export class PedidoDetailComponent {
   /** Transiciones de entrega disponibles ahora (vacío si no se puede tocar la entrega). */
   readonly siguientesEntrega = computed(() => {
     const p = this.pedido();
-    if (!p || !this.canRepartir() || p.estado === 'cancelado' || p.estado === 'facturado') return [];
+    if (!p || !this.canRepartir() || p.estado === 'cancelado' || p.estado === 'facturado')
+      return [];
     return siguientesEstadosEntrega(p.estado_entrega, p.tipo);
   });
   /** Responsable de la primera línea de servicio (envío): sugerencia para el repartidor del pedido. */
   readonly responsableServicio = computed(
-    () => (this.pedido()?.lineas ?? []).find(l => l.es_servicio && l.asignado_a)?.asignado_a ?? null,
+    () =>
+      (this.pedido()?.lineas ?? []).find((l) => l.es_servicio && l.asignado_a)?.asignado_a ?? null,
   );
   readonly totalAnticipos = computed(() => Number(this.pedido()?.total_anticipos ?? 0));
   readonly ahorroPromo = computed(() =>
@@ -141,14 +166,20 @@ export class PedidoDetailComponent {
     monedero: 'Monedero',
   };
 
+  readonly productosMap = signal<Record<string, ProductoResponse>>({});
+
   constructor() {
     this.cargar();
-    this.productoService.listar({ page_size: 100 }).subscribe({
-      next: res => this.nombres.set(Object.fromEntries(res.data.map(p => [p.id, p.nombre]))),
+    this.productoService.listar({ page_size: 100, include: ['unidades', 'imagenes'] }).subscribe({
+      next: (res) => {
+        this.nombres.set(Object.fromEntries(res.data.map((p) => [p.id, p.nombre])));
+        this.productosMap.set(Object.fromEntries(res.data.map((p) => [p.id, p])));
+      },
       error: () => {},
     });
     this.usuarioService.listar({ sort: 'nombre:asc' }).subscribe({
-      next: res => this.repartidores.set(Object.fromEntries(res.data.map(u => [u.id, u.nombre]))),
+      next: (res) =>
+        this.repartidores.set(Object.fromEntries(res.data.map((u) => [u.id, u.nombre]))),
       error: () => {},
     });
   }
@@ -157,16 +188,46 @@ export class PedidoDetailComponent {
     this.loading.set(true);
     this.error.set(false);
     this.pedidoService.obtener(this.id).subscribe({
-      next: p => {
+      next: (p) => {
         this.pedido.set(p);
         this.loading.set(false);
+        this.cargarProductosFaltantes(p);
       },
-      error: err => {
+      error: (err) => {
         console.error('Error al cargar el pedido', err);
         this.error.set(true);
         this.loading.set(false);
       },
     });
+  }
+
+  private cargarProductosFaltantes(p: PedidoResponse) {
+    const ids = (p.lineas ?? []).map((l) => l.producto_id);
+    const faltantes = [...new Set(ids)].filter((id) => !this.productosMap()[id]);
+    if (faltantes.length === 0) return;
+
+    for (const id of faltantes) {
+      this.productoService.obtenerPorId(id, 'imagen_principal').subscribe({
+        next: (prod) => {
+          this.nombres.update((map) => ({ ...map, [prod.id]: prod.nombre }));
+          this.productosMap.update((map) => ({ ...map, [prod.id]: prod }));
+        },
+        error: () => {},
+      });
+    }
+  }
+
+  imagenProductoUrl(productoId: string): string | null {
+    const p = this.productosMap()[productoId];
+    return p?.imagen_principal?.thumbnail_url ?? p?.imagen_principal?.url ?? null;
+  }
+
+  skuProducto(productoId: string): string | null {
+    return this.productosMap()[productoId]?.sku ?? null;
+  }
+
+  tipoProducto(productoId: string): string | null {
+    return this.productosMap()[productoId]?.tipo ?? null;
   }
 
   nombreProducto(productoId: string): string {
@@ -189,13 +250,13 @@ export class PedidoDetailComponent {
     return 'outline';
   }
   labelEstado(e: string) {
-    return ESTADOS_PEDIDO.find(x => x.value === e)?.label ?? e;
+    return ESTADOS_PEDIDO.find((x) => x.value === e)?.label ?? e;
   }
   labelEntrega(e: string) {
-    return ESTADOS_ENTREGA.find(x => x.value === e)?.label ?? e;
+    return ESTADOS_ENTREGA.find((x) => x.value === e)?.label ?? e;
   }
   labelTipo(t: string) {
-    return TIPOS_PEDIDO.find(x => x.value === t)?.label ?? t;
+    return TIPOS_PEDIDO.find((x) => x.value === t)?.label ?? t;
   }
 
   private errMsg(err: unknown, fallback: string): string {
@@ -206,7 +267,9 @@ export class PedidoDetailComponent {
   /** Un pedido a domicilio sin dirección hace que el backend rechace confirmar/facturar. */
   private faltaDireccionDomicilio(p: PedidoResponse): boolean {
     if (p.tipo === 'domicilio' && !p.direccion_texto?.trim()) {
-      this.sonner.error('Este pedido a domicilio no tiene dirección. Edítalo y captúrala antes de continuar.');
+      this.sonner.error(
+        'Este pedido a domicilio no tiene dirección. Edítalo y captúrala antes de continuar.',
+      );
       return true;
     }
     return false;
@@ -221,17 +284,19 @@ export class PedidoDetailComponent {
     if (this.working() || !p) return;
     if (this.faltaDireccionDomicilio(p)) return;
     if (this.bloqueadoPorEntrega()) {
-      this.sonner.error('Marca la entrega como «Entregado» antes de confirmar el pedido a domicilio.');
+      this.sonner.error(
+        'Marca la entrega como «Entregado» antes de confirmar el pedido a domicilio.',
+      );
       return;
     }
     this.working.set(true);
     this.pedidoService.confirmar(this.id).subscribe({
-      next: p => {
+      next: (p) => {
         this.pedido.set(p);
         this.working.set(false);
         this.sonner.success(`Pedido confirmado · total congelado ${Number(p.total).toFixed(2)}`);
       },
-      error: err => {
+      error: (err) => {
         this.working.set(false);
         this.sonner.error(this.errMsg(err, 'No se pudo confirmar el pedido'));
       },
@@ -242,12 +307,12 @@ export class PedidoDetailComponent {
     if (this.working()) return;
     this.working.set(true);
     this.pedidoService.reabrir(this.id).subscribe({
-      next: p => {
+      next: (p) => {
         this.pedido.set(p);
         this.working.set(false);
         this.sonner.success('Pedido reabierto para edición');
       },
-      error: err => {
+      error: (err) => {
         this.working.set(false);
         this.sonner.error(this.errMsg(err, 'No se pudo reabrir el pedido'));
       },
@@ -278,7 +343,8 @@ export class PedidoDetailComponent {
       zData: { pedidoId: p.id, saldoPorCobrar: Number(p.saldo_por_cobrar) || 0 },
       zOkText: 'Registrar',
       zCancelText: 'Cancelar',
-      zOnOk: (i: any) => this.persistir(i, 'Anticipo registrado', 'No se pudo registrar el anticipo'),
+      zOnOk: (i: any) =>
+        this.persistir(i, 'Anticipo registrado', 'No se pudo registrar el anticipo'),
     });
   }
 
@@ -291,12 +357,12 @@ export class PedidoDetailComponent {
     }
     this.working.set(true);
     this.pedidoService.entrega(this.id, { estado_entrega: estado }).subscribe({
-      next: p => {
+      next: (p) => {
         this.pedido.set(p);
         this.working.set(false);
         this.sonner.success(`Entrega: ${this.labelEntrega(estado)}`);
       },
-      error: err => {
+      error: (err) => {
         this.working.set(false);
         this.sonner.error(this.errMsg(err, 'No se pudo actualizar la entrega'));
       },
@@ -319,7 +385,8 @@ export class PedidoDetailComponent {
       },
       zOkText: 'Guardar',
       zCancelText: 'Cancelar',
-      zOnOk: (i: any) => this.persistir(i, 'Entrega actualizada', 'No se pudo actualizar la entrega'),
+      zOnOk: (i: any) =>
+        this.persistir(i, 'Entrega actualizada', 'No se pudo actualizar la entrega'),
     });
   }
 
@@ -328,11 +395,13 @@ export class PedidoDetailComponent {
     if (!p) return;
     if (this.faltaDireccionDomicilio(p)) return;
     if (this.bloqueadoPorEntrega()) {
-      this.sonner.error('Marca la entrega como «Entregado» antes de facturar el pedido a domicilio.');
+      this.sonner.error(
+        'Marca la entrega como «Entregado» antes de facturar el pedido a domicilio.',
+      );
       return;
     }
     this.cajaService.actual().subscribe({
-      next: turno => {
+      next: (turno) => {
         if (!turno) {
           this.sonner.error('Necesitas un turno de caja abierto. Abre caja en el Punto de venta.');
           return;
@@ -391,7 +460,7 @@ export class PedidoDetailComponent {
     const ventaId = this.pedido()?.venta_id;
     if (!ventaId) return;
     this.ventaService.ticketPdf(ventaId).subscribe({
-      next: blob => {
+      next: (blob) => {
         const url = URL.createObjectURL(blob);
         window.open(url, '_blank');
         setTimeout(() => URL.revokeObjectURL(url), 60_000);

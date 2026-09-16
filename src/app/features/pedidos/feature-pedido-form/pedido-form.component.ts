@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CurrencyPipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -20,6 +20,11 @@ import {
   lucideTag,
   lucideTrash2,
   lucideX,
+  lucideCheck,
+  lucideTruck,
+  lucideUser,
+  lucideFileText,
+  lucideChevronRight,
 } from '@ng-icons/lucide';
 
 import { ZardButtonComponent } from '../../../shared/components/button/button.component';
@@ -69,6 +74,11 @@ import { ProductoResponse, UnidadResponse } from '../../inventario/data-access/i
       lucideTag,
       lucideTrash2,
       lucideX,
+      lucideCheck,
+      lucideTruck,
+      lucideUser,
+      lucideFileText,
+      lucideChevronRight,
     }),
   ],
   templateUrl: './pedido-form.component.html',
@@ -77,6 +87,8 @@ import { ProductoResponse, UnidadResponse } from '../../inventario/data-access/i
 export class PedidoFormComponent implements OnInit {
   private route = inject(ActivatedRoute);
   readonly store = inject(PedidoFormStore);
+
+  readonly pasoActivo = signal<number>(1);
 
   // --- Aliases for HTML compatibility ---
   readonly canDescuentoManual = this.store.canDescuentoManual;
