@@ -299,8 +299,9 @@ export class PedidoListComponent {
     if (e === 'confirmado') return 'secondary';
     return 'outline';
   }
-  entregaBadge(e: EstadoEntrega): 'default' | 'secondary' | 'destructive' | 'outline' {
-    if (e === 'entregado') return 'default';
+
+  entregaBadge(e: EstadoEntrega): 'emerald-solid' | 'secondary' | 'destructive' | 'outline' {
+    if (e === 'entregado') return 'emerald-solid';
     if (e === 'fallido') return 'destructive';
     if (e === 'en_reparto') return 'secondary';
     return 'outline';
