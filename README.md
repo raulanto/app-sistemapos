@@ -1,6 +1,6 @@
 # Sistema POS — Frontend
 
-Aplicación web de **Punto de Venta (POS)** construida con **Angular 22** y **Tailwind CSS 4**. Consume una API REST (Laravel) y cubre todo el ciclo operativo de un negocio: ventas, inventario, clientes, cajas, promociones, reportes y auditoría.
+Aplicación web de **Punto de Venta (POS)** construida con **Angular 22** y **Tailwind CSS 4**. Consume una API REST y cubre todo el ciclo operativo de un negocio: ventas, inventario, clientes, cajas, promociones, reportes y auditoría.
 
 ## Stack tecnológico
 
