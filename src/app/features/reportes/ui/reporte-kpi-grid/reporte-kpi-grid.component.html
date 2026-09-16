@@ -1,0 +1,22 @@
+<div class="flex flex-wrap gap-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:shadow-xs">
+  @for (k of kpis(); track k.label) {
+    <z-card [class]="cardClasses(k)">
+      <z-card-header>
+        <z-card-description [zDescription]="k.label" class="text-xs font-medium uppercase tracking-wide" />
+        <z-card-title [zTitle]="k.value" class="mt-1 font-semibold tabular-nums" [class]="valorClase(k.tono) + (k.destacado ? ' text-3xl lg:text-4xl' : ' text-2xl lg:text-3xl')" />
+        @if (k.icon) {
+          <z-card-action>
+            <span class="grid size-9 place-items-center rounded-full" [class]="iconBadgeBg(k.tono)">
+              <ng-icon [name]="k.icon" class="size-5" />
+            </span>
+          </z-card-action>
+        }
+      </z-card-header>
+      @if (k.caption) {
+        <z-card-footer class="border-t border-border/60 pt-3 text-xs text-muted-foreground">
+          {{ k.caption }}
+        </z-card-footer>
+      }
+    </z-card>
+  }
+</div>

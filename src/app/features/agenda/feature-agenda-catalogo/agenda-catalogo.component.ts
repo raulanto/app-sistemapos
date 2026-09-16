@@ -1,8 +1,17 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArmchair, lucideBan, lucidePencil, lucidePlus, lucideRotateCcw } from '@ng-icons/lucide';
+import {
+  lucideArmchair,
+  lucideBan,
+  lucideCheckCircle2,
+  lucideLayers,
+  lucidePencil,
+  lucidePlus,
+  lucideRotateCcw,
+  lucideUsers,
+} from '@ng-icons/lucide';
 
-import { AgendaService } from '../data-access/agenda.service';
+import { RecursoService } from '../data-access/services/recurso.service';
 import { RecursoResponse } from '../data-access/agenda.models';
 
 import { ZardTabsImports } from '../../../shared/components/tabs/tabs.imports';
@@ -30,12 +39,23 @@ import { EmpleadoAgendaEditorComponent } from '../ui/empleado-agenda-editor/empl
     ZardSkeletonComponent,
     EmpleadoAgendaEditorComponent,
   ],
-  viewProviders: [provideIcons({ lucideArmchair, lucideBan, lucidePencil, lucidePlus, lucideRotateCcw })],
+  viewProviders: [
+    provideIcons({
+      lucideArmchair,
+      lucideBan,
+      lucideCheckCircle2,
+      lucideLayers,
+      lucidePencil,
+      lucidePlus,
+      lucideRotateCcw,
+      lucideUsers,
+    }),
+  ],
   templateUrl: './agenda-catalogo.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AgendaCatalogoComponent {
-  private agendaService = inject(AgendaService);
+  private recursoService = inject(RecursoService);
   private sheetService = inject(ZardSheetService);
   private sonner = inject(ZardSonnerService);
   private alertDialog = inject(ZardAlertDialogService);
@@ -43,13 +63,18 @@ export class AgendaCatalogoComponent {
   readonly recursos = signal<RecursoResponse[]>([]);
   readonly loading = signal(true);
 
+  readonly totalRecursos = computed(() => this.recursos().length);
+  readonly recursosActivos = computed(() => this.recursos().filter(r => r.activo).length);
+  readonly recursosInactivos = computed(() => this.recursos().filter(r => !r.activo).length);
+  readonly tiposCount = computed(() => new Set(this.recursos().map(r => r.tipo).filter(Boolean)).size);
+
   constructor() {
     this.cargar();
   }
 
   private cargar() {
     this.loading.set(true);
-    this.agendaService.listarRecursos({ incluir_inactivos: true }).subscribe({
+    this.recursoService.listarRecursos({ incluir_inactivos: true }).subscribe({
       next: r => {
         this.recursos.set(r);
         this.loading.set(false);
@@ -109,7 +134,7 @@ export class AgendaCatalogoComponent {
       zOkText: 'Desactivar',
       zOkDestructive: true,
       zOnOk: () => {
-        this.agendaService.eliminarRecurso(recurso.id).subscribe({
+        this.recursoService.eliminarRecurso(recurso.id).subscribe({
           next: () => {
             this.sonner.success('Recurso desactivado');
             this.cargar();
@@ -121,7 +146,7 @@ export class AgendaCatalogoComponent {
   }
 
   reactivar(recurso: RecursoResponse) {
-    this.agendaService.reactivarRecurso(recurso.id).subscribe({
+    this.recursoService.reactivarRecurso(recurso.id).subscribe({
       next: () => {
         this.sonner.success('Recurso reactivado');
         this.cargar();

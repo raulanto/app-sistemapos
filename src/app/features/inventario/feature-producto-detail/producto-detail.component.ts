@@ -66,6 +66,16 @@ import { ProveedorService } from '../../proveedores/data-access/proveedor.servic
 import { mensajeProveedorError, ProductoProveedorResponse, ProveedorResponse } from '../../proveedores/data-access/proveedores.models';
 import { ProductoProveedorFormSheetComponent } from '../../proveedores/ui/producto-proveedor-form-sheet/producto-proveedor-form-sheet.component';
 
+import { ProductoDetailHeaderComponent } from '../ui/producto-detail-header/producto-detail-header.component';
+import { ProductoDetailKpisComponent } from '../ui/producto-detail-kpis/producto-detail-kpis.component';
+import { ProductoTabExistenciasComponent } from '../ui/producto-tab-existencias/producto-tab-existencias.component';
+import { ProductoTabRecetaComponent } from '../ui/producto-tab-receta/producto-tab-receta.component';
+import { ProductoTabPresentacionesComponent } from '../ui/producto-tab-presentaciones/producto-tab-presentaciones.component';
+import { ProductoTabMovimientosComponent } from '../ui/producto-tab-movimientos/producto-tab-movimientos.component';
+import { ProductoTabFichaTecnicaComponent } from '../ui/producto-tab-ficha-tecnica/producto-tab-ficha-tecnica.component';
+import { ProductoTabAnalisisComponent } from '../ui/producto-tab-analisis/producto-tab-analisis.component';
+import { ProductoTabProveedoresComponent } from '../ui/producto-tab-proveedores/producto-tab-proveedores.component';
+
 @Component({
   selector: 'app-producto-detail',
   standalone: true,
@@ -78,12 +88,19 @@ import { ProductoProveedorFormSheetComponent } from '../../proveedores/ui/produc
     ...ZardTableImports,
     ...ZardTabsImports,
     ZardAlertComponent,
-    ZardButtonComponent,
     ZardEmptyComponent,
     ZardSkeletonComponent,
-    ZardSeparatorComponent,
     ImagenGaleriaComponent,
-    ...ZardChartImports
+    ...ZardChartImports,
+    ProductoDetailHeaderComponent,
+    ProductoDetailKpisComponent,
+    ProductoTabExistenciasComponent,
+    ProductoTabRecetaComponent,
+    ProductoTabPresentacionesComponent,
+    ProductoTabMovimientosComponent,
+    ProductoTabFichaTecnicaComponent,
+    ProductoTabAnalisisComponent,
+    ProductoTabProveedoresComponent,
   ],
   templateUrl: './producto-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -506,6 +523,9 @@ export class ProductoDetailComponent implements OnInit {
     const upb = u.unidades_por_base != null ? Number(u.unidades_por_base) : factor > 0 ? 1 / factor : 0;
     return `${this.fmtNum(upb)} ${u.unidad_medida} = 1 ${base}`;
   }
+
+  readonly getNombreSucursalBound = (id: string) => this.getNombreSucursal(id);
+  readonly describirEquivalenciaBound = (u: UnidadResponse) => this.describirEquivalencia(u);
 
   getNombreSucursal(id: string): string {
     const sucursales = this.sucursalService.sucursales();

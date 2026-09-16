@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CurrencyPipe, DatePipe, NgTemplateOutlet } from '@angular/common';
+import { CurrencyPipe, DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { FormsModule } from '@angular/forms';
 
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -44,6 +45,11 @@ import { ZardSkeletonComponent } from '@/shared/components/skeleton/skeleton.com
 import { ZardEmptyComponent } from '@/shared/components/empty/empty.component';
 import { ZardTableImports } from '@/shared/components/table/table.imports';
 import { ZardChartImports } from '@/shared/components/chart/chart.imports';
+import { ZardSelectImports } from '@/shared/components/select/select.imports';
+
+import { ReporteService } from '@/features/reportes/data-access/reporte.service';
+import { DashboardReporte } from '@/features/reportes/data-access/reporte.models';
+import { SucursalService } from '@/core/sucursal/sucursal.service';
 
 interface StatCard {
   description: string;
@@ -65,12 +71,15 @@ type BadgeType = 'default' | 'secondary' | 'destructive' | 'outline';
     NgIcon,
     CurrencyPipe,
     DatePipe,
+    DecimalPipe,
     ...ZardCardImports,
     ZardBadgeComponent,
     ZardSkeletonComponent,
     ZardEmptyComponent,
     ...ZardTableImports,
     ...ZardChartImports,
+    ...ZardSelectImports,
+    FormsModule,
   ],
   viewProviders: [
     provideIcons({
@@ -101,6 +110,16 @@ export class DashboardComponent implements OnInit {
   private readonly sucursalAdminService = inject(SucursalAdminService);
   private readonly usuarioAdminService = inject(UsuarioAdminService);
   private readonly rolAdminService = inject(RolAdminService);
+  private readonly reporteService = inject(ReporteService);
+  readonly sucursalService = inject(SucursalService);
+
+  readonly esGlobal = computed(() => {
+    const codigo = this.authService.currentUser()?.rol?.codigo;
+    return codigo === 'admin' || codigo === 'gerente';
+  });
+
+  readonly sucursalId = signal('');
+  readonly reporte = signal<DashboardReporte | null>(null);
 
   readonly nombreUsuario = computed(() => this.authService.currentUser()?.nombre ?? '');
 
@@ -135,6 +154,11 @@ export class DashboardComponent implements OnInit {
   private readonly rolesTotal = signal(0);
 
   ngOnInit() {
+    this.cargarDatos();
+  }
+
+  setSucursal(v: string) {
+    this.sucursalId.set(v);
     this.cargarDatos();
   }
 
@@ -209,6 +233,9 @@ export class DashboardComponent implements OnInit {
       rolesTotal: this.canUsuarios()
         ? this.rolAdminService.listar({ page_size: 1 }).pipe(map(totalItems), catchError(() => of(0)))
         : of(0),
+      reporte: this.reporteService
+        .dashboard(this.esGlobal() ? this.sucursalId() || undefined : undefined)
+        .pipe(catchError(() => of(null))),
     }).subscribe(r => {
       this.ventasHoy.set(r.ventasHoy);
       this.ventasPorDia.set(r.ventasPorDia);
@@ -229,6 +256,7 @@ export class DashboardComponent implements OnInit {
       this.usuariosTotal.set(r.usuarios.total);
       this.usuariosRecientes.set(r.usuarios.lista);
       this.rolesTotal.set(r.rolesTotal);
+      this.reporte.set(r.reporte);
       this.cargando.set(false);
     });
   }
@@ -266,15 +294,33 @@ export class DashboardComponent implements OnInit {
 
   readonly ventasCajaCards = computed<StatCard[]>(() => {
     const cards: StatCard[] = [];
+    const rep = this.reporte();
+
     if (this.canVentas()) {
-      cards.push({
-        description: 'Ventas hoy',
-        value: this.fmtNum(this.ventasHoy()),
-        trend: this.ventasHoy() > 0 ? 'up' : 'neutral',
-        badge: 'Hoy',
-        headline: 'Transacciones registradas',
-        caption: 'Ventas creadas hoy en el sistema',
-      });
+      if (rep) {
+        const hoy = Number(rep.ventas_hoy.total_vendido) || 0;
+        const ayer = Number(rep.ventas_ayer.total_vendido) || 0;
+        const variacion = ayer ? ((hoy - ayer) / ayer) * 100 : null;
+        const tendencia = variacion == null ? 'Sin ventas ayer' : `${variacion >= 0 ? '+' : ''}${variacion.toFixed(1)}% vs. ayer`;
+
+        cards.push({
+          description: 'Ventas hoy',
+          value: this.fmtCurrency(hoy),
+          trend: variacion == null ? 'neutral' : variacion >= 0 ? 'up' : 'alert',
+          badge: 'Hoy',
+          headline: `${this.fmtNum(rep.ventas_hoy.numero_ventas)} transacciones`,
+          caption: tendencia,
+        });
+      } else {
+        cards.push({
+          description: 'Ventas hoy',
+          value: this.fmtNum(this.ventasHoy()),
+          trend: this.ventasHoy() > 0 ? 'up' : 'neutral',
+          badge: 'Hoy',
+          headline: 'Transacciones registradas',
+          caption: 'Ventas creadas hoy en el sistema',
+        });
+      }
     }
     if (this.canCaja()) {
       const t = this.turnoActual();
@@ -294,14 +340,26 @@ export class DashboardComponent implements OnInit {
         headline: 'Efectivo en cajón',
         caption: 'Según ventas y movimientos registrados',
       });
-      cards.push({
-        description: 'Turnos abiertos',
-        value: this.fmtNum(this.turnosAbiertos()),
-        trend: 'neutral',
-        badge: `${this.cajasActivas()} cajas activas`,
-        headline: 'En toda la sucursal',
-        caption: 'Cajeros operando en este momento',
-      });
+      
+      if (rep) {
+        cards.push({
+          description: 'Cajas abiertas',
+          value: this.fmtNum(rep.cajas_abiertas.length),
+          trend: 'neutral',
+          badge: `${rep.cajas_abiertas.length} operando`,
+          headline: 'En toda la sucursal',
+          caption: 'Según el último reporte',
+        });
+      } else {
+        cards.push({
+          description: 'Turnos abiertos',
+          value: this.fmtNum(this.turnosAbiertos()),
+          trend: 'neutral',
+          badge: `${this.cajasActivas()} cajas activas`,
+          headline: 'En toda la sucursal',
+          caption: 'Cajeros operando en este momento',
+        });
+      }
     }
     return cards;
   });

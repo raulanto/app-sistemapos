@@ -7,7 +7,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucideTrendingUp, lucideTrendingDown, lucideMinus, lucideAlertCircle, lucideRefreshCw } from '@ng-icons/lucide';
 import { ProductoService } from '../data-access/producto.service';
 import { CategoriaService } from '../data-access/categoria.service';
-import { CategoriaResponse, ProductoQuery, ProductoResponse, ProductoKpiResponse } from '../data-access/inventario.models';
+import { CategoriaResponse, ProductoQuery, ProductoResponse, ProductoKpiResponse, TipoProducto } from '../data-access/inventario.models';
 import { ZardCardImports } from '../../../shared/components/card/card.imports';
 import { ZardButtonComponent } from '../../../shared/components/button/button.component';
 import { ZardSelectImports } from '../../../shared/components/select/select.imports';
@@ -67,6 +67,7 @@ export class ProductoListComponent implements OnInit {
   // Filtros y Paginación
   readonly q = signal<string>('');
   readonly categoriaId = signal<string[]>([]);
+  readonly tipo = signal<string[]>([]);
   readonly activo = signal<string[]>([]);
   readonly todasLasSucursales = signal(this.authService.currentUser()?.rol?.codigo === 'admin');
   readonly page = signal(1);
@@ -98,6 +99,7 @@ export class ProductoListComponent implements OnInit {
     return {
       q: this.q() || null,
       categoria_id: this.categoriaId().length > 0 ? this.categoriaId() : null,
+      tipo: this.tipo().length > 0 ? (this.tipo() as TipoProducto[]) : null,
       activo: activoVal,
       sucursal_id,
       page: this.page(),
@@ -220,6 +222,11 @@ export class ProductoListComponent implements OnInit {
 
   updateCategoria(val: string[]) {
     this.categoriaId.set(val);
+    this.page.set(1);
+  }
+
+  updateTipo(val: string[]) {
+    this.tipo.set(val);
     this.page.set(1);
   }
 

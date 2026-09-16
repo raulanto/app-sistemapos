@@ -6,7 +6,24 @@ import { Router, RouterLink } from '@angular/router';
 import { Observable, forkJoin, of } from 'rxjs';
 import { map, switchMap, retry } from 'rxjs/operators';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideSave, lucidePlus, lucideTrash, lucidePackage, lucideLayers, lucideStar, lucideUpload, lucideChevronDown } from '@ng-icons/lucide';
+import {
+  lucideArrowLeft,
+  lucideSave,
+  lucidePlus,
+  lucideTrash,
+  lucidePackage,
+  lucideLayers,
+  lucideStar,
+  lucideUpload,
+  lucideChevronDown,
+  lucideTag,
+  lucideFolderTree,
+  lucideSettings,
+  lucideCoins,
+  lucideCalendar,
+  lucideBoxes,
+  lucideImage,
+} from '@ng-icons/lucide';
 
 import { ProductoService } from '../data-access/producto.service';
 import { CategoriaService } from '../data-access/categoria.service';
@@ -51,11 +68,30 @@ function equivalenciaUnidadValidator(control: AbstractControl): ValidationErrors
     ZardButtonComponent,
     ZardAlertComponent,
     ZardEmptyComponent,
-    ZardSeparatorComponent
+    ZardSeparatorComponent,
   ],
   templateUrl: './producto-create.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ lucideArrowLeft, lucideSave, lucidePlus, lucideTrash, lucidePackage, lucideLayers, lucideStar, lucideUpload, lucideChevronDown })]
+  viewProviders: [
+    provideIcons({
+      lucideArrowLeft,
+      lucideSave,
+      lucidePlus,
+      lucideTrash,
+      lucidePackage,
+      lucideLayers,
+      lucideStar,
+      lucideUpload,
+      lucideChevronDown,
+      lucideTag,
+      lucideFolderTree,
+      lucideSettings,
+      lucideCoins,
+      lucideCalendar,
+      lucideBoxes,
+      lucideImage,
+    }),
+  ],
 })
 export class ProductoCreateComponent implements OnInit {
   private fb = inject(FormBuilder);

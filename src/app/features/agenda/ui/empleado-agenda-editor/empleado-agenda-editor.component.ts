@@ -5,7 +5,7 @@ import { catchError, map } from 'rxjs/operators';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideChevronLeft, lucideChevronRight, lucidePlus, lucideTrash } from '@ng-icons/lucide';
 
-import { AgendaService } from '../../data-access/agenda.service';
+import { EmpleadoAgendaService } from '../../data-access/services/empleado-agenda.service';
 import {
   DIAS_SEMANA_AGENDA,
   EmpleadoServicioResponse,
@@ -70,7 +70,7 @@ export interface DiaRango {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EmpleadoAgendaEditorComponent {
-  private agendaService = inject(AgendaService);
+  private empleadoAgendaService = inject(EmpleadoAgendaService);
   private productoService = inject(ProductoService);
   private usuarioService = inject(UsuarioAdminService);
   private sonner = inject(ZardSonnerService);
@@ -159,11 +159,11 @@ export class EmpleadoAgendaEditorComponent {
 
   private cargarTodo() {
     this.loading.set(true);
-    this.agendaService.listarServiciosEmpleado(this.empleadoId()).subscribe({
+    this.empleadoAgendaService.listarServiciosEmpleado(this.empleadoId()).subscribe({
       next: r => this.calificados.set(r.filter(c => c.activo)),
       error: () => this.calificados.set([]),
     });
-    this.agendaService.listarHorariosEmpleado(this.empleadoId()).subscribe({
+    this.empleadoAgendaService.listarHorariosEmpleado(this.empleadoId()).subscribe({
       next: r => {
         this.horarios.set(r);
         this.loading.set(false);
@@ -181,7 +181,7 @@ export class EmpleadoAgendaEditorComponent {
     this.cargandoRango.set(true);
     forkJoin(
       dias.map(d =>
-        this.agendaService.listarExcepciones(empleadoId, d.fecha).pipe(
+        this.empleadoAgendaService.listarExcepciones(empleadoId, d.fecha).pipe(
           map(lista => [d.fecha, lista] as const),
           catchError(() => of([d.fecha, []] as const)),
         ),
@@ -235,7 +235,7 @@ export class EmpleadoAgendaEditorComponent {
   toggleServicio(servicioId: string) {
     if (!this.empleadoId()) return;
     if (this.calificadoIds().has(servicioId)) {
-      this.agendaService.quitarServicioEmpleado(this.empleadoId(), servicioId).subscribe({
+      this.empleadoAgendaService.quitarServicioEmpleado(this.empleadoId(), servicioId).subscribe({
         next: () => {
           this.calificados.update(list => list.filter(c => c.servicio_id !== servicioId));
           this.sonner.success('Servicio quitado');
@@ -243,7 +243,7 @@ export class EmpleadoAgendaEditorComponent {
         error: err => this.sonner.error(mensajeCitaError(err, 'No se pudo quitar el servicio')),
       });
     } else {
-      this.agendaService.calificarEmpleado(this.empleadoId(), servicioId).subscribe({
+      this.empleadoAgendaService.calificarEmpleado(this.empleadoId(), servicioId).subscribe({
         next: c => {
           this.calificados.update(list => [...list, c]);
           this.sonner.success('Servicio agregado');
@@ -258,7 +258,7 @@ export class EmpleadoAgendaEditorComponent {
       this.sonner.error('Elige una sucursal');
       return;
     }
-    this.agendaService
+    this.empleadoAgendaService
       .crearHorarioEmpleado(this.empleadoId(), {
         sucursal_id: this.nuevaSucursalId(),
         dia_semana: this.nuevoDia(),
@@ -275,7 +275,7 @@ export class EmpleadoAgendaEditorComponent {
   }
 
   quitarHorario(h: HorarioBaseResponse) {
-    this.agendaService.eliminarHorarioEmpleado(this.empleadoId(), h.id).subscribe({
+    this.empleadoAgendaService.eliminarHorarioEmpleado(this.empleadoId(), h.id).subscribe({
       next: () => this.horarios.update(list => list.filter(x => x.id !== h.id)),
       error: err => this.sonner.error(mensajeCitaError(err, 'No se pudo quitar el horario')),
     });
@@ -284,7 +284,7 @@ export class EmpleadoAgendaEditorComponent {
   agregarExcepcion() {
     const fecha = this.diaActivo();
     if (!this.empleadoId() || !fecha) return;
-    this.agendaService
+    this.empleadoAgendaService
       .crearExcepcion(this.empleadoId(), {
         fecha,
         tipo: this.nuevoTipoExcepcion(),
@@ -307,7 +307,7 @@ export class EmpleadoAgendaEditorComponent {
   }
 
   quitarExcepcion(fecha: string, e: ExcepcionResponse) {
-    this.agendaService.eliminarExcepcion(this.empleadoId(), e.id).subscribe({
+    this.empleadoAgendaService.eliminarExcepcion(this.empleadoId(), e.id).subscribe({
       next: () =>
         this.excepcionesPorFecha.update(m => ({ ...m, [fecha]: (m[fecha] ?? []).filter(x => x.id !== e.id) })),
       error: err => this.sonner.error(mensajeCitaError(err, 'No se pudo quitar la excepción')),

@@ -1,0 +1,161 @@
+<div class="space-y-6">
+  <!-- Encabezado -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-6xl font-extrabold">Corte de caja</h1>
+      <p class="text-muted-foreground">
+        Arqueo detallado de efectivo, cobros con tarjeta, transacciones y desgloses por turno de caja.
+      </p>
+    </div>
+    @if (corte(); as c) {
+      <div class="flex items-center gap-2">
+        <app-reporte-exportar [path]="'corte-caja/' + c.caja_turno_id" />
+      </div>
+    }
+  </div>
+
+  <!-- Barra de búsqueda por ID puntual de turno -->
+  <div
+    class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-xl border bg-card p-4 shadow-2xs"
+  >
+    <div class="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+      <ng-icon name="lucideSearch" class="size-4 text-primary" />
+      <span>Búsqueda directa por ID de turno:</span>
+    </div>
+
+    <div class="flex items-center gap-2 w-full sm:w-auto">
+      <input
+        z-input
+        class="w-full sm:w-80 font-mono text-xs"
+        placeholder="UUID o ID del turno de caja"
+        [ngModel]="turnoIdInput()"
+        (ngModelChange)="turnoIdInput.set($event)"
+        (keyup.enter)="buscar()"
+      />
+      <button z-button zSize="sm" [zLoading]="cargando()" (click)="buscar()">
+        <ng-icon name="lucideSearch" class="mr-1.5 size-3.5" /> Consultar
+      </button>
+    </div>
+  </div>
+
+  <!-- Rejilla Principal: Tabla de Turnos Recientes (izq/top) + Corte Detallado (der/bottom) -->
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+    <!-- Columna 1: Listado de Turnos Recientes para Selección Rápida (5 cols en lg) -->
+    <div class="lg:col-span-5 rounded-xl border bg-card shadow-xs overflow-hidden flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between border-b bg-card p-4 sm:p-5">
+          <div>
+            <h3 class="text-base font-bold tracking-tight">Turnos de caja recientes</h3>
+            <p class="text-xs text-muted-foreground">Haz clic en un turno para consultar su corte</p>
+          </div>
+          <button
+            z-button
+            zType="ghost"
+            zSize="xs"
+            [zLoading]="cargandoTurnos()"
+            (click)="cargarTurnosRecientes()"
+          >
+            <ng-icon name="lucideHistory" class="size-3.5" />
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table z-table class="text-xs">
+            <thead z-table-header class="bg-muted/40">
+              <tr z-table-row>
+                <th z-table-head>Apertura</th>
+                <th z-table-head>Estado</th>
+                <th z-table-head class="text-right">Acción</th>
+              </tr>
+            </thead>
+            <tbody z-table-body>
+              @if (cargandoTurnos()) {
+                @for (i of [1, 2, 3, 4]; track i) {
+                  <tr z-table-row>
+                    <td z-table-cell colspan="3"><z-skeleton class="h-6 w-full" /></td>
+                  </tr>
+                }
+              } @else {
+                @for (t of turnosHistoricos(); track t.id) {
+                  <tr
+                    z-table-row
+                    class="cursor-pointer transition-colors"
+                    [class.bg-muted/60]="turnoSeleccionadoId() === t.id"
+                    (click)="seleccionarTurno(t.id)"
+                  >
+                    <td z-table-cell>
+                      <span class="font-medium text-foreground block">{{ t.abierto_en | date: 'dd/MM/yyyy HH:mm' }}</span>
+                      <span class="text-[10px] text-muted-foreground font-mono">{{ t.id.slice(0, 8) }}...</span>
+                    </td>
+                    <td z-table-cell>
+                      <z-badge [zType]="badgeTipo(t.estado)" class="capitalize text-[10px] px-1.5 py-0.5">
+                        {{ t.estado.replace('_', ' ') }}
+                      </z-badge>
+                    </td>
+                    <td z-table-cell class="text-right">
+                      <button z-button zType="outline" zSize="xs">Ver corte</button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr z-table-row>
+                    <td z-table-cell colspan="3" class="p-0">
+                      <z-empty zIcon="lucideHistory" zTitle="Sin turnos registrados" class="py-8" />
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna 2: Detalle del Corte de Caja Seleccionado (7 cols en lg) -->
+    <div class="lg:col-span-7 space-y-6">
+      @if (cargando()) {
+        <div class="rounded-xl border bg-card p-6 space-y-4">
+          <z-skeleton class="h-16 w-full" />
+          <z-skeleton class="h-48 w-full" />
+        </div>
+      } @else if (error()) {
+        <z-empty zIcon="lucideBan" zTitle="No se encontró el turno" [zDescription]="error()!" class="py-12" />
+      } @else if (corte(); as c) {
+        <!-- KPIs del corte -->
+        <app-reporte-kpi-grid [kpis]="kpis()" />
+
+        <!-- Tarjeta de Ajustes y Desglose -->
+        <div class="rounded-xl border bg-card shadow-xs overflow-hidden">
+          <div class="border-b bg-card p-5">
+            <h3 class="text-lg font-bold tracking-tight">Ajustes y movimientos del turno</h3>
+            <p class="text-xs text-muted-foreground mt-0.5">
+              ID de Turno: <span class="font-mono text-foreground">{{ c.caja_turno_id }}</span>
+            </p>
+          </div>
+
+          <dl class="divide-y divide-border/60 text-sm">
+            @for (d of detalle(); track d.label) {
+              <div class="flex items-center justify-between p-4 hover:bg-muted/20 transition-colors">
+                <dt class="text-muted-foreground font-medium">{{ d.label }}</dt>
+                <dd class="tabular-nums font-bold text-foreground">{{ d.value }}</dd>
+              </div>
+            }
+          </dl>
+
+          @if (c.nota) {
+            <div class="border-t bg-muted/20 p-4">
+              <span class="text-xs font-semibold text-muted-foreground block mb-1">Nota de cierre / observación:</span>
+              <p class="text-xs text-foreground italic">{{ c.nota }}</p>
+            </div>
+          }
+        </div>
+      } @else {
+        <z-empty
+          zIcon="lucideLandmark"
+          zTitle="Selecciona o busca un turno de caja"
+          zDescription="Selecciona un turno de la lista de la izquierda o ingresa un ID puntual para consultar su arqueo."
+          class="py-16"
+        />
+      }
+    </div>
+  </div>
+</div>

@@ -43,6 +43,11 @@ export class ProductoService {
           params = params.append('categoria_id', id);
         });
       }
+      if (query.tipo && query.tipo.length > 0) {
+        query.tipo.forEach(t => {
+          params = params.append('tipo', t);
+        });
+      }
       if (query.sucursal_id && query.sucursal_id.length > 0) {
         query.sucursal_id.forEach(id => {
           params = params.append('sucursal_id', id);

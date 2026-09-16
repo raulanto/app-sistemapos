@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { form, FormField, maxLength, required } from '@angular/forms/signals';
 import { Observable } from 'rxjs';
 
-import { AgendaService } from '../../data-access/agenda.service';
+import { RecursoService } from '../../data-access/services/recurso.service';
 import { RecursoResponse } from '../../data-access/agenda.models';
 import { injectSheetData } from '../../../../shared/components/sheet/sheet.service';
 import { ZardFieldImports } from '../../../../shared/components/field/field.imports';
@@ -22,7 +22,7 @@ export interface RecursoSheetData {
   host: { style: 'display: contents' },
 })
 export class RecursoFormSheetComponent {
-  private agendaService = inject(AgendaService);
+  private recursoService = inject(RecursoService);
   readonly sheetData = injectSheetData<RecursoSheetData | undefined>();
 
   readonly isEditing = !!this.sheetData?.recurso;
@@ -45,8 +45,8 @@ export class RecursoFormSheetComponent {
     }
     const d = this.model();
     if (this.isEditing && this.sheetData?.recurso) {
-      return this.agendaService.renombrarRecurso(this.sheetData.recurso.id, { nombre: d.nombre });
+      return this.recursoService.renombrarRecurso(this.sheetData.recurso.id, { nombre: d.nombre });
     }
-    return this.agendaService.crearRecurso({ nombre: d.nombre, tipo: d.tipo || null });
+    return this.recursoService.crearRecurso({ nombre: d.nombre, tipo: d.tipo || null });
   }
 }

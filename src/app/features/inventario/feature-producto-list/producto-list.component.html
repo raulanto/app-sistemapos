@@ -46,10 +46,12 @@
     [q]="q()"
     [categorias]="categorias()"
     [categoriaId]="categoriaId()"
+    [tipo]="tipo()"
     [activo]="activo()"
     [todasLasSucursales]="todasLasSucursales()"
     (qChange)="updateSearch($event)"
     (categoriaIdChange)="updateCategoria($event)"
+    (tipoChange)="updateTipo($event)"
     (activoChange)="updateActivo($event)"
     (todasLasSucursalesChange)="updateTodasLasSucursales($event)"
   ></app-producto-filtros>

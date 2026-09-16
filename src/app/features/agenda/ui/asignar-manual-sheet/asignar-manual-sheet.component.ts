@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 
-import { AgendaService } from '../../data-access/agenda.service';
+import { CitaService } from '../../data-access/services/cita.service';
 import { CitaResponse } from '../../data-access/agenda.models';
 import { UsuarioResponse } from '../../../usuarios/data-access/models/usuario.model';
 import { injectSheetData } from '../../../../shared/components/sheet/sheet.service';
@@ -24,7 +24,7 @@ export interface AsignarManualSheetData {
   host: { style: 'display: contents' },
 })
 export class AsignarManualSheetComponent {
-  private agendaService = inject(AgendaService);
+  private citaService = inject(CitaService);
   readonly sheetData = injectSheetData<AsignarManualSheetData>();
 
   readonly usuarios = this.sheetData.usuarios;
@@ -32,6 +32,6 @@ export class AsignarManualSheetComponent {
 
   save(): Observable<CitaResponse> | void {
     if (!this.empleadoId()) return;
-    return this.agendaService.asignarManual(this.sheetData.citaId, { empleado_id: this.empleadoId() });
+    return this.citaService.asignarManual(this.sheetData.citaId, { empleado_id: this.empleadoId() });
   }
 }

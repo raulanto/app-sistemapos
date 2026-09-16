@@ -476,9 +476,11 @@ export class PosComponent {
     if (existe) {
       this.setCantidad(key, existe.cantidad + 1);
     } else {
+      // Fraccionable (peso/volumen): arranca en 0 para forzar capturar el peso real, no "1 kg".
+      const cantidad = p.permite_venta_fraccionada ? 0 : 1;
       this.carrito.update(list => [
         ...list,
-        { key, producto: p, unidad: u, cantidad: 1, precio_unitario: this.precioDe(p, u), descuento_linea: 0 },
+        { key, producto: p, unidad: u, cantidad, precio_unitario: this.precioDe(p, u), descuento_linea: 0 },
       ]);
     }
     // La última línea tocada queda desplegada; las anteriores se colapsan para una lista limpia.

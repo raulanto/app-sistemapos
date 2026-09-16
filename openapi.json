@@ -9031,6 +9031,17 @@
             "in": "path",
             "required": true,
             "schema": { "type": "string", "format": "uuid", "title": "Caja Turno Id" }
+          },
+          {
+            "name": "formato",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": ["json", "csv", "excel", "pdf"],
+              "type": "string",
+              "default": "json",
+              "title": "Formato"
+            }
           }
         ],
         "responses": {
@@ -9085,6 +9096,17 @@
             "schema": {
               "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
               "title": "Sucursal Id"
+            }
+          },
+          {
+            "name": "formato",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": ["json", "csv", "excel", "pdf"],
+              "type": "string",
+              "default": "json",
+              "title": "Formato"
             }
           }
         ],
@@ -9141,6 +9163,17 @@
               "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
               "title": "Sucursal Id"
             }
+          },
+          {
+            "name": "formato",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": ["json", "csv", "excel", "pdf"],
+              "type": "string",
+              "default": "json",
+              "title": "Formato"
+            }
           }
         ],
         "responses": {
@@ -9195,6 +9228,17 @@
             "schema": {
               "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
               "title": "Sucursal Id"
+            }
+          },
+          {
+            "name": "formato",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": ["json", "csv", "excel", "pdf"],
+              "type": "string",
+              "default": "json",
+              "title": "Formato"
             }
           },
           {
@@ -9282,6 +9326,17 @@
             }
           },
           {
+            "name": "formato",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": ["json", "csv", "excel", "pdf"],
+              "type": "string",
+              "default": "json",
+              "title": "Formato"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -9355,6 +9410,17 @@
               "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
               "title": "Categoria Id"
             }
+          },
+          {
+            "name": "formato",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": ["json", "csv", "excel", "pdf"],
+              "type": "string",
+              "default": "json",
+              "title": "Formato"
+            }
           }
         ],
         "responses": {
@@ -9365,6 +9431,109 @@
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponse_InventarioValorizadoResponse_"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reportes/mermas-ajustes": {
+      "get": {
+        "tags": ["reportes"],
+        "summary": "Mermas Y Ajustes",
+        "operationId": "mermas_y_ajustes_api_v1_reportes_mermas_ajustes_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "desde",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+              "title": "Desde"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+              "title": "Hasta"
+            }
+          },
+          {
+            "name": "sucursal_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Sucursal Id"
+            }
+          },
+          {
+            "name": "formato",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": ["json", "csv", "excel", "pdf"],
+              "type": "string",
+              "default": "json",
+              "title": "Formato"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_ReporteMermasResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reportes/dashboard": {
+      "get": {
+        "tags": ["reportes"],
+        "summary": "Dashboard",
+        "operationId": "dashboard_api_v1_reportes_dashboard_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "sucursal_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Sucursal Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_DashboardResponse_" }
               }
             }
           },
@@ -9393,6 +9562,17 @@
             "schema": {
               "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
               "title": "Sucursal Id"
+            }
+          },
+          {
+            "name": "formato",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": ["json", "csv", "excel", "pdf"],
+              "type": "string",
+              "default": "json",
+              "title": "Formato"
             }
           },
           {
@@ -10648,6 +10828,17 @@
         "required": ["data"],
         "title": "ApiResponse[CuponValidacionResponse]"
       },
+      "ApiResponse_DashboardResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/DashboardResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[DashboardResponse]"
+      },
       "ApiResponse_DesgloseStockResponse_": {
         "properties": {
           "success": { "type": "boolean", "title": "Success", "default": true },
@@ -10955,6 +11146,17 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[RecursoResponse]"
+      },
+      "ApiResponse_ReporteMermasResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/ReporteMermasResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[ReporteMermasResponse]"
       },
       "ApiResponse_ReporteVentasResponse_": {
         "properties": {
@@ -11933,6 +12135,22 @@
         "type": "object",
         "required": ["file"],
         "title": "Body_subir_imagen_unidad_api_v1_inventario_productos__producto_id__unidades__unidad_id__imagenes_upload_post"
+      },
+      "CajaAbiertaResponse": {
+        "properties": {
+          "sucursal_id": { "type": "string", "format": "uuid", "title": "Sucursal Id" },
+          "caja_turno_id": { "type": "string", "format": "uuid", "title": "Caja Turno Id" },
+          "usuario_id": { "type": "string", "format": "uuid", "title": "Usuario Id" },
+          "abierto_en": { "type": "string", "format": "date-time", "title": "Abierto En" },
+          "saldo_inicial": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Saldo Inicial"
+          }
+        },
+        "type": "object",
+        "required": ["sucursal_id", "caja_turno_id", "usuario_id", "abierto_en", "saldo_inicial"],
+        "title": "CajaAbiertaResponse"
       },
       "CajaCreateRequest": {
         "properties": {
@@ -13331,6 +13549,37 @@
         "required": ["codigo"],
         "title": "CuponValidarRequest"
       },
+      "DashboardResponse": {
+        "properties": {
+          "sucursal_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Sucursal Id"
+          },
+          "ventas_hoy": { "$ref": "#/components/schemas/ReporteVentasResponse" },
+          "ventas_ayer": { "$ref": "#/components/schemas/ReporteVentasResponse" },
+          "top_productos_hoy": {
+            "items": { "$ref": "#/components/schemas/ProductoRankingResponse" },
+            "type": "array",
+            "title": "Top Productos Hoy"
+          },
+          "productos_bajo_stock": { "type": "integer", "title": "Productos Bajo Stock" },
+          "cajas_abiertas": {
+            "items": { "$ref": "#/components/schemas/CajaAbiertaResponse" },
+            "type": "array",
+            "title": "Cajas Abiertas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sucursal_id",
+          "ventas_hoy",
+          "ventas_ayer",
+          "top_productos_hoy",
+          "productos_bajo_stock",
+          "cajas_abiertas"
+        ],
+        "title": "DashboardResponse"
+      },
       "DenominacionInput": {
         "properties": {
           "valor": {
@@ -14051,7 +14300,7 @@
         "type": "object",
         "required": ["id", "orden", "es_principal"],
         "title": "ImagenEmbed",
-        "description": "Imagen de la galería de un producto o presentación (`?include=imagenes`).\n\n`url` (y `thumbnail_url` si aplica) salen PREFIRMADAS cuando la imagen vive\nen S3 (`object_key` presente); si es una URL externa, `url` va tal cual y\n`thumbnail_url` es None."
+        "description": "Imagen de la galería de un producto o presentación (`?include=imagenes`).\n\n`url` (y `thumbnail_url` si aplica) se resuelven al leer cuando la imagen\nes propia (`object_key` presente); si es una URL externa, `url` va tal\ncual y `thumbnail_url` es None."
       },
       "ImagenResponse": {
         "properties": {
@@ -14531,6 +14780,25 @@
         "type": "object",
         "required": ["id", "producto_id", "codigo_lote", "costo", "activo"],
         "title": "LoteResponse"
+      },
+      "MermaAjusteTotalResponse": {
+        "properties": {
+          "tipo": { "type": "string", "title": "Tipo" },
+          "numero_movimientos": { "type": "integer", "title": "Numero Movimientos" },
+          "cantidad_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Cantidad Total"
+          },
+          "valor_estimado": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Valor Estimado"
+          }
+        },
+        "type": "object",
+        "required": ["tipo", "numero_movimientos", "cantidad_total", "valor_estimado"],
+        "title": "MermaAjusteTotalResponse"
       },
       "MermarInstanciaRequest": {
         "properties": {
@@ -16110,6 +16378,47 @@
         "type": "object",
         "required": ["pedido", "fue_creado"],
         "title": "ReordenGeneradoResponse"
+      },
+      "ReporteMermasResponse": {
+        "properties": {
+          "desde": { "type": "string", "format": "date-time", "title": "Desde" },
+          "hasta": { "type": "string", "format": "date-time", "title": "Hasta" },
+          "sucursal_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Sucursal Id"
+          },
+          "total_merma": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Merma"
+          },
+          "total_ajuste": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Ajuste"
+          },
+          "valor_estimado_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Valor Estimado Total"
+          },
+          "detalle": {
+            "items": { "$ref": "#/components/schemas/MermaAjusteTotalResponse" },
+            "type": "array",
+            "title": "Detalle"
+          }
+        },
+        "type": "object",
+        "required": [
+          "desde",
+          "hasta",
+          "sucursal_id",
+          "total_merma",
+          "total_ajuste",
+          "valor_estimado_total",
+          "detalle"
+        ],
+        "title": "ReporteMermasResponse"
       },
       "ReporteVentasResponse": {
         "properties": {

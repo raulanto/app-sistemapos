@@ -3,8 +3,9 @@ import { CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucidePlus, lucideX } from '@ng-icons/lucide';
+import { lucidePlus, lucideX, lucideWallet, lucidePhone } from '@ng-icons/lucide';
 
+import { ClienteService } from '../../../clientes/data-access/cliente.service';
 import { PedidoService } from '../../data-access/pedido.service';
 import {
   FacturarPedidoRequest,
@@ -45,7 +46,7 @@ interface PagoFila {
     ZardButtonComponent,
     ZardCheckboxComponent,
   ],
-  viewProviders: [provideIcons({ lucidePlus, lucideX })],
+  viewProviders: [provideIcons({ lucidePlus, lucideX, lucideWallet, lucidePhone })],
   templateUrl: './facturar-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   exportAs: 'facturarSheet',
@@ -53,6 +54,7 @@ interface PagoFila {
 })
 export class FacturarSheetComponent {
   private pedidoService = inject(PedidoService);
+  private clienteService = inject(ClienteService);
   readonly sheetData = injectSheetData<FacturarSheetData>();
 
   readonly metodos = METODOS_PAGO;
@@ -66,8 +68,21 @@ export class FacturarSheetComponent {
   readonly pagos = signal<PagoFila[]>(
     this.saldoPorCobrar > 0.009 ? [{ monto: this.round(this.saldoPorCobrar), metodo_pago: 'efectivo' }] : [],
   );
+  readonly monederoSaldo = signal<number>(0);
 
   private idemKey = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`;
+
+  constructor() {
+    const tel = this.sheetData.pedido.telefono;
+    if (tel) {
+      this.clienteService.monederoSaldo(tel).subscribe({
+        next: m => {
+          if (m) this.monederoSaldo.set(Number(m.saldo) || 0);
+        },
+        error: () => {}
+      });
+    }
+  }
 
   readonly pagado = computed(() => this.pagos().reduce((s, p) => s + (Number(p.monto) || 0), 0));
   /** Σ pagos + anticipos frente al total del pedido. */
@@ -88,11 +103,22 @@ export class FacturarSheetComponent {
 
   agregarPago(metodo: MetodoPago) {
     const falta = Math.max(0, this.faltante());
-    this.pagos.update(list => [...list, { monto: this.round(falta), metodo_pago: metodo }]);
+    let monto = this.round(falta);
+    if (metodo === 'monedero') {
+      monto = Math.min(monto, this.monederoSaldo());
+    }
+    this.pagos.update(list => [...list, { monto, metodo_pago: metodo }]);
   }
 
   setMonto(i: number, v: number) {
-    this.pagos.update(list => list.map((p, idx) => (idx === i ? { ...p, monto: Math.max(0, Number(v) || 0) } : p)));
+    this.pagos.update(list => list.map((p, idx) => {
+      if (idx !== i) return p;
+      let monto = Math.max(0, Number(v) || 0);
+      if (p.metodo_pago === 'monedero') {
+        monto = Math.min(monto, this.monederoSaldo());
+      }
+      return { ...p, monto };
+    }));
   }
 
   setRecibido(i: number, v: number) {

@@ -9,13 +9,13 @@
 
 
 @font-face {
-  font-family: 'SF Pro Rounded';
-  src: url('/assets/font/FontsFree-Net-SF-Pro-Rounded-Bold.ttf') format('truetype');
+  font-family: 'Google Sans';
+  src: url('/assets/font/GoogleSans-VariableFont_GRAD,opsz,wght.ttf') format('truetype');
   font-weight: bold;
   font-style: normal;
 }
 :root {
-  --font-sans: 'SF Pro Rounded', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-sans: 'Google Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --radius: 1rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0 0);

@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { form, FormField, email, required } from '@angular/forms/signals';
+import { FormField } from '@angular/forms/signals';
 import { Router } from '@angular/router';
-
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideGalleryVerticalEnd } from '@ng-icons/lucide';
-
 import { ZardButtonComponent } from '../../../shared/components/button/button.component';
 import { ZardFieldImports } from '../../../shared/components/field/field.imports';
 import { ZardInputComponent } from '../../../shared/components/input/input.component';
 import { ZardAlertComponent } from '../../../shared/components/alert/alert.component';
 import { AuthService } from '@/core/auth/api/auth.service';
+import { createLoginForm } from './login.form';
+import { ZardCardImports } from '@/shared/components/card/card.imports';
 
 @Component({
   selector: 'app-login',
@@ -19,72 +19,12 @@ import { AuthService } from '@/core/auth/api/auth.service';
     ZardButtonComponent,
     ZardInputComponent,
     ZardAlertComponent,
-    ...ZardFieldImports
+    ...ZardCardImports,
+    ...ZardFieldImports,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucideGalleryVerticalEnd })],
-  template: `
-    <div class="bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-      <div class="w-full max-w-sm">
-        <div class="flex flex-col gap-6">
-          <form novalidate (submit)="onSubmit($event)">
-            <div z-field-group>
-              <div class="flex flex-col items-center gap-2 text-center">
-                <a href="#" class="flex flex-col items-center gap-2 font-medium">
-                  <div class="flex size-8 items-center justify-center rounded-md">
-                    <ng-icon name="lucideGalleryVerticalEnd" class="size-6" />
-                  </div>
-                  <span class="sr-only">Sistema POS</span>
-                </a>
-                <h1 class="text-xl font-bold">Bienvenido al Sistema</h1>
-                <p z-field-description>
-                  Ingresa tus credenciales para continuar
-                </p>
-              </div>
-
-              @if (errorMessage()) {
-                <z-alert zType="destructive" zTitle="Error" [zDescription]="errorMessage() || ''" />
-              }
-
-              @let emailField = loginForm.email();
-              @let emailInvalid = emailField.invalid() && emailField.touched();
-              <div z-field [attr.data-invalid]="emailInvalid || null">
-                <label z-field-label for="email">Correo electrónico</label>
-                <input z-input id="email" type="email" placeholder="ejemplo@empresa.com"
-                  [formField]="loginForm.email" [attr.aria-invalid]="emailInvalid || null" />
-                @if (emailInvalid) {
-                  <z-field-error [zErrors]="emailField.errors()" />
-                }
-              </div>
-
-              @let passwordField = loginForm.password();
-              @let passwordInvalid = passwordField.invalid() && passwordField.touched();
-              <div z-field [attr.data-invalid]="passwordInvalid || null">
-                <div class="flex items-center">
-                  <label z-field-label for="password">Contraseña</label>
-                </div>
-                <input z-input id="password" type="password" placeholder="Tu contraseña"
-                  [formField]="loginForm.password" [attr.aria-invalid]="passwordInvalid || null" />
-                @if (passwordInvalid) {
-                  <z-field-error [zErrors]="passwordField.errors()" />
-                }
-              </div>
-
-              <div z-field>
-                <button z-button type="submit" class="w-full" [zLoading]="isLoading()" [zDisabled]="loginForm().invalid() || isLoading()">
-                  Iniciar Sesión
-                </button>
-              </div>
-            </div>
-          </form>
-
-          <p z-field-description class="px-6 text-center">
-            Al continuar, aceptas nuestros <a href="#" class="underline underline-offset-4 hover:text-primary">Términos de Servicio</a> y <a href="#" class="underline underline-offset-4 hover:text-primary">Políticas de Privacidad</a>.
-          </p>
-        </div>
-      </div>
-    </div>
-  `
+  templateUrl: './login.component.html',
 })
 export class LoginComponent {
   private authService = inject(AuthService);
@@ -95,11 +35,7 @@ export class LoginComponent {
 
   private readonly model = signal({ email: '', password: '' });
 
-  protected readonly loginForm = form(this.model, path => {
-    required(path.email, { message: 'Por favor ingresa un correo válido.' });
-    email(path.email, { message: 'Por favor ingresa un correo válido.' });
-    required(path.password, { message: 'La contraseña es requerida.' });
-  });
+  protected readonly loginForm = createLoginForm(this.model);
 
   onSubmit(event: Event) {
     event.preventDefault();
@@ -120,11 +56,13 @@ export class LoginComponent {
       error: (err) => {
         this.isLoading.set(false);
         if (err.error?.detail) {
-           this.errorMessage.set(typeof err.error.detail === 'string' ? err.error.detail : 'Credenciales inválidas');
+          this.errorMessage.set(
+            typeof err.error.detail === 'string' ? err.error.detail : 'Credenciales inválidas',
+          );
         } else {
-           this.errorMessage.set('Ha ocurrido un error al iniciar sesión. Intenta nuevamente.');
+          this.errorMessage.set('Ha ocurrido un error al iniciar sesión. Intenta nuevamente.');
         }
-      }
+      },
     });
   }
 }

@@ -100,11 +100,7 @@ export class AppSidebarComponent {
   }
 
   protected readonly navSecondary: readonly Sidebar07NavItem[] = [
-    {
-      title: 'Buscar',
-      url: '/buscar',
-      icon: SearchIcon,
-    },
+    
     {
       title: 'Configuración',
       url: '/config',
@@ -197,6 +193,18 @@ export class AppSidebarComponent {
       title: 'Reportes',
       url: '/reportes',
       icon: ChartColumnIcon,
+      items: [
+        { title: 'Dashboard', url: '/reportes/dashboard', icon: LayoutDashboardIcon },
+        { title: 'Ventas', url: '/reportes/ventas', icon: ShoppingCartIcon },
+        { title: 'Métodos de pago', url: '/reportes/metodos-pago', icon: HandCoinsIcon },
+        { title: 'Por vendedor', url: '/reportes/vendedores', icon: UserRoundIcon },
+        { title: 'Productos', url: '/reportes/productos', icon: LayersIcon },
+        { title: 'Inventario', url: '/reportes/inventario', icon: BoxesIcon },
+        { title: 'Mermas y ajustes', url: '/reportes/mermas', icon: RotateCcwIcon },
+        { title: 'Clientes con saldo', url: '/reportes/clientes', icon: UserRoundCheckIcon },
+        { title: 'Corte de caja', url: '/reportes/corte-caja', icon: ClockIcon },
+        { title: 'Programados', url: '/reportes/programados', icon: CalendarCheckIcon },
+      ],
     },
     {
       title: 'Auditoría',

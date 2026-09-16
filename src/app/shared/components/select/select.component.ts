@@ -392,7 +392,7 @@ export class ZardSelectComponent implements ControlValueAccessor, OnDestroy {
       return;
     }
 
-    if (value === undefined || value === null || value === '') {
+    if (value === undefined || value === null) {
       if (isDevMode()) {
         console.warn('Attempted to select item with invalid value:', { value, label });
       }

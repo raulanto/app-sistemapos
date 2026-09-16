@@ -1,0 +1,121 @@
+<div class="space-y-6">
+  <!-- Encabezado con Botón de Exportar (CSV/Excel/PDF) arriba a la derecha -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-6xl font-extrabold">Ventas por método de pago</h1>
+      <p class="text-muted-foreground">
+        Distribución de ingresos por efectivo, tarjeta, transferencia, crédito y otros medios.
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <app-reporte-exportar
+        path="ventas-por-metodo-pago"
+        [query]="filtros.rango()"
+        [disabled]="!reporte()"
+      />
+    </div>
+  </div>
+
+  <!-- KPIs principales -->
+  @if (!cargando() && reporte()) {
+    <app-reporte-kpi-grid [kpis]="kpis()" />
+  }
+
+  <!-- Barra intermedia: Filtros ordenados -->
+  <div
+    class="flex flex-col xl:flex-row xl:items-center justify-between gap-3 rounded-xl border bg-card p-2.5 shadow-2xs mt-4"
+  >
+    <div class="flex items-center gap-2 text-sm font-semibold text-muted-foreground px-1">
+      <ng-icon name="lucideCreditCard" class="size-4 text-primary" />
+      <span>Filtros y Períodos</span>
+    </div>
+
+    <div
+      class="flex items-center justify-end w-full xl:w-auto pt-2 xl:pt-0 border-t xl:border-t-0 border-border/60"
+    >
+      <app-reporte-filtros [cargando]="cargando()" (recargar)="cargar()" />
+    </div>
+  </div>
+
+  @if (cargando()) {
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      @for (i of [1, 2, 3]; track i) {
+        <z-skeleton class="h-24" />
+      }
+    </div>
+    <z-skeleton class="h-64 w-full" />
+  } @else if (reporte(); as m) {
+    <!-- Gráfica de pastel + Tabla de Desglose en tarjeta grid -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <!-- Tarjeta 1: Gráfica Pie / Donut -->
+      <div class="rounded-xl border bg-card shadow-xs overflow-hidden">
+        <div class="border-b bg-card p-6">
+          <h3 class="text-xl font-bold tracking-tight">Distribución porcentual</h3>
+          <p class="text-sm text-muted-foreground mt-0.5">
+            Proporción de ingresos recibidos según la forma de pago
+          </p>
+        </div>
+
+        <div class="p-6">
+          @if (metodoPagoData().length) {
+            <z-chart
+              class="block w-full"
+              zType="pie"
+              [zData]="metodoPagoData()"
+              [zSeries]="metodoPagoSeries"
+              zXAxisKey="metodo_pago"
+            >
+              <z-chart-tooltip />
+              <z-chart-legend />
+            </z-chart>
+          } @else {
+            <z-empty zIcon="lucideWallet" zTitle="Sin ventas en el rango" class="py-12" />
+          }
+        </div>
+      </div>
+
+      <!-- Tarjeta 2: Tabla de Desglose -->
+      <div class="rounded-xl border bg-card shadow-xs overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="border-b bg-card p-6">
+            <h3 class="text-xl font-bold tracking-tight">Desglose por método</h3>
+            <p class="text-sm text-muted-foreground mt-0.5">
+              Totales cobrados desglosados en moneda local
+            </p>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table z-table>
+              <thead z-table-header class="bg-muted/40">
+                <tr z-table-row>
+                  <th z-table-head>Método de Pago</th>
+                  <th z-table-head class="text-right">Total recaudado</th>
+                </tr>
+              </thead>
+              <tbody z-table-body>
+                @for (d of m.detalle; track d.metodo_pago) {
+                  <tr z-table-row class="hover:bg-muted/30 transition-colors">
+                    <td z-table-cell class="capitalize font-medium text-foreground">
+                      {{ etiqueta(d.metodo_pago) }}
+                    </td>
+                    <td z-table-cell class="text-right tabular-nums font-bold text-emerald-600 dark:text-emerald-400">
+                      {{ d.total | currency }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Foot Total de la tarjeta -->
+        <div class="border-t bg-muted/20 p-6 flex items-center justify-between">
+          <span class="text-sm font-bold text-foreground">Total Recaudado</span>
+          <span class="text-2xl font-extrabold text-foreground tracking-tight">
+            {{ m.total_general | currency }}
+          </span>
+        </div>
+      </div>
+    </div>
+  }
+</div>

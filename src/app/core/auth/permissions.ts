@@ -101,6 +101,10 @@ export const PERMISOS = {
   },
   reportes: {
     leer: ['reportes.leer', 'REP_VER'],
+    /** Descargar cualquier reporte en CSV/Excel/PDF (`?formato=`). Sin esto la vista JSON sigue igual. */
+    exportar: ['reportes.exportar'],
+    /** CRUD de reportes programados (envío periódico por correo). */
+    programar: ['reportes.programar'],
   },
   auditoria: {
     leer: ['auditoria.leer'],

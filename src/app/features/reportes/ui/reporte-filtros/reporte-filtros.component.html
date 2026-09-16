@@ -1,0 +1,59 @@
+<div class="flex flex-wrap items-center gap-3">
+  @if (mostrarFechas()) {
+    <!-- Rango de fechas con z-calendar (Popover) -->
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-medium text-muted-foreground whitespace-nowrap">Rango de fechas:</span>
+      <button
+        z-button
+        zType="outline"
+        zSize="sm"
+        class="justify-start text-left font-normal bg-background"
+        [class.text-muted-foreground]="!filtros.desde() && !filtros.hasta()"
+        zPopover
+        [zContent]="calendarPopover"
+        zPlacement="bottom"
+        zAlign="start"
+      >
+        <ng-icon name="lucideCalendar" class="mr-1.5 size-3.5" />
+        <span>{{ rangoTexto() }}</span>
+      </button>
+
+      <ng-template #calendarPopover>
+        <div class="p-3 bg-popover text-popover-foreground rounded-lg border shadow-md">
+          <z-calendar
+            zMode="range"
+            [value]="dateRange()"
+            (valueChange)="onDateRangeChange($event)"
+          />
+          @if (filtros.desde() || filtros.hasta()) {
+            <div class="mt-2 flex justify-end border-t pt-2">
+              <button z-button zType="ghost" zSize="sm" (click)="limpiarFechas()">
+                <ng-icon name="lucideX" class="mr-1 size-3.5" /> Limpiar fechas
+              </button>
+            </div>
+          }
+        </div>
+      </ng-template>
+    </div>
+  }
+  @if (filtros.esGlobal()) {
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-medium text-muted-foreground whitespace-nowrap">Sucursal:</span>
+      <z-select class="w-48" [ngModel]="filtros.sucursalId()" (ngModelChange)="filtros.setSucursal($event)">
+        <z-select-item zValue="">Todas las sucursales</z-select-item>
+        @for (s of sucursalService.sucursales(); track s.id) {
+          <z-select-item [zValue]="s.id">{{ s.nombre }}</z-select-item>
+        }
+      </z-select>
+    </div>
+  }
+  <div class="ml-auto flex items-center gap-2">
+    <ng-content />
+    <button z-button zType="outline" zSize="sm" class="bg-background" [zLoading]="cargando()" (click)="recargar.emit()">
+      <ng-icon name="lucideRefreshCw" class="mr-1.5 size-3.5" /> Actualizar
+    </button>
+  </div>
+  @if (ayuda()) {
+    <p class="w-full text-xs text-muted-foreground mt-1">{{ ayuda() }}</p>
+  }
+</div>
