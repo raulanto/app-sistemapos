@@ -1,463 +1,338 @@
-<div class="p-6 max-w-4xl mx-auto space-y-6">
-  <div class="flex items-center gap-4">
-    <a routerLink="/inventario/productos" z-button zType="ghost" zSize="icon" aria-label="Volver al listado de productos">
-      <ng-icon name="lucideArrowLeft" class="size-5" />
-    </a>
-    <div>
-      <h1 class="text-4xl font-bold tracking-tight">Nuevo Producto</h1>
-      <p class="text-muted-foreground">Llena los datos para registrar un nuevo producto en el inventario.</p>
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- CABECERA PRINCIPAL CON NAVEGACIÓN Y BOTONES DE ACCIÓN -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+    <div class="flex items-center gap-3">
+      <a
+        routerLink="/inventario/productos"
+        z-button
+        zType="ghost"
+        zSize="icon"
+        aria-label="Volver al listado de productos"
+      >
+        <ng-icon name="lucideArrowLeft" class="size-5" />
+      </a>
+      <div>
+        <h1 class="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">Nuevo Producto</h1>
+        <p class="text-sm text-muted-foreground">
+          Completa la información técnica, precios y existencias para registrar el producto.
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a routerLink="/inventario/productos" z-button zType="outline"> Cancelar </a>
+      <button
+        z-button
+        zType="default"
+        type="button"
+        [zLoading]="loading()"
+        [zDisabled]="loading()"
+        (click)="guardar()"
+      >
+        @if (!loading()) {
+          <ng-icon name="lucideSave" class="mr-2" />
+        }
+        {{ loading() ? 'Guardando…' : 'Guardar producto' }}
+      </button>
     </div>
   </div>
 
-  <div z-card>
-    <z-card-content class="pt-6">
-      <ng-template #erroresTpl>
-        <ul class="ml-4 list-disc">
-          @for (err of resumenErrores(); track err) {
-            <li>{{ err }}</li>
-          }
-        </ul>
-      </ng-template>
+  <ng-template #erroresTpl>
+    <ul class="ml-4 list-disc text-sm">
+      @for (err of resumenErrores(); track err) {
+        <li>{{ err }}</li>
+      }
+    </ul>
+  </ng-template>
 
-      <form [formGroup]="form" class="flex flex-col gap-8" (ngSubmit)="guardar()">
-        @if (resumenErrores().length > 0) {
-          <z-alert zType="destructive" zTitle="Revisa los campos marcados antes de guardar" [zDescription]="erroresTpl"></z-alert>
-        }
+  <form [formGroup]="form" class="space-y-6" (ngSubmit)="guardar()">
+    @if (resumenErrores().length > 0) {
+      <z-alert
+        zType="destructive"
+        zTitle="Revisa los campos marcados antes de guardar"
+        [zDescription]="erroresTpl"
+      ></z-alert>
+    }
 
-        <!-- Datos Principales -->
-        <fieldset z-field-set>
-          <legend z-field-legend>Datos principales</legend>
-          <p z-field-description>Identificación básica del producto. Los campos con * son obligatorios.</p>
-
-          <div z-field-group class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-            <div z-field [attr.data-invalid]="skuError().length ? 'true' : null">
-              <label z-field-label for="sku">SKU *</label>
-              <input z-input id="sku" type="text" formControlName="sku" placeholder="Ej. PRD-001" autocomplete="off" [attr.aria-invalid]="skuError().length ? 'true' : null">
-              <z-field-error [zErrors]="skuError()"></z-field-error>
+    <!-- ESTRUCTURA EN 2 COLUMNAS (ESTILO PRODUCT CREATION DASHBOARD) -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
+      
+      <!-- COLUMNA IZQUIERDA: INFORMACIÓN PRINCIPAL, FOTOS, PRESENTACIONES E INVENTARIO (8 cols) -->
+      <div class="space-y-6 lg:col-span-8">
+        
+        <!-- CARD 1: INFORMACIÓN GENERAL -->
+        <div z-card class="p-6 space-y-5 rounded-2xl border bg-card">
+          <div class="flex items-center gap-2 border-b pb-3">
+            <ng-icon name="lucideTag" class="size-5 text-primary" />
+            <div>
+              <h3 class="text-base font-bold text-foreground">Información del producto</h3>
+              <p class="text-xs text-muted-foreground">Identificación básica y detalles visibles en el punto de venta.</p>
             </div>
+          </div>
 
-            <div z-field>
-              <label z-field-label for="codigo_barras">Código de barras</label>
-              <input z-input id="codigo_barras" type="text" formControlName="codigo_barras" placeholder="Escanea o escribe el código" autocomplete="off">
-              <p z-field-description>Opcional. Se usa para buscar el producto en el punto de venta.</p>
-            </div>
-
+          <div z-field-group class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
+            <!-- Nombre -->
             <div z-field class="md:col-span-2" [attr.data-invalid]="nombreError().length ? 'true' : null">
-              <label z-field-label for="nombre">Nombre *</label>
-              <input z-input id="nombre" type="text" formControlName="nombre" placeholder="Nombre visible del producto" [attr.aria-invalid]="nombreError().length ? 'true' : null">
+              <label z-field-label for="nombre">Nombre del producto *</label>
+              <input
+                z-input
+                id="nombre"
+                type="text"
+                formControlName="nombre"
+                placeholder="Ej. Detergente Biodegradable Multiusos 1L"
+                [attr.aria-invalid]="nombreError().length ? 'true' : null"
+              />
               <z-field-error [zErrors]="nombreError()"></z-field-error>
             </div>
 
+            <!-- SKU -->
+            <div z-field [attr.data-invalid]="skuError().length ? 'true' : null">
+              <label z-field-label for="sku">SKU *</label>
+              <input
+                z-input
+                id="sku"
+                type="text"
+                formControlName="sku"
+                placeholder="Ej. PRD-001"
+                autocomplete="off"
+                [attr.aria-invalid]="skuError().length ? 'true' : null"
+              />
+              <z-field-error [zErrors]="skuError()"></z-field-error>
+            </div>
+
+            <!-- Código de Barras -->
+            <div z-field>
+              <label z-field-label for="codigo_barras">Código de barras</label>
+              <input
+                z-input
+                id="codigo_barras"
+                type="text"
+                formControlName="codigo_barras"
+                placeholder="Escanea o escribe el código"
+                autocomplete="off"
+              />
+            </div>
+
+            <!-- Descripción -->
             <div z-field class="md:col-span-2">
               <label z-field-label for="descripcion">Descripción</label>
-              <input z-input id="descripcion" type="text" formControlName="descripcion" placeholder="Opcional">
+              <input
+                z-input
+                id="descripcion"
+                type="text"
+                formControlName="descripcion"
+                placeholder="Breve resumen técnico o comercial del producto (opcional)"
+              />
             </div>
+          </div>
+        </div>
 
-            <div class="md:col-span-2">
-              <div class="mb-2">
-                <p class="text-sm font-medium">Fotos</p>
-                <p class="text-[0.8rem] text-muted-foreground">Opcional. Sube imágenes desde tu equipo (JPG, PNG o WebP · máx. 5 MiB). La marcada como portada aparece en el listado.</p>
-              </div>
+        <!-- CARD 2: FOTOS Y MULTIMEDIA -->
+        <div z-card class="p-6 space-y-4 rounded-2xl border bg-card">
+          <div class="flex items-center gap-2 border-b pb-3">
+            <ng-icon name="lucideImage" class="size-5 text-primary" />
+            <div>
+              <h3 class="text-base font-bold text-foreground">Imágenes del producto</h3>
+              <p class="text-xs text-muted-foreground">Sube fotos promocionales (JPG, PNG o WebP · máx. 5 MiB).</p>
+            </div>
+          </div>
 
-              <label class="flex cursor-pointer flex-col items-center gap-1.5 rounded-md border border-dashed py-6 text-center text-sm text-muted-foreground transition-colors hover:bg-muted/40">
-                <ng-icon name="lucideUpload" class="size-5" />
-                <span>Arrastra o haz clic para elegir imágenes</span>
-                <input type="file" class="hidden" accept="image/jpeg,image/png,image/webp" multiple (change)="onImagenesSeleccionadas($event)">
-              </label>
+          <label
+            class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border/80 bg-muted/20 py-8 text-center text-sm text-muted-foreground transition-colors hover:bg-muted/40 hover:border-primary/50"
+          >
+            <div class="grid size-10 place-items-center rounded-full bg-primary/10 text-primary">
+              <ng-icon name="lucideUpload" class="size-5" />
+            </div>
+            <div>
+              <span class="font-semibold text-foreground">Arrastra tus fotos</span> o haz clic para examinar
+            </div>
+            <p class="text-xs text-muted-foreground">La primera imagen cargada o la seleccionada será la portada.</p>
+            <input
+              type="file"
+              class="hidden"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              (change)="onImagenesSeleccionadas($event)"
+            />
+          </label>
 
-              @if (imagenError()) {
-                <p class="mt-2 text-[0.8rem] font-medium text-destructive">{{ imagenError() }}</p>
-              }
+          @if (imagenError()) {
+            <p class="text-xs font-medium text-destructive">{{ imagenError() }}</p>
+          }
 
-              @if (imagenesNuevas().length > 0) {
-                <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  @for (foto of imagenesNuevas(); track foto.previewUrl) {
-                    <div class="flex gap-3 rounded-md border p-3">
-                      <img [src]="foto.previewUrl" alt="" class="size-16 shrink-0 rounded-md border object-cover">
-                      <div class="flex min-w-0 flex-1 flex-col gap-2">
-                        <input z-input type="text" maxlength="255" placeholder="Texto alternativo"
-                               [value]="foto.alt" (input)="actualizarAltImagen($index, $any($event.target).value)">
-                        <div class="flex items-center justify-between">
-                          <button type="button" z-button [zType]="foto.portada ? 'default' : 'outline'" zSize="sm"
-                                  [disabled]="foto.portada" (click)="marcarPortada($index)">
-                            <ng-icon name="lucideStar" class="mr-1.5 size-3.5" />
-                            {{ foto.portada ? 'Portada' : 'Usar de portada' }}
-                          </button>
-                          <button type="button" z-button zType="ghost" zSize="icon-sm"
-                                  class="text-destructive hover:bg-destructive/10" (click)="removerImagen($index)" aria-label="Quitar foto">
-                            <ng-icon name="lucideTrash" class="size-4" />
-                          </button>
-                        </div>
-                      </div>
+          @if (imagenesNuevas().length > 0) {
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              @for (foto of imagenesNuevas(); track foto.previewUrl) {
+                <div class="flex gap-3 rounded-xl border p-3 bg-background">
+                  <img [src]="foto.previewUrl" alt="" class="size-16 shrink-0 rounded-lg border object-cover" />
+                  <div class="flex min-w-0 flex-1 flex-col gap-2">
+                    <input
+                      z-input
+                      type="text"
+                      maxlength="255"
+                      placeholder="Texto alternativo (alt)"
+                      [value]="foto.alt"
+                      (input)="actualizarAltImagen($index, $any($event.target).value)"
+                    />
+                    <div class="flex items-center justify-between">
+                      <button
+                        type="button"
+                        z-button
+                        [zType]="foto.portada ? 'default' : 'outline'"
+                        zSize="sm"
+                        [disabled]="foto.portada"
+                        (click)="marcarPortada($index)"
+                      >
+                        <ng-icon name="lucideStar" class="mr-1.5 size-3.5" />
+                        {{ foto.portada ? 'Portada' : 'Usar de portada' }}
+                      </button>
+                      <button
+                        type="button"
+                        z-button
+                        zType="ghost"
+                        zSize="icon-sm"
+                        class="text-destructive hover:bg-destructive/10"
+                        (click)="removerImagen($index)"
+                        aria-label="Quitar foto"
+                      >
+                        <ng-icon name="lucideTrash" class="size-4" />
+                      </button>
                     </div>
-                  }
+                  </div>
                 </div>
               }
             </div>
+          }
+        </div>
 
-            <div z-field [attr.data-invalid]="categoriaError().length ? 'true' : null">
-              <label z-field-label>Categoría *</label>
-              <z-select formControlName="categoria_id" placeholder="Selecciona una categoría" [attr.aria-invalid]="categoriaError().length ? 'true' : null">
-                @for (cat of categorias(); track cat.id) {
-                  <z-select-item [zValue]="cat.id">{{ cat.nombre }}</z-select-item>
-                }
-              </z-select>
-              <z-field-error [zErrors]="categoriaError()"></z-field-error>
-            </div>
-
-            <div z-field [attr.data-invalid]="tipoError().length ? 'true' : null">
-              <label z-field-label>Tipo *</label>
-              <z-select formControlName="tipo" placeholder="Selecciona un tipo" [attr.aria-invalid]="tipoError().length ? 'true' : null">
-                <z-select-item zValue="simple">Simple</z-select-item>
-                <z-select-item zValue="fraccionable">Fraccionable (venta parcial)</z-select-item>
-                <z-select-item zValue="kit">Kit (compuesto)</z-select-item>
-                <z-select-item zValue="servicio">Servicio (no mueve inventario)</z-select-item>
-              </z-select>
-              <p z-field-description>
-                Kit: se arma con otros productos. Fraccionable: se vende en incrementos parciales (ej. aceite a granel).
-                Servicio: flete, mano de obra — nunca genera movimientos de inventario.
-              </p>
-              <z-field-error [zErrors]="tipoError()"></z-field-error>
-            </div>
-
-            <div z-field class="md:col-span-2" [attr.data-invalid]="unidadMedidaError().length ? 'true' : null">
-              <label z-field-label for="unidad_medida">Unidad de medida *</label>
-              <input z-input id="unidad_medida" type="text" formControlName="unidad_medida" placeholder="Ej. pieza, kg, litro, reja" [attr.aria-invalid]="unidadMedidaError().length ? 'true' : null">
-              <p z-field-description>Cómo se cuenta el stock. Las presentaciones (six-pack, caja, etc.) se agregan más abajo.</p>
-              <z-field-error [zErrors]="unidadMedidaError()"></z-field-error>
-            </div>
-
-            <div z-field class="md:col-span-2">
-              <div class="flex items-end gap-2">
-                <div class="flex-1">
-                  <label z-field-label>Unidad del catálogo (opcional)</label>
-                  <z-select formControlName="unidad_medida_id" placeholder="Sin vincular (usa el texto libre)">
-                    <z-select-item zValue="">Sin vincular</z-select-item>
-                    @for (um of unidadesMedida(); track um.id) {
-                      <z-select-item [zValue]="um.id">{{ um.codigo }} — {{ um.nombre }}</z-select-item>
-                    }
-                  </z-select>
-                </div>
-                <button type="button" z-button zType="outline" zSize="default" (click)="abrirCrearUnidadMedida()">
-                  <ng-icon name="lucidePlus" class="mr-1.5" />
-                  Nueva
-                </button>
-              </div>
-              <p z-field-description>Vincularla al catálogo define los decimales usados para redondear el stock. Es opcional.</p>
-            </div>
-
-            @if (permiteFraccionamiento()) {
-              <div z-field zOrientation="horizontal" class="md:col-span-2">
-                <z-switch formControlName="permite_venta_fraccionada" zId="permite_venta_fraccionada" [zDisabled]="esFraccionable()"></z-switch>
-                <label z-field-label for="permite_venta_fraccionada">Permite venta fraccionada (cantidad no entera de la unidad base)</label>
-              </div>
-              <div z-field class="md:col-span-2">
-                <label z-field-label for="incremento_minimo_venta">Incremento mínimo de venta</label>
-                <input z-input id="incremento_minimo_venta" type="number" step="any" min="0" formControlName="incremento_minimo_venta" placeholder="Ej. 0.5">
-                <p z-field-description>
-                  Si se define, toda venta o salida debe ser múltiplo exacto de este valor (la entrada/compra no tiene esta restricción).
-                  @if (esFraccionable()) {
-                    El tipo "Fraccionable" ya habilita la venta parcial automáticamente.
-                  }
-                </p>
-              </div>
-            }
-          </div>
-        </fieldset>
-
-        <z-separator></z-separator>
-
-        <!-- Precios y Costos -->
-        <fieldset z-field-set>
-          <legend z-field-legend>Precios y costos</legend>
-          <p z-field-description>Valores base del producto en su unidad de medida.</p>
-
-          <div z-field-group class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
-            <div z-field [attr.data-invalid]="precioVentaError().length ? 'true' : null">
-              <label z-field-label for="precio_venta">Precio de venta *</label>
-              <input z-input id="precio_venta" type="number" min="0.01" step="0.01" formControlName="precio_venta" placeholder="0.00" [attr.aria-invalid]="precioVentaError().length ? 'true' : null">
-              <z-field-error [zErrors]="precioVentaError()"></z-field-error>
-            </div>
-
-            <div z-field [attr.data-invalid]="costoError().length ? 'true' : null">
-              <label z-field-label for="costo">Costo *</label>
-              <input z-input id="costo" type="number" min="0.01" step="0.01" formControlName="costo" placeholder="0.00" [attr.aria-invalid]="costoError().length ? 'true' : null">
-              <z-field-error [zErrors]="costoError()"></z-field-error>
-            </div>
-
-            <div z-field [attr.data-invalid]="impuestoTasaError().length ? 'true' : null">
-              <label z-field-label for="impuesto_tasa">Impuesto (%) *</label>
-              <input z-input id="impuesto_tasa" type="number" min="0" step="0.01" formControlName="impuesto_tasa" placeholder="0" [attr.aria-invalid]="impuestoTasaError().length ? 'true' : null">
-              <z-field-error [zErrors]="impuestoTasaError()"></z-field-error>
-            </div>
-
-            <div z-field zOrientation="horizontal" class="md:col-span-3">
-              <z-switch formControlName="permite_stock_negativo" zId="permite_stock_negativo"></z-switch>
-              <label z-field-label for="permite_stock_negativo">Permitir stock negativo (vender sin existencias)</label>
-            </div>
-          </div>
-        </fieldset>
-
-        @if (esServicio()) {
-        <z-separator></z-separator>
-        <fieldset z-field-set>
-          <legend z-field-legend>Agenda</legend>
-          <p z-field-description>Deja "Duración" vacía si este servicio no se agenda (p. ej. flete).</p>
-
-          <div z-field-group class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-            <div z-field>
-              <label z-field-label for="duracion_minutos">Duración (minutos)</label>
-              <input z-input id="duracion_minutos" type="number" min="1" step="1" formControlName="duracion_minutos" placeholder="Ej. 30">
-              <p z-field-description>Obligatoria para que el servicio sea agendable en Citas.</p>
-            </div>
-            <div z-field>
-              <label z-field-label for="tiempo_buffer_minutos">Buffer entre citas (minutos)</label>
-              <input z-input id="tiempo_buffer_minutos" type="number" min="0" step="1" formControlName="tiempo_buffer_minutos" placeholder="0">
-              <p z-field-description>Limpieza o preparación; se suma a la duración.</p>
-            </div>
-            <div z-field zOrientation="horizontal" class="md:col-span-2">
-              <z-switch formControlName="requiere_recurso" zId="requiere_recurso"></z-switch>
-              <label z-field-label for="requiere_recurso">Requiere recurso (silla, cabina, equipo)</label>
-            </div>
-            <div z-field zOrientation="horizontal" class="md:col-span-2">
-              <z-switch formControlName="disponibilidad_cruzada_activa" zId="disponibilidad_cruzada_activa"></z-switch>
-              <label z-field-label for="disponibilidad_cruzada_activa">Permite ofertar a empleados de otra sucursal</label>
-            </div>
-          </div>
-        </fieldset>
-        }
-
-        <details class="group rounded-lg border" [open]="seccionAbierta('avanzada')" (toggle)="syncSeccion('avanzada', $event)">
-          <summary class="flex cursor-pointer list-none items-center justify-between gap-4 p-4 [&::-webkit-details-marker]:hidden">
-            <div>
-              <span class="text-base font-semibold">Configuración avanzada</span>
-              <p class="text-sm text-muted-foreground">Opcional: mayoreo, IVA incluido, control por lote y envases abiertos.</p>
-            </div>
-            <ng-icon name="lucideChevronDown" class="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
-          </summary>
-
-          <div z-field-group class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 border-t p-4">
-            <div z-field zOrientation="horizontal" class="md:col-span-2">
-              <z-switch formControlName="es_sobre_pedido" zId="es_sobre_pedido"></z-switch>
-              <label z-field-label for="es_sobre_pedido">Sobre pedido (se vende sin existencia)</label>
-            </div>
-            <div z-field zOrientation="horizontal" class="md:col-span-2">
-              <z-switch formControlName="precio_incluye_impuesto" zId="precio_incluye_impuesto"></z-switch>
-              <label z-field-label for="precio_incluye_impuesto">El precio de venta ya incluye IVA</label>
-            </div>
-            <div z-field zOrientation="horizontal" class="md:col-span-2">
-              <z-switch formControlName="requiere_lote" zId="requiere_lote"></z-switch>
-              <label z-field-label for="requiere_lote">Control por lote (entrada exige lote, salida por FEFO)</label>
-            </div>
-            <div z-field zOrientation="horizontal" class="md:col-span-2">
-              <z-switch formControlName="rastrea_instancia_abierta" zId="rastrea_instancia_abierta"></z-switch>
-              <label z-field-label for="rastrea_instancia_abierta">Rastrear envases abiertos (venta a granel)</label>
-            </div>
-
-            @if (form.controls.rastrea_instancia_abierta.value) {
-              <div z-field class="md:col-span-2">
-                <label z-field-label for="instancia_capacidad_default">Capacidad por envase *</label>
-                <input z-input id="instancia_capacidad_default" type="number" step="any" min="0" formControlName="instancia_capacidad_default" placeholder="Ej. 5">
-                <p z-field-description>En unidad base; con este valor se auto-abre un envase al vender a granel.</p>
-              </div>
-            }
-
-            <div z-field>
-              <label z-field-label for="precio_mayoreo">Precio mayoreo</label>
-              <input z-input id="precio_mayoreo" type="number" min="0" step="0.01" formControlName="precio_mayoreo" placeholder="Opcional">
-            </div>
-            <div z-field>
-              <label z-field-label for="cantidad_minima_mayoreo">Cantidad mínima mayoreo</label>
-              <input z-input id="cantidad_minima_mayoreo" type="number" min="0" step="any" formControlName="cantidad_minima_mayoreo" placeholder="Opcional">
-            </div>
-            <p z-field-description class="md:col-span-2">Ambos van juntos: a partir de esa cantidad (unidad base) la venta usa el precio de mayoreo.</p>
-
-            <div z-field>
-              <label z-field-label for="monedero_pct">Monedero %</label>
-              <input z-input id="monedero_pct" type="number" min="0" max="100" step="0.01" formControlName="monedero_pct" placeholder="Opcional">
-            </div>
-            <div z-field>
-              <label z-field-label for="monedero_monto">Monedero monto fijo</label>
-              <input z-input id="monedero_monto" type="number" min="0" step="0.01" formControlName="monedero_monto" placeholder="Opcional">
-            </div>
-            <p z-field-description class="md:col-span-2">Cashback al vender con teléfono: el % (sobre el subtotal) tiene prioridad; el monto es fijo por unidad.</p>
-          </div>
-        </details>
-
-        @if (!esServicio()) {
-        <details class="group rounded-lg border" [open]="seccionAbierta('inventario')" (toggle)="syncSeccion('inventario', $event)">
-          <summary class="flex cursor-pointer list-none items-center justify-between gap-4 p-4 [&::-webkit-details-marker]:hidden">
-            <div>
-              <span class="text-base font-semibold">Inventario inicial</span>
-              @if (existenciasArray.length) { <span class="text-muted-foreground"> · {{ existenciasArray.length }}</span> }
-              <p class="text-sm text-muted-foreground">Opcional. Registra stock, umbrales y costo de compra por sucursal en un solo paso.</p>
-            </div>
-            <ng-icon name="lucideChevronDown" class="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
-          </summary>
-
-          <div class="border-t p-4">
-          <div class="mb-4 flex justify-end">
-            <button type="button" z-button zType="outline" zSize="sm" (click)="agregarExistencia()">
-              <ng-icon name="lucidePlus" class="mr-2" />
-              Agregar sucursal
-            </button>
-          </div>
-
-          <div formArrayName="existencias" class="flex flex-col gap-4">
-            @for (control of existenciasArray.controls; track $index) {
-              <div [formGroupName]="$index" class="p-4 border rounded-md bg-card relative">
-                <button type="button" z-button zType="ghost" zSize="icon-sm" class="absolute top-2 right-2 text-destructive hover:bg-destructive/10" (click)="removerExistencia($index)" aria-label="Quitar esta sucursal">
-                  <ng-icon name="lucideTrash" class="size-4" />
-                </button>
-
-                <div z-field-group class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-5 mt-2">
-                  <div z-field>
-                    <label z-field-label>Sucursal *</label>
-                    <z-select formControlName="sucursal_id" placeholder="Seleccionar sucursal">
-                      @for (sucursal of sucursalService.sucursales(); track sucursal.id) {
-                        <z-select-item [zValue]="sucursal.id">{{ sucursal.nombre }}</z-select-item>
-                      }
-                    </z-select>
-                  </div>
-                  <div z-field>
-                    <label z-field-label>Tipo de movimiento *</label>
-                    <z-select formControlName="tipo" placeholder="Tipo">
-                      <z-select-item zValue="entrada">Entrada</z-select-item>
-                      <z-select-item zValue="ajuste_positivo">Ajuste positivo</z-select-item>
-                    </z-select>
-                  </div>
-                  <div z-field>
-                    <label z-field-label>Referencia *</label>
-                    <input z-input type="text" formControlName="referencia_tipo" placeholder="Ej. inventario_inicial">
-                  </div>
-                  <div z-field>
-                    <label z-field-label>Motivo</label>
-                    <input z-input type="text" formControlName="motivo" placeholder="Opcional">
-                  </div>
-
-                  <div z-field>
-                    <label z-field-label>Cantidad inicial</label>
-                    <input z-input type="number" formControlName="cantidad" placeholder="0.00" min="0" step="0.01">
-                  </div>
-                  <div z-field>
-                    <label z-field-label>Costo unitario</label>
-                    <input z-input type="number" formControlName="costo_unitario" placeholder="0.00" min="0" step="0.01">
-                    <p z-field-description>Si es &gt; 0 y el tipo es Entrada, actualiza el costo del producto.</p>
-                  </div>
-                  <div z-field>
-                    <label z-field-label>Stock mínimo</label>
-                    <input z-input type="number" formControlName="stock_minimo" placeholder="0.00" min="0" step="0.01">
-                  </div>
-                  <div z-field>
-                    <label z-field-label>Stock máximo</label>
-                    <input z-input type="number" formControlName="stock_maximo" placeholder="0.00" min="0" step="0.01">
-                  </div>
-                </div>
-              </div>
-            } @empty {
-              <z-empty
-                zIcon="lucidePackage"
-                zTitle="Sin inventario inicial"
-                zDescription="El producto se creará sin existencias. Puedes registrar movimientos más tarde."
-                class="border border-dashed rounded-md">
-              </z-empty>
-            }
-          </div>
-          </div>
-        </details>
-        } @else {
-        <z-alert zType="default" zTitle="Producto de tipo servicio" zDescription="No maneja inventario: no aplican stock inicial ni presentaciones de venta."></z-alert>
-        }
-
+        <!-- CARD 3: PRESENTACIONES DE VENTA (si no es kit ni servicio) -->
         @if (form.get('tipo')?.value !== 'kit' && !esServicio()) {
-          <details class="group rounded-lg border" [open]="seccionAbierta('presentaciones')" (toggle)="syncSeccion('presentaciones', $event)">
-            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 p-4 [&::-webkit-details-marker]:hidden">
-              <div>
-                <span class="text-base font-semibold">Presentaciones de venta</span>
-                @if (unidadesArray.length) { <span class="text-muted-foreground"> · {{ unidadesArray.length }}</span> }
-                <p class="text-sm text-muted-foreground">Opcional. Formas alternativas de vender el producto. La unidad base se incluye automáticamente.</p>
+          <div z-card class="p-6 space-y-4 rounded-2xl border bg-card">
+            <div class="flex items-center justify-between border-b pb-3">
+              <div class="flex items-center gap-2">
+                <ng-icon name="lucideLayers" class="size-5 text-primary" />
+                <div>
+                  <h3 class="text-base font-bold text-foreground">Presentaciones de venta</h3>
+                  <p class="text-xs text-muted-foreground">Empaques o embalajes adicionales (caja, six-pack, reja, etc.).</p>
+                </div>
               </div>
-              <ng-icon name="lucideChevronDown" class="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
-            </summary>
-
-            <div class="border-t p-4">
-            <div class="mb-4 flex justify-end">
               <button type="button" z-button zType="outline" zSize="sm" (click)="agregarUnidad()">
-                <ng-icon name="lucidePlus" class="mr-2" />
+                <ng-icon name="lucidePlus" class="mr-1.5" />
                 Agregar presentación
               </button>
             </div>
 
-            <!-- Unidad base (el propio producto) -->
-            <div class="p-4 border rounded-md bg-muted/40">
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <!-- Unidad Base Automática -->
+            <div class="p-4 border rounded-xl bg-muted/30 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Unidad Base</span>
+                <span class="text-xs font-mono text-primary font-medium">1.0 Equivalencia</span>
+              </div>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                 <div>
                   <p class="text-muted-foreground">Nombre</p>
-                  <p class="font-medium">{{ form.get('nombre')?.value || 'Unidad base' }}</p>
+                  <p class="font-medium text-foreground">{{ form.get('nombre')?.value || 'Unidad base' }}</p>
                 </div>
                 <div>
                   <p class="text-muted-foreground">Unidad de medida</p>
-                  <p class="font-medium">{{ form.get('unidad_medida')?.value || '—' }}</p>
-                </div>
-                <div>
-                  <p class="text-muted-foreground">Equivalencia</p>
-                  <p class="font-medium">1 (unidad base)</p>
+                  <p class="font-medium text-foreground">{{ form.get('unidad_medida')?.value || '—' }}</p>
                 </div>
                 <div>
                   <p class="text-muted-foreground">Precio de venta</p>
-                  <p class="font-medium">{{ form.get('precio_venta')?.value | currency }}</p>
+                  <p class="font-medium text-emerald-600 dark:text-emerald-400">
+                    {{ form.get('precio_venta')?.value | currency }}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-muted-foreground">Estado</p>
+                  <p class="font-medium text-foreground">Predeterminada</p>
                 </div>
               </div>
             </div>
 
+            <!-- FormArray de Presentaciones -->
             <div formArrayName="unidades" class="flex flex-col gap-4">
               @for (control of unidadesArray.controls; track $index) {
-                <div [formGroupName]="$index" class="p-4 border rounded-md bg-card relative" [attr.data-invalid]="control.invalid && control.touched ? 'true' : null">
-                  <button type="button" z-button zType="ghost" zSize="icon-sm" class="absolute top-2 right-2 text-destructive hover:bg-destructive/10" (click)="removerUnidad($index)" aria-label="Quitar esta presentación">
+                <div
+                  [formGroupName]="$index"
+                  class="p-4 border rounded-xl bg-background relative space-y-3"
+                  [attr.data-invalid]="control.invalid && control.touched ? 'true' : null"
+                >
+                  <button
+                    type="button"
+                    z-button
+                    zType="ghost"
+                    zSize="icon-sm"
+                    class="absolute top-3 right-3 text-destructive hover:bg-destructive/10"
+                    (click)="removerUnidad($index)"
+                    aria-label="Quitar esta presentación"
+                  >
                     <ng-icon name="lucideTrash" class="size-4" />
                   </button>
 
-                  <div z-field-group class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5 mt-2">
+                  <div z-field-group class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-4 pt-1">
                     <div z-field>
                       <label z-field-label>Nombre *</label>
-                      <input z-input type="text" formControlName="nombre" maxlength="50" placeholder="Ej. Lata 355ml, Reja x24">
+                      <input
+                        z-input
+                        type="text"
+                        formControlName="nombre"
+                        maxlength="50"
+                        placeholder="Ej. Six-Pack, Reja x24"
+                      />
                     </div>
                     <div z-field>
                       <label z-field-label>Unidad de medida *</label>
-                      <input z-input type="text" formControlName="unidad_medida" maxlength="20" placeholder="Ej. pieza, litro">
+                      <input
+                        z-input
+                        type="text"
+                        formControlName="unidad_medida"
+                        maxlength="20"
+                        placeholder="Ej. pieza, paquete"
+                      />
                     </div>
                     <div z-field>
                       <label z-field-label>Precio de venta *</label>
-                      <input z-input type="number" formControlName="precio_venta" min="0" step="0.01" placeholder="0.00">
+                      <input z-input type="number" formControlName="precio_venta" min="0" step="0.01" placeholder="0.00" />
                     </div>
                     <div z-field>
-                      <label z-field-label>Equivalencia *</label>
-                      <z-select formControlName="modo" placeholder="Tipo de equivalencia">
-                        <z-select-item zValue="unidades_por_base">Más pequeña que la base</z-select-item>
-                        <z-select-item zValue="factor">Más grande que la base</z-select-item>
+                      <label z-field-label>Tipo equivalencia *</label>
+                      <z-select formControlName="modo" placeholder="Selecciona el modo">
+                        <z-select-item zValue="unidades_por_base">Menor que la unidad base</z-select-item>
+                        <z-select-item zValue="factor">Mayor que la unidad base</z-select-item>
                       </z-select>
                     </div>
+
                     @if (control.get('modo')?.value === 'factor') {
                       <div z-field>
-                        <label z-field-label>Unidades base por presentación *</label>
-                        <input z-input type="number" formControlName="factor" min="0" step="any" placeholder="Ej. 24">
-                        <p z-field-description>¿Cuántas unidades base contiene 1 de esta presentación?</p>
+                        <label z-field-label>Contenido base por presentación *</label>
+                        <input z-input type="number" formControlName="factor" min="0" step="any" placeholder="Ej. 24" />
                       </div>
                     } @else {
                       <div z-field>
-                        <label z-field-label>Unidades por unidad base *</label>
-                        <input z-input type="number" formControlName="unidades_por_base" min="0" step="any" placeholder="Ej. 6">
-                        <p z-field-description>¿Cuántas de esta presentación entran en 1 unidad base?</p>
+                        <label z-field-label>Unidades por base *</label>
+                        <input
+                          z-input
+                          type="number"
+                          formControlName="unidades_por_base"
+                          min="0"
+                          step="any"
+                          placeholder="Ej. 6"
+                        />
                       </div>
                     }
+
                     <div z-field>
                       <label z-field-label>Código de barras</label>
-                      <input z-input type="text" formControlName="codigo_barras" placeholder="Opcional">
+                      <input z-input type="text" formControlName="codigo_barras" placeholder="Opcional" />
                     </div>
                   </div>
 
                   @if (control.hasError('equivalencia') && control.touched) {
-                    <z-field-error class="mt-2" [zErrors]="[{ message: 'Indica un valor mayor a 0 para la equivalencia.' }]"></z-field-error>
+                    <z-field-error
+                      class="mt-1"
+                      [zErrors]="[{ message: 'Indica un valor mayor a 0 para la equivalencia.' }]"
+                    ></z-field-error>
                   }
                 </div>
               } @empty {
@@ -465,35 +340,36 @@
                   zIcon="lucideLayers"
                   zTitle="Sin presentaciones adicionales"
                   zDescription="El producto se venderá únicamente en su unidad base."
-                  class="border border-dashed rounded-md">
+                  class="border border-dashed rounded-xl py-6"
+                >
                 </z-empty>
               }
             </div>
-            </div>
-          </details>
+          </div>
         }
 
+        <!-- CARD 4: RECETA DEL KIT (si tipo == 'kit') -->
         @if (form.get('tipo')?.value === 'kit') {
-          <z-separator></z-separator>
-
-          <!-- Componentes (Receta) -->
-          <fieldset z-field-set>
-            <div class="flex items-start justify-between gap-4">
-              <div>
-                <legend z-field-legend>Receta del kit</legend>
-                <p z-field-description>Agrega los productos que conforman este kit y su cantidad.</p>
+          <div z-card class="p-6 space-y-4 rounded-2xl border bg-card">
+            <div class="flex items-center justify-between border-b pb-3">
+              <div class="flex items-center gap-2">
+                <ng-icon name="lucidePackage" class="size-5 text-primary" />
+                <div>
+                  <h3 class="text-base font-bold text-foreground">Receta del kit</h3>
+                  <p class="text-xs text-muted-foreground">Agrega los productos individuales que componen este paquete.</p>
+                </div>
               </div>
               <button type="button" z-button zType="outline" zSize="sm" (click)="agregarComponente()">
-                <ng-icon name="lucidePlus" class="mr-2" />
+                <ng-icon name="lucidePlus" class="mr-1.5" />
                 Agregar componente
               </button>
             </div>
 
-            <div formArrayName="componentes" class="flex flex-col gap-4">
+            <div formArrayName="componentes" class="flex flex-col gap-3">
               @for (control of componentesArray.controls; track $index) {
-                <div [formGroupName]="$index" class="flex flex-col sm:flex-row gap-4 p-4 border rounded-md bg-card">
+                <div [formGroupName]="$index" class="flex flex-col sm:flex-row gap-4 p-4 border rounded-xl bg-background">
                   <div z-field class="flex-1">
-                    <label z-field-label>Producto (componente) *</label>
+                    <label z-field-label>Producto componente *</label>
                     <z-select formControlName="producto_componente_id" placeholder="Selecciona un producto">
                       @for (prod of productosSimples(); track prod.id) {
                         <z-select-item [zValue]="prod.id">{{ prod.sku }} - {{ prod.nombre }}</z-select-item>
@@ -502,10 +378,18 @@
                   </div>
                   <div z-field class="w-full sm:w-48">
                     <label z-field-label>Cantidad *</label>
-                    <input z-input type="number" formControlName="cantidad" placeholder="1" min="0.01" step="0.01">
+                    <input z-input type="number" formControlName="cantidad" placeholder="1" min="0.01" step="0.01" />
                   </div>
                   <div class="flex items-end pb-0.5">
-                    <button type="button" z-button zType="ghost" zSize="icon-sm" class="text-destructive hover:bg-destructive/10" (click)="removerComponente($index)" aria-label="Quitar este componente">
+                    <button
+                      type="button"
+                      z-button
+                      zType="ghost"
+                      zSize="icon-sm"
+                      class="text-destructive hover:bg-destructive/10"
+                      (click)="removerComponente($index)"
+                      aria-label="Quitar componente"
+                    >
                       <ng-icon name="lucideTrash" class="size-4" />
                     </button>
                   </div>
@@ -514,24 +398,470 @@
                 <z-empty
                   zIcon="lucidePackage"
                   zTitle="Sin componentes"
-                  zDescription="El kit se creará vacío. Puedes agregar componentes ahora o más tarde."
-                  class="border border-dashed rounded-md">
+                  zDescription="El kit se creará sin componentes. Puedes agregarlos ahora o editarlos después."
+                  class="border border-dashed rounded-xl py-6"
+                >
                 </z-empty>
               }
             </div>
-          </fieldset>
+          </div>
         }
 
-        <div class="flex justify-end gap-3 pt-6 border-t">
-          <a z-button zType="outline" routerLink="/inventario/productos">Cancelar</a>
-          <button z-button zType="default" type="submit" [zLoading]="loading()" [zDisabled]="loading()">
-            @if (!loading()) {
-              <ng-icon name="lucideSave" class="mr-2" />
-            }
-            {{ loading() ? 'Guardando…' : 'Guardar producto' }}
-          </button>
+        <!-- CARD 5: INVENTARIO INICIAL POR SUCURSAL (si no es servicio) -->
+        @if (!esServicio()) {
+          <div z-card class="p-6 space-y-4 rounded-2xl border bg-card">
+            <div class="flex items-center justify-between border-b pb-3">
+              <div class="flex items-center gap-2">
+                <ng-icon name="lucideBoxes" class="size-5 text-primary" />
+                <div>
+                  <h3 class="text-base font-bold text-foreground">Inventario inicial por sucursal</h3>
+                  <p class="text-xs text-muted-foreground">Opcional. Registra la existencia inicial y umbrales de alerta.</p>
+                </div>
+              </div>
+              <button type="button" z-button zType="outline" zSize="sm" (click)="agregarExistencia()">
+                <ng-icon name="lucidePlus" class="mr-1.5" />
+                Agregar sucursal
+              </button>
+            </div>
+
+            <div formArrayName="existencias" class="flex flex-col gap-4">
+              @for (control of existenciasArray.controls; track $index) {
+                <div [formGroupName]="$index" class="p-4 border rounded-xl bg-background relative space-y-3">
+                  <button
+                    type="button"
+                    z-button
+                    zType="ghost"
+                    zSize="icon-sm"
+                    class="absolute top-3 right-3 text-destructive hover:bg-destructive/10"
+                    (click)="removerExistencia($index)"
+                    aria-label="Quitar sucursal"
+                  >
+                    <ng-icon name="lucideTrash" class="size-4" />
+                  </button>
+
+                  <div z-field-group class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4 pt-1">
+                    <div z-field>
+                      <label z-field-label>Sucursal *</label>
+                      <z-select formControlName="sucursal_id" placeholder="Seleccionar sucursal">
+                        @for (sucursal of sucursalService.sucursales(); track sucursal.id) {
+                          <z-select-item [zValue]="sucursal.id">{{ sucursal.nombre }}</z-select-item>
+                        }
+                      </z-select>
+                    </div>
+                    <div z-field>
+                      <label z-field-label>Tipo movimiento *</label>
+                      <z-select formControlName="tipo" placeholder="Tipo">
+                        <z-select-item zValue="entrada">Entrada</z-select-item>
+                        <z-select-item zValue="ajuste_positivo">Ajuste positivo</z-select-item>
+                      </z-select>
+                    </div>
+                    <div z-field>
+                      <label z-field-label>Referencia *</label>
+                      <input z-input type="text" formControlName="referencia_tipo" placeholder="Ej. inventario_inicial" />
+                    </div>
+                    <div z-field>
+                      <label z-field-label>Motivo</label>
+                      <input z-input type="text" formControlName="motivo" placeholder="Opcional" />
+                    </div>
+
+                    <div z-field>
+                      <label z-field-label>Cantidad inicial</label>
+                      <input z-input type="number" formControlName="cantidad" placeholder="0.00" min="0" step="0.01" />
+                    </div>
+                    <div z-field>
+                      <label z-field-label>Costo unitario</label>
+                      <input z-input type="number" formControlName="costo_unitario" placeholder="0.00" min="0" step="0.01" />
+                    </div>
+                    <div z-field>
+                      <label z-field-label>Stock mínimo</label>
+                      <input z-input type="number" formControlName="stock_minimo" placeholder="0.00" min="0" step="0.01" />
+                    </div>
+                    <div z-field>
+                      <label z-field-label>Stock máximo</label>
+                      <input z-input type="number" formControlName="stock_maximo" placeholder="0.00" min="0" step="0.01" />
+                    </div>
+                  </div>
+                </div>
+              } @empty {
+                <z-empty
+                  zIcon="lucidePackage"
+                  zTitle="Sin inventario inicial"
+                  zDescription="El producto se creará sin existencias. Puedes registrar movimientos en cualquier momento."
+                  class="border border-dashed rounded-xl py-6"
+                >
+                </z-empty>
+              }
+            </div>
+          </div>
+        } @else {
+          <z-alert
+            zType="default"
+            zTitle="Producto de tipo servicio"
+            zDescription="No maneja inventario: no aplican stock inicial ni existencias por sucursal."
+          ></z-alert>
+        }
+
+        <!-- CARD 6: AGENDA (si tipo == 'servicio') -->
+        @if (esServicio()) {
+          <div z-card class="p-6 space-y-4 rounded-2xl border bg-card">
+            <div class="flex items-center gap-2 border-b pb-3">
+              <ng-icon name="lucideCalendar" class="size-5 text-primary" />
+              <div>
+                <h3 class="text-base font-bold text-foreground">Configuración de Agenda</h3>
+                <p class="text-xs text-muted-foreground">Parámetros para agendar citas para este servicio.</p>
+              </div>
+            </div>
+
+            <div z-field-group class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
+              <div z-field>
+                <label z-field-label for="duracion_minutos">Duración (minutos)</label>
+                <input
+                  z-input
+                  id="duracion_minutos"
+                  type="number"
+                  min="1"
+                  step="1"
+                  formControlName="duracion_minutos"
+                  placeholder="Ej. 30"
+                />
+              </div>
+              <div z-field>
+                <label z-field-label for="tiempo_buffer_minutos">Buffer entre citas (minutos)</label>
+                <input
+                  z-input
+                  id="tiempo_buffer_minutos"
+                  type="number"
+                  min="0"
+                  step="1"
+                  formControlName="tiempo_buffer_minutos"
+                  placeholder="0"
+                />
+              </div>
+
+              <div z-field zOrientation="horizontal" class="md:col-span-2">
+                <z-switch formControlName="requiere_recurso" zId="requiere_recurso"></z-switch>
+                <label z-field-label for="requiere_recurso">Requiere recurso específico (silla, cabina, equipo)</label>
+              </div>
+
+              <div z-field zOrientation="horizontal" class="md:col-span-2">
+                <z-switch formControlName="disponibilidad_cruzada_activa" zId="disponibilidad_cruzada_activa"></z-switch>
+                <label z-field-label for="disponibilidad_cruzada_activa">Permite ofertar a personal de otra sucursal</label>
+              </div>
+            </div>
+          </div>
+        }
+
+      </div>
+
+      <!-- COLUMNA DERECHA: PRECIOS, CLASIFICACIÓN Y CONFIGURACIÓN (4 cols) -->
+      <div class="space-y-6 lg:col-span-4">
+        
+        <!-- CARD 1: PRECIOS Y COSTOS -->
+        <div z-card class="p-6 space-y-4 rounded-2xl border bg-card">
+          <div class="flex items-center gap-2 border-b pb-3">
+            <ng-icon name="lucideCoins" class="size-5 text-emerald-600 dark:text-emerald-400" />
+            <div>
+              <h3 class="text-base font-bold text-foreground">Precios y Costos</h3>
+              <p class="text-xs text-muted-foreground">Valores comerciales unitarios del producto.</p>
+            </div>
+          </div>
+
+          <div z-field-group class="space-y-4">
+            <!-- Precio de Venta -->
+            <div z-field [attr.data-invalid]="precioVentaError().length ? 'true' : null">
+              <label z-field-label for="precio_venta">Precio de venta *</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2.5 text-xs text-muted-foreground font-mono">$</span>
+                <input
+                  z-input
+                  id="precio_venta"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  formControlName="precio_venta"
+                  placeholder="0.00"
+                  class="pl-7"
+                  [attr.aria-invalid]="precioVentaError().length ? 'true' : null"
+                />
+              </div>
+              <z-field-error [zErrors]="precioVentaError()"></z-field-error>
+            </div>
+
+            <!-- Costo -->
+            <div z-field [attr.data-invalid]="costoError().length ? 'true' : null">
+              <label z-field-label for="costo">Costo de compra *</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2.5 text-xs text-muted-foreground font-mono">$</span>
+                <input
+                  z-input
+                  id="costo"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  formControlName="costo"
+                  placeholder="0.00"
+                  class="pl-7"
+                  [attr.aria-invalid]="costoError().length ? 'true' : null"
+                />
+              </div>
+              <z-field-error [zErrors]="costoError()"></z-field-error>
+            </div>
+
+            <!-- Impuesto -->
+            <div z-field [attr.data-invalid]="impuestoTasaError().length ? 'true' : null">
+              <label z-field-label for="impuesto_tasa">Tasa de Impuesto (%) *</label>
+              <input
+                z-input
+                id="impuesto_tasa"
+                type="number"
+                min="0"
+                step="0.01"
+                formControlName="impuesto_tasa"
+                placeholder="16"
+                [attr.aria-invalid]="impuestoTasaError().length ? 'true' : null"
+              />
+              <z-field-error [zErrors]="impuestoTasaError()"></z-field-error>
+            </div>
+
+            <z-separator></z-separator>
+
+            <!-- Mayoreo (Opcional) -->
+            <div class="space-y-3">
+              <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Mayoreo (Opcional)</span>
+              <div z-field>
+                <label z-field-label for="precio_mayoreo">Precio mayoreo</label>
+                <input
+                  z-input
+                  id="precio_mayoreo"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  formControlName="precio_mayoreo"
+                  placeholder="0.00"
+                />
+              </div>
+              <div z-field>
+                <label z-field-label for="cantidad_minima_mayoreo">Cantidad mínima mayoreo</label>
+                <input
+                  z-input
+                  id="cantidad_minima_mayoreo"
+                  type="number"
+                  min="0"
+                  step="any"
+                  formControlName="cantidad_minima_mayoreo"
+                  placeholder="Ej. 10"
+                />
+              </div>
+            </div>
+
+            <z-separator></z-separator>
+
+            <!-- Switches -->
+            <div class="space-y-3 pt-1">
+              <div z-field zOrientation="horizontal">
+                <z-switch formControlName="permite_stock_negativo" zId="permite_stock_negativo"></z-switch>
+                <label z-field-label for="permite_stock_negativo">Permitir venta sin existencia (stock negativo)</label>
+              </div>
+
+              <div z-field zOrientation="horizontal">
+                <z-switch formControlName="precio_incluye_impuesto" zId="precio_incluye_impuesto"></z-switch>
+                <label z-field-label for="precio_incluye_impuesto">El precio de venta ya incluye IVA</label>
+              </div>
+            </div>
+
+          </div>
         </div>
-      </form>
-    </z-card-content>
-  </div>
+
+        <!-- CARD 2: CLASIFICACIÓN Y TIPO -->
+        <div z-card class="p-6 space-y-4 rounded-2xl border bg-card">
+          <div class="flex items-center gap-2 border-b pb-3">
+            <ng-icon name="lucideFolderTree" class="size-5 text-primary" />
+            <div>
+              <h3 class="text-base font-bold text-foreground">Clasificación</h3>
+              <p class="text-xs text-muted-foreground">Agrupación en catálogo y comportamiento.</p>
+            </div>
+          </div>
+
+          <div z-field-group class="space-y-4">
+            <!-- Categoría -->
+            <div z-field [attr.data-invalid]="categoriaError().length ? 'true' : null">
+              <label z-field-label>Categoría *</label>
+              <z-select
+                formControlName="categoria_id"
+                placeholder="Selecciona una categoría"
+                [attr.aria-invalid]="categoriaError().length ? 'true' : null"
+              >
+                @for (cat of categorias(); track cat.id) {
+                  <z-select-item [zValue]="cat.id">{{ cat.nombre }}</z-select-item>
+                }
+              </z-select>
+              <z-field-error [zErrors]="categoriaError()"></z-field-error>
+            </div>
+
+            <!-- Tipo de Producto -->
+            <div z-field [attr.data-invalid]="tipoError().length ? 'true' : null">
+              <label z-field-label>Tipo de producto *</label>
+              <z-select
+                formControlName="tipo"
+                placeholder="Selecciona tipo"
+                [attr.aria-invalid]="tipoError().length ? 'true' : null"
+              >
+                <z-select-item zValue="simple">Simple</z-select-item>
+                <z-select-item zValue="fraccionable">Fraccionable (venta parcial)</z-select-item>
+                <z-select-item zValue="kit">Kit (compuesto)</z-select-item>
+                <z-select-item zValue="servicio">Servicio (no mueve inventario)</z-select-item>
+              </z-select>
+              <z-field-error [zErrors]="tipoError()"></z-field-error>
+            </div>
+
+            <!-- Unidad de Medida Libre -->
+            <div z-field [attr.data-invalid]="unidadMedidaError().length ? 'true' : null">
+              <label z-field-label for="unidad_medida">Unidad de medida *</label>
+              <input
+                z-input
+                id="unidad_medida"
+                type="text"
+                formControlName="unidad_medida"
+                placeholder="Ej. pieza, kg, litro, reja"
+                [attr.aria-invalid]="unidadMedidaError().length ? 'true' : null"
+              />
+              <z-field-error [zErrors]="unidadMedidaError()"></z-field-error>
+            </div>
+
+            <!-- Unidad del Catálogo -->
+            <div z-field>
+              <div class="flex items-end gap-2">
+                <div class="flex-1">
+                  <label z-field-label>Unidad del catálogo (opcional)</label>
+                  <z-select formControlName="unidad_medida_id" placeholder="Sin vincular">
+                    <z-select-item zValue="">Sin vincular</z-select-item>
+                    @for (um of unidadesMedida(); track um.id) {
+                      <z-select-item [zValue]="um.id">{{ um.codigo }} — {{ um.nombre }}</z-select-item>
+                    }
+                  </z-select>
+                </div>
+                <button type="button" z-button zType="outline" zSize="default" (click)="abrirCrearUnidadMedida()">
+                  <ng-icon name="lucidePlus" class="mr-1" />
+                  Nueva
+                </button>
+              </div>
+            </div>
+
+            @if (permiteFraccionamiento()) {
+              <z-separator></z-separator>
+              <div class="space-y-3">
+                <div z-field zOrientation="horizontal">
+                  <z-switch
+                    formControlName="permite_venta_fraccionada"
+                    zId="permite_venta_fraccionada"
+                    [zDisabled]="esFraccionable()"
+                  ></z-switch>
+                  <label z-field-label for="permite_venta_fraccionada">Permite venta fraccionada</label>
+                </div>
+                <div z-field>
+                  <label z-field-label for="incremento_minimo_venta">Incremento mínimo de venta</label>
+                  <input
+                    z-input
+                    id="incremento_minimo_venta"
+                    type="number"
+                    step="any"
+                    min="0"
+                    formControlName="incremento_minimo_venta"
+                    placeholder="Ej. 0.5"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- CARD 3: CONFIGURACIÓN AVANZADA -->
+        <div z-card class="p-6 space-y-4 rounded-2xl border bg-card">
+          <div class="flex items-center gap-2 border-b pb-3">
+            <ng-icon name="lucideSettings" class="size-5 text-primary" />
+            <div>
+              <h3 class="text-base font-bold text-foreground">Opciones Avanzadas</h3>
+              <p class="text-xs text-muted-foreground">Lotes, envases abiertos y cashback.</p>
+            </div>
+          </div>
+
+          <div z-field-group class="space-y-4">
+            <div z-field zOrientation="horizontal">
+              <z-switch formControlName="es_sobre_pedido" zId="es_sobre_pedido"></z-switch>
+              <label z-field-label for="es_sobre_pedido">Sobre pedido (se vende sin stock)</label>
+            </div>
+
+            <div z-field zOrientation="horizontal">
+              <z-switch formControlName="requiere_lote" zId="requiere_lote"></z-switch>
+              <label z-field-label for="requiere_lote">Control por lote y caducidad (FEFO)</label>
+            </div>
+
+            <div z-field zOrientation="horizontal">
+              <z-switch formControlName="rastrea_instancia_abierta" zId="rastrea_instancia_abierta"></z-switch>
+              <label z-field-label for="rastrea_instancia_abierta">Rastrear envases abiertos (granel)</label>
+            </div>
+
+            @if (form.controls.rastrea_instancia_abierta.value) {
+              <div z-field>
+                <label z-field-label for="instancia_capacidad_default">Capacidad por envase *</label>
+                <input
+                  z-input
+                  id="instancia_capacidad_default"
+                  type="number"
+                  step="any"
+                  min="0"
+                  formControlName="instancia_capacidad_default"
+                  placeholder="Ej. 5"
+                />
+              </div>
+            }
+
+            <z-separator></z-separator>
+
+            <!-- Cashback / Monedero -->
+            <div class="space-y-3">
+              <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Monedero / Cashback</span>
+              <div z-field>
+                <label z-field-label for="monedero_pct">Porcentaje Monedero (%)</label>
+                <input
+                  z-input
+                  id="monedero_pct"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  formControlName="monedero_pct"
+                  placeholder="Ej. 5%"
+                />
+              </div>
+              <div z-field>
+                <label z-field-label for="monedero_monto">Monto Fijo Monedero</label>
+                <input
+                  z-input
+                  id="monedero_monto"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  formControlName="monedero_monto"
+                  placeholder="Ej. 10.00"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BOTONES INFERIORES DE ACCIÓN DE RESPALDO -->
+    <div class="flex justify-end gap-3 border-t pt-6">
+      <a routerLink="/inventario/productos" z-button zType="outline"> Cancelar </a>
+      <button z-button zType="default" type="submit" [zLoading]="loading()" [zDisabled]="loading()">
+        @if (!loading()) {
+          <ng-icon name="lucideSave" class="mr-2" />
+        }
+        {{ loading() ? 'Guardando…' : 'Guardar producto' }}
+      </button>
+    </div>
+  </form>
 </div>

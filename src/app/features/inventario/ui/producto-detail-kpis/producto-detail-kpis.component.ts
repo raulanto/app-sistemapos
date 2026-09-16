@@ -25,27 +25,40 @@ import { ZardBadgeComponent } from '../../../../shared/components/badge/badge.co
       <!-- KPI 1: Precio de Venta -->
       <z-card class="gap-3 transition-shadow duration-200 hover:shadow-md">
         <z-card-header>
-          <z-card-description zDescription="Precio de Venta" class="text-xs font-medium uppercase tracking-wide" />
+          <z-card-description
+            zDescription="Precio de Venta"
+            class="text-xs font-medium uppercase tracking-wide"
+          />
           <z-card-title
             [zTitle]="(producto().precio_venta | currency) || ''"
             class="mt-1 text-2xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400"
           />
           <z-card-action>
-            <z-badge zType="outline" class="gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+            <z-badge
+              zType="outline"
+              class="gap-1 font-medium text-emerald-600 dark:text-emerald-400"
+            >
               <ng-icon name="lucideTag" class="size-3.5" />
               Precio base
             </z-badge>
           </z-card-action>
         </z-card-header>
-        <z-card-footer class="flex-col items-start gap-1 border-t border-border/60 bg-transparent pt-3 text-xs">
-          <div class="line-clamp-1 font-medium text-muted-foreground">Valor unitario al público</div>
+        <z-card-footer
+          class="flex-col items-start gap-1 border-t border-border/60 bg-transparent pt-3 text-xs"
+        >
+          <div class="line-clamp-1 font-medium text-muted-foreground">
+            Valor unitario al público
+          </div>
         </z-card-footer>
       </z-card>
 
       <!-- KPI 2: Costo -->
       <z-card class="gap-3 transition-shadow duration-200 hover:shadow-md">
         <z-card-header>
-          <z-card-description zDescription="Costo de Compra" class="text-xs font-medium uppercase tracking-wide" />
+          <z-card-description
+            zDescription="Costo de Compra"
+            class="text-xs font-medium uppercase tracking-wide"
+          />
           <z-card-title
             [zTitle]="(producto().costo | currency) || ''"
             class="mt-1 text-2xl font-semibold tabular-nums"
@@ -57,7 +70,9 @@ import { ZardBadgeComponent } from '../../../../shared/components/badge/badge.co
             </z-badge>
           </z-card-action>
         </z-card-header>
-        <z-card-footer class="flex-col items-start gap-1 border-t border-border/60 bg-transparent pt-3 text-xs">
+        <z-card-footer
+          class="flex-col items-start gap-1 border-t border-border/60 bg-transparent pt-3 text-xs"
+        >
           <div class="line-clamp-1 font-medium text-muted-foreground">Costo promedio ponderado</div>
         </z-card-footer>
       </z-card>
@@ -65,7 +80,10 @@ import { ZardBadgeComponent } from '../../../../shared/components/badge/badge.co
       <!-- KPI 3: Margen -->
       <z-card class="gap-3 transition-shadow duration-200 hover:shadow-md">
         <z-card-header>
-          <z-card-description zDescription="Margen Bruto" class="text-xs font-medium uppercase tracking-wide" />
+          <z-card-description
+            zDescription="Margen Bruto"
+            class="text-xs font-medium uppercase tracking-wide"
+          />
           <z-card-title
             [zTitle]="(margen().monto | currency) || ''"
             class="mt-1 text-2xl font-semibold tabular-nums"
@@ -80,15 +98,22 @@ import { ZardBadgeComponent } from '../../../../shared/components/badge/badge.co
             </z-badge>
           </z-card-action>
         </z-card-header>
-        <z-card-footer class="flex-col items-start gap-1 border-t border-border/60 bg-transparent pt-3 text-xs">
-          <div class="line-clamp-1 font-medium text-muted-foreground">Utilidad sobre precio de venta</div>
+        <z-card-footer
+          class="flex-col items-start gap-1 border-t border-border/60 bg-transparent pt-3 text-xs"
+        >
+          <div class="line-clamp-1 font-medium text-muted-foreground">
+            Utilidad sobre precio de venta
+          </div>
         </z-card-footer>
       </z-card>
 
       <!-- KPI 4: Impuesto -->
       <z-card class="gap-3 transition-shadow duration-200 hover:shadow-md">
         <z-card-header>
-          <z-card-description zDescription="Impuesto" class="text-xs font-medium uppercase tracking-wide" />
+          <z-card-description
+            zDescription="Impuesto"
+            class="text-xs font-medium uppercase tracking-wide"
+          />
           <z-card-title
             [zTitle]="((producto().impuesto_tasa | number: '1.0-2') || '0') + '%'"
             class="mt-1 text-2xl font-semibold tabular-nums"
@@ -100,15 +125,22 @@ import { ZardBadgeComponent } from '../../../../shared/components/badge/badge.co
             </z-badge>
           </z-card-action>
         </z-card-header>
-        <z-card-footer class="flex-col items-start gap-1 border-t border-border/60 bg-transparent pt-3 text-xs">
-          <div class="line-clamp-1 font-medium text-muted-foreground">Tasa de impuesto aplicable</div>
+        <z-card-footer
+          class="flex-col items-start gap-1 border-t border-border/60 bg-transparent pt-3 text-xs"
+        >
+          <div class="line-clamp-1 font-medium text-muted-foreground">
+            Tasa de impuesto aplicable
+          </div>
         </z-card-footer>
       </z-card>
 
       <!-- KPI 5: Stock Global -->
       <z-card class="gap-3 transition-shadow duration-200 hover:shadow-md">
         <z-card-header>
-          <z-card-description zDescription="Stock Global" class="text-xs font-medium uppercase tracking-wide" />
+          <z-card-description
+            zDescription="Stock Global"
+            class="text-xs font-medium uppercase tracking-wide"
+          />
           <z-card-title
             [zTitle]="(totalStock() | number: '1.0-2') || '0'"
             class="mt-1 text-2xl font-semibold tabular-nums text-primary"
@@ -120,9 +152,12 @@ import { ZardBadgeComponent } from '../../../../shared/components/badge/badge.co
             </z-badge>
           </z-card-action>
         </z-card-header>
-        <z-card-footer class="flex-col items-start gap-1 border-t border-border/60 bg-transparent pt-3 text-xs">
+        <z-card-footer
+          class="flex-col items-start gap-1 border-t border-border/60 bg-transparent pt-3 text-xs"
+        >
           <div class="line-clamp-1 font-medium text-muted-foreground">
-            {{ producto().unidad_medida | lowercase }}s en {{ producto().existencias?.length || 0 }} sucursal(es)
+            {{ producto().unidad_medida | lowercase }}s en
+            {{ producto().existencias?.length || 0 }} sucursal(es)
           </div>
         </z-card-footer>
       </z-card>
