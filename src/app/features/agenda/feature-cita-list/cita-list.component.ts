@@ -11,6 +11,14 @@ import {
   lucidePlus,
   lucideRefreshCw,
   lucideX,
+  lucideClock,
+  lucideUser,
+  lucideSearch,
+  lucideFilter,
+  lucideSparkles,
+  lucideAlertCircle,
+  lucideCheckCircle2,
+  lucideClipboardList,
 } from '@ng-icons/lucide';
 
 import { CitaService } from '../data-access/services/cita.service';
@@ -21,8 +29,10 @@ import { AuthService } from '@/core/auth/api/auth.service';
 import { PERMISOS } from '@/core/auth/permissions';
 
 import { ZardTableImports } from '../../../shared/components/table/table.imports';
+import { ZardCardImports } from '../../../shared/components/card/card.imports';
 import { ZardButtonComponent } from '../../../shared/components/button/button.component';
 import { ZardBadgeComponent } from '../../../shared/components/badge/badge.component';
+import { ZardBadgeTypeVariants } from '../../../shared/components/badge/badge.variants';
 import { ZardEmptyComponent } from '../../../shared/components/empty/empty.component';
 import { ZardSkeletonComponent } from '../../../shared/components/skeleton/skeleton.component';
 import { ZardInputComponent } from '../../../shared/components/input/input.component';
@@ -48,6 +58,7 @@ function hoyISO(): string {
     RouterLink,
     NgIconComponent,
     ...ZardTableImports,
+    ...ZardCardImports,
     ...ZardSelectImports,
     ...ZardPopoverImports,
     ...ZardPaginationImports,
@@ -58,7 +69,23 @@ function hoyISO(): string {
     ZardSkeletonComponent,
   ],
   viewProviders: [
-    provideIcons({ lucideCalendar, lucideCalendarClock, lucideCalendarDays, lucideCheck, lucidePlus, lucideRefreshCw, lucideX }),
+    provideIcons({
+      lucideCalendar,
+      lucideCalendarClock,
+      lucideCalendarDays,
+      lucideCheck,
+      lucidePlus,
+      lucideRefreshCw,
+      lucideX,
+      lucideClock,
+      lucideUser,
+      lucideSearch,
+      lucideFilter,
+      lucideSparkles,
+      lucideAlertCircle,
+      lucideCheckCircle2,
+      lucideClipboardList,
+    }),
   ],
   templateUrl: './cita-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -101,6 +128,10 @@ export class CitaListComponent {
   });
 
   readonly hayFiltros = computed(() => !!this.estado() || !!this.servicioId() || this.fecha() !== hoyISO());
+
+  readonly completadasCount = computed(() => this.citas().filter(c => c.estado === 'completada').length);
+  readonly enProcesoCount = computed(() => this.citas().filter(c => c.estado === 'en_proceso' || c.estado === 'asignada').length);
+  readonly porAsignarCount = computed(() => this.citas().filter(c => c.estado === 'por_asignar' || c.estado === 'sin_empleado_disponible').length);
 
   readonly page = signal(1);
   readonly pageSize = signal(20);
@@ -314,11 +345,24 @@ export class CitaListComponent {
     return this.servicioNombre()[id] ?? id.slice(0, 8);
   }
 
-  estadoBadge(e: EstadoCita): 'default' | 'secondary' | 'destructive' | 'outline' {
-    if (e === 'completada') return 'default';
-    if (e === 'cancelada' || e === 'no_show' || e === 'sin_empleado_disponible') return 'destructive';
-    if (e === 'asignada' || e === 'en_proceso') return 'secondary';
-    return 'outline';
+  estadoBadge(e: EstadoCita): ZardBadgeTypeVariants {
+    switch (e) {
+      case 'completada':
+        return 'success';
+      case 'en_proceso':
+        return 'indigo-ghost';
+      case 'asignada':
+        return 'info';
+      case 'por_asignar':
+        return 'warning';
+      case 'cancelada':
+      case 'no_show':
+        return 'danger';
+      case 'sin_empleado_disponible':
+        return 'rose-outline';
+      default:
+        return 'outline';
+    }
   }
   labelEstado(e: string) {
     return this.estados.find(x => x.value === e)?.label ?? e;
