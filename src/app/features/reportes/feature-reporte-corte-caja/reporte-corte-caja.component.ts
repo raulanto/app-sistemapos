@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { DatePipe, CurrencyPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -30,7 +30,6 @@ interface DetalleLinea {
   standalone: true,
   imports: [
     DatePipe,
-    CurrencyPipe,
     FormsModule,
     NgIcon,
     ...ZardTableImports,
