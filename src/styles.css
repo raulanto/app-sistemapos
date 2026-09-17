@@ -1,6 +1,9 @@
 
 @layer ng-icon, theme, base, components, utilities;
 @import 'tailwindcss';
+@import './app/shared/components/styles/typeset.css';
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
 @import './app/shared/core/css/tailwind.css';
 @plugin "tailwindcss-animate";
 
@@ -16,6 +19,8 @@
 }
 :root {
   --font-sans: 'Google Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-geist: 'Geist Variable', sans-serif;
+  --font-geist-mono: 'Geist Mono Variable', monospace;
   --radius: 1rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0 0);
@@ -153,7 +158,18 @@
   border-radius: 5px;
 }
 
+
 ::-webkit-scrollbar-track {
   border-radius: 5px;
   background: var(--muted);
+}
+
+/* ─── Typeset preset — docs surface ───────────────────────────────────────── */
+.typeset-docs {
+  --typeset-font-body:    var(--font-geist);
+  --typeset-font-heading: var(--font-geist);
+  --typeset-font-mono:    var(--font-geist-mono);
+  --typeset-size:         15px;
+  --typeset-leading:      1.75;
+  --typeset-flow:         1.25em;
 }

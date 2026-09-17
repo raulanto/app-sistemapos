@@ -72,6 +72,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/sucursales/sucursales.routes').then((m) => m.SUCURSALES_ROUTES),
       },
+      {
+        path: 'ayuda',
+        loadChildren: () =>
+          import('./features/ayuda/ayuda.routes').then((m) => m.AYUDA_ROUTES),
+      },
       { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
     ],
   },
