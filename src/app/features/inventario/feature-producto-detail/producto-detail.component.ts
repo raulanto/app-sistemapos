@@ -53,18 +53,18 @@ import { MovimientoFormSheetComponent } from '../ui/movimiento-form-sheet/movimi
 import { UmbralesFormSheetComponent } from '../ui/umbrales-form-sheet/umbrales-form-sheet.component';
 import { ComponenteFormSheetComponent } from '../ui/componente-form-sheet/componente-form-sheet.component';
 import { UnidadFormSheetComponent } from '../ui/unidad-form-sheet/unidad-form-sheet.component';
-import { ZardButtonComponent } from '../../../shared/components/button/button.component';
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
 import { ZardChartImports } from '../../../shared/components/chart/chart.imports';
 import { ZardEmptyComponent } from '../../../shared/components/empty/empty.component';
 import { ZardSkeletonComponent } from '../../../shared/components/skeleton/skeleton.component';
-import { ZardSeparatorComponent } from '../../../shared/components/separator/separator.component';
 import { ZardAlertDialogService } from '../../../shared/components/alert-dialog/alert-dialog.service';
 import { ImagenGaleriaComponent } from '../ui/imagen-galeria/imagen-galeria.component';
 import { ComponenteResponse } from '../data-access/inventario.models';
 import { ProveedorService } from '../../proveedores/data-access/proveedor.service';
 import { mensajeProveedorError, ProductoProveedorResponse, ProveedorResponse } from '../../proveedores/data-access/proveedores.models';
 import { ProductoProveedorFormSheetComponent } from '../../proveedores/ui/producto-proveedor-form-sheet/producto-proveedor-form-sheet.component';
+
+import { ProductoAccionesService } from '../data-access/producto-acciones.service';
 
 import { ProductoDetailHeaderComponent } from '../ui/producto-detail-header/producto-detail-header.component';
 import { ProductoDetailKpisComponent } from '../ui/producto-detail-kpis/producto-detail-kpis.component';
@@ -145,6 +145,7 @@ export class ProductoDetailComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly sheetService = inject(ZardSheetService);
   private readonly inventarioAction = inject(InventarioActionService);
+  private readonly productoAcciones = inject(ProductoAccionesService);
   private readonly sonner = inject(ZardSonnerService);
   private readonly alertDialog = inject(ZardAlertDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -399,64 +400,25 @@ export class ProductoDetailComponent implements OnInit {
   agregarProveedor() {
     const prod = this.producto();
     if (!prod) return;
-    this.sheetService.create({
-      zTitle: 'Vincular proveedor',
-      zDescription: `Agrega un proveedor para ${prod.nombre}.`,
-      zContent: ProductoProveedorFormSheetComponent,
-      zSize: 'lg',
-      zData: { productoId: prod.id },
-      zOkText: 'Vincular',
-      zCancelText: 'Cancelar',
-      zOnOk: (instance: any) => {
-        const obs = instance.save();
-        if (!obs) return false;
-        return new Promise<void>((resolve, reject) => {
-          obs.subscribe({
-            next: () => {
-              this.sonner.success('Proveedor vinculado');
-              this.cargarProveedoresProducto(prod.id);
-              resolve();
-            },
-            error: (err: unknown) => {
-              this.sonner.error(mensajeProveedorError(err, 'No se pudo vincular el proveedor'));
-              reject(err);
-            },
-          });
-        });
-      },
-    });
+    this.productoAcciones.openAgregarProveedorSheet(prod, () =>
+      this.cargarProveedoresProducto(prod.id)
+    );
   }
 
   marcarPrincipalProveedor(fila: { link: ProductoProveedorResponse }) {
     const prod = this.producto();
     if (!prod) return;
-    this.proveedorService.marcarPrincipal(prod.id, fila.link.id).subscribe({
-      next: () => {
-        this.sonner.success('Marcado como proveedor principal');
-        this.cargarProveedoresProducto(prod.id);
-      },
-      error: (err) => this.sonner.error(mensajeProveedorError(err, 'No se pudo marcar como principal')),
-    });
+    this.productoAcciones.marcarPrincipalProveedor(prod.id, fila.link.id, () =>
+      this.cargarProveedoresProducto(prod.id)
+    );
   }
 
   desvincularProveedorProducto(fila: { link: ProductoProveedorResponse; nombreProveedor: string }) {
     const prod = this.producto();
     if (!prod) return;
-    this.alertDialog.confirm({
-      zTitle: `¿Desvincular ${fila.nombreProveedor}?`,
-      zDescription: 'Este producto dejará de comprarse a ese proveedor.',
-      zOkText: 'Desvincular',
-      zOkDestructive: true,
-      zOnOk: () => {
-        this.proveedorService.desvincularProveedor(prod.id, fila.link.id).subscribe({
-          next: () => {
-            this.sonner.success('Vínculo desactivado');
-            this.cargarProveedoresProducto(prod.id);
-          },
-          error: (err) => this.sonner.error(mensajeProveedorError(err, 'No se pudo desvincular')),
-        });
-      },
-    });
+    this.productoAcciones.desvincularProveedor(prod.id, fila.link.id, fila.nombreProveedor, () =>
+      this.cargarProveedoresProducto(prod.id)
+    );
   }
 
   cargarMovimientos(productoId: string) {
@@ -536,42 +498,17 @@ export class ProductoDetailComponent implements OnInit {
   openEditSheet() {
     const prod = this.producto();
     if (!prod) return;
-    this.sheetService.create({
-      zTitle: `Editar ${prod.sku}`,
-      zDescription: 'Modifica los datos del producto.',
-      zContent: ProductoFormSheetComponent,
-      zSize: 'lg',
-      zData: {
-        productoId: prod.id,
-        onSaved: () => {
-          this.sonner.success('Producto actualizado exitosamente');
-          this.refrescarProducto(prod.id);
-        }
-      },
-      zHideFooter: true
-    });
+    this.productoAcciones.openEditSheet(prod, () =>
+      this.refrescarProducto(prod.id)
+    );
   }
 
   desactivarProducto() {
     const prod = this.producto();
     if (!prod) return;
-    const conStock = (prod.existencias ?? []).some(e => Number(e.cantidad) > 0);
-    this.alertDialog.confirm({
-      zTitle: `¿Desactivar producto ${prod.sku}?`,
-      zDescription: conStock
-        ? 'Este producto todavía tiene existencias en una o más sucursales. Se desactivará de todos modos y dejará de estar disponible para la venta.'
-        : 'El producto dejará de estar disponible para la venta.',
-      zOkText: 'Desactivar',
-      zOkDestructive: true,
-      zOnOk: () => {
-        this.inventarioAction.handleAction(
-          this.productoService.desactivar(prod.id, conStock),
-          'Producto desactivado correctamente',
-          'Error al desactivar el producto',
-          () => this.producto.update(p => (p ? { ...p, activo: false } : p))
-        );
-      }
-    });
+    this.productoAcciones.desactivarProducto(prod, () =>
+      this.producto.update(p => (p ? { ...p, activo: false } : p))
+    );
   }
 
   /** La galería ya persistió el cambio; refresca solo el producto (portada + URLs prefirmadas). */
@@ -583,302 +520,97 @@ export class ProductoDetailComponent implements OnInit {
   eliminarProducto() {
     const prod = this.producto();
     if (!prod) return;
-    this.alertDialog.confirm({
-      zTitle: `¿Eliminar producto ${prod.sku}?`,
-      zDescription:
-        'Se borrará permanentemente junto con sus imágenes, presentaciones, receta, lotes y existencias. ' +
-        'No se puede si tiene movimientos de inventario o es componente de un kit: en ese caso, desactívalo.',
-      zOkText: 'Eliminar',
-      zOkDestructive: true,
-      zOnOk: () => {
-        this.productoService.eliminar(prod.id).subscribe({
-          next: () => {
-            this.sonner.success('Producto eliminado correctamente');
-            this.router.navigate(['/inventario/productos']);
-          },
-          error: (err) => {
-            console.error('Error al eliminar el producto', err);
-            if (err?.status === 409) {
-              this.sonner.error(
-                err?.error?.error?.message ??
-                  'El producto tiene historial y no se puede eliminar. Desactívalo en su lugar.',
-              );
-            } else {
-              this.sonner.error('Error al eliminar el producto');
-            }
-          },
-        });
-      },
-    });
+    this.productoAcciones.eliminarProducto(prod);
   }
 
   activarProducto() {
     const prod = this.producto();
     if (!prod) return;
-    this.alertDialog.confirm({
-      zTitle: `¿Activar producto ${prod.sku}?`,
-      zDescription: 'El producto volverá a estar disponible para la venta.',
-      zOkText: 'Activar',
-      zOnOk: () => {
-        this.inventarioAction.handleAction(
-          this.productoService.activar(prod.id),
-          'Producto activado correctamente',
-          'Error al activar el producto',
-          () => this.producto.update(p => (p ? { ...p, activo: true } : p))
-        );
-      }
-    });
+    this.productoAcciones.activarProducto(prod, () =>
+      this.producto.update(p => (p ? { ...p, activo: true } : p))
+    );
   }
 
   openMovimientoSheet() {
     const prod = this.producto();
     if (!prod) return;
-    this.sheetService.create({
-      zTitle: 'Agregar Movimiento',
-      zDescription: `Registrar movimiento manual para ${prod.sku}.`,
-      zContent: MovimientoFormSheetComponent,
-      zData: { productoId: prod.id },
-      zOkText: 'Aplicar',
-      zCancelText: 'Cancelar',
-      zOnOk: (instance: any) => {
-        return this.inventarioAction.handleSheetSave(
-          instance.save(),
-          'Movimiento registrado exitosamente',
-          'Error al registrar el movimiento',
-          () => {
-            // Small delay to ensure backend transaction is fully committed before reading
-            setTimeout(() => {
-              this.refrescarProducto(prod.id);
-              this.cargarMovimientos(prod.id);
-            }, 300);
-          }
-        );
-      }
+    this.productoAcciones.openMovimientoSheet(prod, () => {
+      this.refrescarProducto(prod.id);
+      this.cargarMovimientos(prod.id);
     });
   }
 
-  async openTransferenciaSheet() {
+  openTransferenciaSheet() {
     const prod = this.producto();
     if (!prod) return;
-
-    const { TransferenciaFormSheetComponent } = await import('../ui/transferencia-form-sheet/transferencia-form-sheet.component');
-    
-    this.sheetService.create({
-      zTitle: 'Transferir Stock',
-      zDescription: `Mover unidades de ${prod.nombre} entre sucursales.`,
-      zContent: TransferenciaFormSheetComponent,
-      zSize: 'lg',
-      zData: { productoId: prod.id },
-      zOkText: 'Transferir',
-      zCancelText: 'Cancelar',
-      zOnOk: (instance: any) => {
-        return this.inventarioAction.handleSheetSave(
-          instance.save(),
-          'Transferencia realizada exitosamente',
-          'Error al realizar la transferencia',
-          () => {
-            setTimeout(() => {
-              this.refrescarProducto(prod.id);
-              this.cargarMovimientos(prod.id);
-            }, 300);
-          }
-        );
-      }
+    this.productoAcciones.openTransferenciaSheet(prod, () => {
+      this.refrescarProducto(prod.id);
+      this.cargarMovimientos(prod.id);
     });
   }
 
   openUmbralesSheet(existencia: ExistenciaResponse) {
     const prod = this.producto();
     if (!prod) return;
-    this.sheetService.create({
-      zTitle: 'Configurar Umbrales',
-      zDescription: `Establecer stock mínimo y máximo para la sucursal ${this.getNombreSucursal(existencia.sucursal_id)}.`,
-      zContent: UmbralesFormSheetComponent,
-      zData: {
-        productoId: prod.id,
-        sucursalId: existencia.sucursal_id,
-        stockMinimo: existencia.stock_minimo ? Number(existencia.stock_minimo) : 0,
-        stockMaximo: existencia.stock_maximo != null ? Number(existencia.stock_maximo) : null
-      },
-      zOkText: 'Guardar Umbrales',
-      zCancelText: 'Cancelar',
-      zOnOk: (instance: any) => {
-        return this.inventarioAction.handleSheetSave(
-          instance.save(),
-          'Umbrales configurados exitosamente',
-          'Error al configurar umbrales',
-          () => {
-            setTimeout(() => {
-              this.refrescarProducto(prod.id);
-            }, 300);
-          }
-        );
-      }
-    });
+    const nombreSucursal = this.getNombreSucursal(existencia.sucursal_id);
+    this.productoAcciones.openUmbralesSheet(prod, existencia, nombreSucursal, () =>
+      this.refrescarProducto(prod.id)
+    );
   }
 
   openAddComponenteSheet() {
     const prod = this.producto();
     if (!prod || prod.tipo !== 'kit') return;
-
-    this.sheetService.create({
-      zTitle: 'Agregar Componente',
-      zDescription: `Selecciona un producto para agregarlo a la receta de ${prod.nombre}.`,
-      zContent: ComponenteFormSheetComponent,
-      zData: { kitId: prod.id },
-      zOkText: 'Agregar',
-      zCancelText: 'Cancelar',
-      zOnOk: (instance: any) => {
-        return this.inventarioAction.handleSheetSave(
-          instance.save(),
-          'Componente agregado exitosamente',
-          'Error al agregar componente',
-          () => {
-            setTimeout(() => {
-              this.refrescarProducto(prod.id);
-            }, 300);
-          }
-        );
-      }
-    });
+    this.productoAcciones.openAddComponenteSheet(prod, () =>
+      this.refrescarProducto(prod.id)
+    );
   }
 
   openEditComponenteSheet(comp: ComponenteResponse) {
     const prod = this.producto();
     if (!prod || prod.tipo !== 'kit') return;
-
-    this.sheetService.create({
-      zTitle: 'Editar Componente',
-      zDescription: `Actualiza la cantidad del componente.`,
-      zContent: ComponenteFormSheetComponent,
-      zData: { kitId: prod.id, componente: comp },
-      zOkText: 'Guardar',
-      zCancelText: 'Cancelar',
-      zOnOk: (instance: any) => {
-        return this.inventarioAction.handleSheetSave(
-          instance.save(),
-          'Componente actualizado',
-          'Error al actualizar componente',
-          () => {
-            setTimeout(() => {
-              this.refrescarProducto(prod.id);
-            }, 300);
-          }
-        );
-      }
-    });
+    this.productoAcciones.openEditComponenteSheet(prod, comp, () =>
+      this.refrescarProducto(prod.id)
+    );
   }
 
   quitarComponente(comp: ComponenteResponse) {
     const prod = this.producto();
     if (!prod || prod.tipo !== 'kit') return;
-
-    this.alertDialog.confirm({
-      zTitle: '¿Quitar componente de la receta?',
-      zDescription: `Se eliminará "${comp.componente?.nombre || 'este producto'}" de la receta de ${prod.nombre}.`,
-      zOkText: 'Quitar',
-      zOkDestructive: true,
-      zOnOk: () => {
-        this.inventarioAction.handleAction(
-          this.productoService.quitarComponente(prod.id, comp.producto_componente_id),
-          'Componente removido',
-          'Error al remover componente',
-          () => this.refrescarProducto(prod.id)
-        );
-      }
-    });
+    this.productoAcciones.quitarComponente(prod.id, prod.nombre, comp, () =>
+      this.refrescarProducto(prod.id)
+    );
   }
 
   openAddUnidadSheet() {
     const prod = this.producto();
     if (!prod || prod.tipo === 'kit') return;
-
-    this.sheetService.create({
-      zTitle: 'Agregar Presentación',
-      zDescription: `Nueva presentación de venta para ${prod.nombre}.`,
-      zContent: UnidadFormSheetComponent,
-      zSize: 'lg',
-      zData: { productoId: prod.id, unidadBase: prod.unidad_medida },
-      zOkText: 'Guardar',
-      zCancelText: 'Cancelar',
-      zOnOk: (instance: any) => {
-        return this.inventarioAction.handleSheetSave(
-          instance.save(),
-          'Presentación agregada exitosamente',
-          'Error al agregar presentación',
-          () => {
-            setTimeout(() => {
-              this.cargarUnidades(prod.id);
-            }, 300);
-          }
-        );
-      }
-    });
+    this.productoAcciones.openAddUnidadSheet(prod, () =>
+      this.cargarUnidades(prod.id)
+    );
   }
 
   openEditUnidadSheet(unidad: UnidadResponse) {
     const prod = this.producto();
     if (!prod || prod.tipo === 'kit') return;
-
-    this.sheetService.create({
-      zTitle: 'Editar Presentación',
-      zDescription: `Actualiza los datos de la presentación.`,
-      zContent: UnidadFormSheetComponent,
-      zSize: 'lg',
-      zData: { productoId: prod.id, unidadBase: prod.unidad_medida, unidad },
-      zOkText: 'Guardar',
-      zCancelText: 'Cancelar',
-      zOnOk: (instance: any) => {
-        return this.inventarioAction.handleSheetSave(
-          instance.save(),
-          'Presentación actualizada exitosamente',
-          'Error al actualizar presentación',
-          () => {
-            setTimeout(() => {
-              this.cargarUnidades(prod.id);
-            }, 300);
-          }
-        );
-      }
-    });
+    this.productoAcciones.openEditUnidadSheet(prod, unidad, () =>
+      this.cargarUnidades(prod.id)
+    );
   }
 
   desactivarUnidad(unidad: UnidadResponse) {
     const prod = this.producto();
     if (!prod || prod.tipo === 'kit') return;
-
-    this.alertDialog.confirm({
-      zTitle: '¿Desactivar presentación?',
-      zDescription: `"${unidad.nombre}" dejará de venderse. Las ventas históricas la conservan y puedes reactivarla después.`,
-      zOkText: 'Desactivar',
-      zOkDestructive: true,
-      zOnOk: () => {
-        this.productoService.eliminarUnidad(prod.id, unidad.id).subscribe({
-          next: () => {
-            this.sonner.success('Presentación desactivada');
-            this.cargarUnidades(prod.id);
-          },
-          error: (err) => {
-            console.error('Error al desactivar presentación', err);
-            this.sonner.error(err?.error?.error?.message ?? err?.error?.detail ?? 'No se pudo desactivar la presentación');
-          },
-        });
-      }
-    });
+    this.productoAcciones.desactivarUnidad(prod.id, unidad, () =>
+      this.cargarUnidades(prod.id)
+    );
   }
 
   reactivarUnidad(unidad: UnidadResponse) {
     const prod = this.producto();
     if (!prod || prod.tipo === 'kit') return;
-    this.productoService.reactivarUnidad(prod.id, unidad.id).subscribe({
-      next: () => {
-        this.sonner.success('Presentación reactivada');
-        this.cargarUnidades(prod.id);
-      },
-      error: (err) => {
-        console.error('Error al reactivar presentación', err);
-        this.sonner.error(err?.error?.error?.message ?? err?.error?.detail ?? 'No se pudo reactivar la presentación');
-      },
-    });
+    this.productoAcciones.reactivarUnidad(prod.id, unidad, () =>
+      this.cargarUnidades(prod.id)
+    );
   }
 }
