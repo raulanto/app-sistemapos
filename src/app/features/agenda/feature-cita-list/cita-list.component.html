@@ -1,33 +1,104 @@
 <div class="p-6 w-full space-y-6">
+  <!-- Encabezado Principal -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
-      <h1 class="text-6xl font-extrabold">Agenda</h1>
-      <p class="text-muted-foreground">Citas de servicios: crea, oferta y da seguimiento.</p>
+      <h1 class="text-4xl font-extrabold tracking-tight lg:text-5xl">Agenda & Citas</h1>
+      <p class="text-muted-foreground mt-1 text-sm">Citas de servicios: crea, oferta a empleados y da seguimiento en tiempo real.</p>
     </div>
     @if (canCrear()) {
-      <button z-button zType="default" (click)="crear()">
-        <ng-icon name="lucidePlus" class="mr-2" /> Nueva cita
+      <button z-button zType="default" (click)="crear()" class="shadow-sm">
+        <ng-icon name="lucidePlus" class="mr-2 size-4" /> Nueva cita
       </button>
     }
   </div>
 
-  <!-- Mis ofertas pendientes -->
+  <!-- Grid de KPIs con el diseño moderno de la aplicación -->
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:shadow-xs">
+    <z-card class="transition-shadow duration-200 hover:shadow-md">
+      <z-card-header>
+        <z-card-description zDescription="TOTAL CITAS" class="text-xs font-medium uppercase tracking-wide" />
+        <z-card-title [zTitle]="totalItems().toString()" class="mt-1 text-2xl font-semibold tabular-nums lg:text-3xl" />
+        <z-card-action>
+          <span class="grid size-9 place-items-center rounded-full bg-primary/10 text-primary">
+            <ng-icon name="lucideClipboardList" class="size-5" />
+          </span>
+        </z-card-action>
+      </z-card-header>
+      <z-card-footer class="border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        Citas registradas en el filtro
+      </z-card-footer>
+    </z-card>
+
+    <z-card class="transition-shadow duration-200 hover:shadow-md">
+      <z-card-header>
+        <z-card-description zDescription="COMPLETADAS" class="text-xs font-medium uppercase tracking-wide" />
+        <z-card-title [zTitle]="completadasCount().toString()" class="mt-1 text-2xl font-semibold tabular-nums lg:text-3xl" />
+        <z-card-action>
+          <span class="grid size-9 place-items-center rounded-full bg-emerald-500/10 text-emerald-600">
+            <ng-icon name="lucideCheckCircle2" class="size-5" />
+          </span>
+        </z-card-action>
+      </z-card-header>
+      <z-card-footer class="border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        Servicios finalizados con éxito
+      </z-card-footer>
+    </z-card>
+
+    <z-card class="transition-shadow duration-200 hover:shadow-md">
+      <z-card-header>
+        <z-card-description zDescription="EN PROCESO / ASIGNADAS" class="text-xs font-medium uppercase tracking-wide" />
+        <z-card-title [zTitle]="enProcesoCount().toString()" class="mt-1 text-2xl font-semibold tabular-nums lg:text-3xl" />
+        <z-card-action>
+          <span class="grid size-9 place-items-center rounded-full bg-indigo-500/10 text-indigo-600">
+            <ng-icon name="lucideCalendarClock" class="size-5" />
+          </span>
+        </z-card-action>
+      </z-card-header>
+      <z-card-footer class="border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        Citas activas o agendadas
+      </z-card-footer>
+    </z-card>
+
+    <z-card class="transition-shadow duration-200 hover:shadow-md">
+      <z-card-header>
+        <z-card-description zDescription="PENDIENTES / SIN ASIGNAR" class="text-xs font-medium uppercase tracking-wide" />
+        <z-card-title [zTitle]="porAsignarCount().toString()" class="mt-1 text-2xl font-semibold tabular-nums lg:text-3xl" />
+        <z-card-action>
+          <span class="grid size-9 place-items-center rounded-full bg-amber-500/10 text-amber-600">
+            <ng-icon name="lucideAlertCircle" class="size-5" />
+          </span>
+        </z-card-action>
+      </z-card-header>
+      <z-card-footer class="border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        Ofertas enviadas o sin atender
+      </z-card-footer>
+    </z-card>
+  </div>
+
+  <!-- Banner de Mis Ofertas Pendientes -->
   @if (misOfertas().length > 0) {
-    <div class="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
-      <h2 class="text-sm font-semibold">Tus ofertas pendientes</h2>
-      <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="rounded-2xl border border-primary/30 bg-linear-to-r from-primary/10 via-primary/5 to-transparent p-4 shadow-sm space-y-3">
+      <div class="flex items-center gap-2 text-primary">
+        <ng-icon name="lucideSparkles" class="size-5 animate-pulse" />
+        <h2 class="text-sm font-bold tracking-tight uppercase">Tus ofertas de citas pendientes</h2>
+        <z-badge zType="default" class="ml-auto">{{ misOfertas().length }} pendiente(s)</z-badge>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         @for (c of misOfertas(); track c.id) {
-          <div class="flex items-center justify-between gap-2 rounded-lg border bg-card p-3 text-sm">
-            <div class="min-w-0">
-              <p class="truncate font-medium">{{ nombreServicio(c.servicio_id) }}</p>
-              <p class="text-xs text-muted-foreground">{{ c.fecha_hora_inicio | date:'dd/MM HH:mm' }}</p>
+          <div class="flex items-center justify-between gap-3 rounded-xl border bg-card/90 backdrop-blur-xs p-3.5 shadow-2xs hover:shadow-xs transition-shadow">
+            <div class="min-w-0 space-y-0.5">
+              <p class="truncate font-semibold text-sm text-foreground">{{ nombreServicio(c.servicio_id) }}</p>
+              <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <ng-icon name="lucideClock" class="size-3.5 text-primary" />
+                <span>{{ c.fecha_hora_inicio | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
             </div>
-            <div class="flex shrink-0 gap-1">
-              <button z-button zType="outline" zSize="icon-sm" class="text-emerald-600 hover:bg-emerald-50" title="Aceptar"
+            <div class="flex shrink-0 gap-1.5">
+              <button z-button zType="outline" zSize="icon-sm" class="text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 dark:hover:bg-emerald-950/40" title="Aceptar oferta"
                       [zLoading]="respondiendo() === c.id" (click)="aceptar(c)">
                 <ng-icon name="lucideCheck" class="size-4" />
               </button>
-              <button z-button zType="outline" zSize="icon-sm" class="text-destructive hover:bg-destructive/10" title="Rechazar"
+              <button z-button zType="outline" zSize="icon-sm" class="text-destructive hover:bg-destructive/10 hover:border-destructive/30" title="Rechazar oferta"
                       [zLoading]="respondiendo() === c.id" (click)="rechazar(c)">
                 <ng-icon name="lucideX" class="size-4" />
               </button>
@@ -38,107 +109,176 @@
     </div>
   }
 
-  <!-- Filtros -->
-  <div class="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
-    <!-- Fecha con z-calendar (Popover) -->
-    <div class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-      <span>Fecha</span>
-      <button
-        z-button
-        zType="outline"
-        class="justify-start text-left font-normal"
-        [class.text-muted-foreground]="!fecha()"
-        zPopover
-        [zContent]="calendarPopover"
-        zPlacement="bottom"
-        zAlign="start"
-      >
-        <ng-icon name="lucideCalendar" class="mr-2 size-4" />
-        <span>{{ fechaTexto() }}</span>
-      </button>
+  <!-- Barra de Filtros y Búsqueda estilizada -->
+  <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-4 shadow-xs">
+    <div class="flex flex-wrap items-center gap-3">
+      <!-- Picker de Fecha en Popover -->
+      <div class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+        <span class="flex items-center gap-1"><ng-icon name="lucideCalendar" class="size-3.5" /> Fecha</span>
+        <button
+          z-button
+          zType="outline"
+          class="justify-start text-left font-medium min-w-44 bg-background"
+          [class.text-muted-foreground]="!fecha()"
+          zPopover
+          [zContent]="calendarPopover"
+          zPlacement="bottom"
+          zAlign="start"
+        >
+          <ng-icon name="lucideCalendar" class="mr-2 size-4 text-primary" />
+          <span>{{ fechaTexto() }}</span>
+        </button>
 
-      <ng-template #calendarPopover>
-        <div class="p-3 bg-popover text-popover-foreground rounded-lg border shadow-md">
-          <z-calendar
-            [value]="selectedDate()"
-            (valueChange)="onDateChange($event)"
-          />
-          <div class="mt-2 flex items-center justify-between border-t pt-2">
-            <button z-button zType="ghost" zSize="sm" (click)="verTodas()">
-              Ver todas
-            </button>
-            @if (fecha()) {
-              <button z-button zType="ghost" zSize="sm" (click)="limpiarFechas()">
-                <ng-icon name="lucideX" class="mr-1 size-3.5" /> Limpiar
+        <ng-template #calendarPopover>
+          <div class="p-3 bg-popover text-popover-foreground rounded-xl border shadow-xl space-y-2">
+            <z-calendar
+              [value]="selectedDate()"
+              (valueChange)="onDateChange($event)"
+            />
+            <div class="mt-2 flex items-center justify-between border-t pt-2">
+              <button z-button zType="ghost" zSize="sm" (click)="verTodas()">
+                Ver todas
               </button>
-            }
+              @if (fecha()) {
+                <button z-button zType="ghost" zSize="sm" (click)="limpiarFechas()">
+                  <ng-icon name="lucideX" class="mr-1 size-3.5" /> Limpiar
+                </button>
+              }
+            </div>
           </div>
-        </div>
-      </ng-template>
+        </ng-template>
+      </div>
+
+      <!-- Filtro Estado -->
+      <div class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+        <span>Estado</span>
+        <z-select class="w-48 bg-background" [ngModel]="estado()" (ngModelChange)="setEstado($event)">
+          <z-select-item zValue="">Todos los estados</z-select-item>
+          @for (e of estados; track e.value) {
+            <z-select-item [zValue]="e.value">{{ e.label }}</z-select-item>
+          }
+        </z-select>
+      </div>
+
+      <!-- Filtro Servicio -->
+      <div class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+        <span>Servicio</span>
+        <z-select class="w-52 bg-background" [ngModel]="servicioId()" (ngModelChange)="setServicio($event)">
+          <z-select-item zValue="">Todos los servicios</z-select-item>
+          @for (s of servicios(); track s.id) {
+            <z-select-item [zValue]="s.id">{{ s.nombre }}</z-select-item>
+          }
+        </z-select>
+      </div>
     </div>
 
-    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-      Estado
-      <z-select class="w-48" [ngModel]="estado()" (ngModelChange)="setEstado($event)">
-        <z-select-item zValue="">Todos</z-select-item>
-        @for (e of estados; track e.value) { <z-select-item [zValue]="e.value">{{ e.label }}</z-select-item> }
-      </z-select>
-    </label>
-    <label class="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-      Servicio
-      <z-select class="w-48" [ngModel]="servicioId()" (ngModelChange)="setServicio($event)">
-        <z-select-item zValue="">Todos</z-select-item>
-        @for (s of servicios(); track s.id) { <z-select-item [zValue]="s.id">{{ s.nombre }}</z-select-item> }
-      </z-select>
-    </label>
-    @if (hayFiltros()) {
-      <button z-button zType="destructive" zSize="sm" (click)="limpiarFiltros()">
-        <ng-icon name="lucideX" class="mr-1.5 size-3.5" /> Limpiar
+    <!-- Botones de Acción de Filtros -->
+    <div class="flex items-center gap-2 self-end">
+      @if (hayFiltros()) {
+        <button z-button zType="ghost" zSize="sm" class="text-destructive hover:bg-destructive/10" (click)="limpiarFiltros()">
+          <ng-icon name="lucideX" class="mr-1.5 size-3.5" /> Limpiar filtros
+        </button>
+      }
+      <button z-button zType="outline" zSize="sm" [zLoading]="loading()" (click)="refrescar()">
+        <ng-icon name="lucideRefreshCw" class="mr-1.5 size-3.5" /> Actualizar
       </button>
-    }
-    <button z-button zType="outline" zSize="sm" class="ml-auto" [zLoading]="loading()" (click)="refrescar()">
-      <ng-icon name="lucideRefreshCw" class="mr-1.5 size-3.5" /> Actualizar
-    </button>
+    </div>
   </div>
 
-  <div class="overflow-hidden rounded-xl border">
+  <!-- Tabla de Citas Estilizada -->
+  <div class="overflow-hidden rounded-2xl border bg-card shadow-xs">
     <div class="overflow-x-auto">
-      <table z-table>
-        <thead z-table-header class="bg-muted/50">
+      <table z-table class="w-full">
+        <thead z-table-header class="bg-muted/40 text-xs uppercase font-semibold text-muted-foreground">
           <tr z-table-row>
-            <th z-table-head>Hora</th>
+            <th z-table-head class="pl-6">Hora / Horario</th>
             <th z-table-head>Servicio</th>
             <th z-table-head>Cliente</th>
-            <th z-table-head>Empleado</th>
-            <th z-table-head>Estado</th>
+            <th z-table-head>Empleado Asignado</th>
+            <th z-table-head class="pr-6">Estado</th>
           </tr>
         </thead>
-        <tbody z-table-body>
+        <tbody z-table-body class="divide-y">
           @if (loading()) {
             @for (i of [1,2,3,4,5,6]; track i) {
-              <tr z-table-row><td z-table-cell colspan="5"><z-skeleton class="h-5 w-full" /></td></tr>
+              <tr z-table-row>
+                <td z-table-cell colspan="5" class="py-4 pl-6 pr-6">
+                  <z-skeleton class="h-6 w-full rounded-lg" />
+                </td>
+              </tr>
             }
           } @else {
             @for (c of citas(); track c.id) {
-              <tr z-table-row class="cursor-pointer hover:bg-muted/40" [routerLink]="['/agenda', c.id]">
-                <td z-table-cell class="whitespace-nowrap text-sm">
-                  {{ c.fecha_hora_inicio | date:'dd/MM HH:mm' }}–{{ c.fecha_hora_fin | date:'HH:mm' }}
+              <tr z-table-row class="cursor-pointer hover:bg-muted/30 transition-colors" [routerLink]="['/agenda', c.id]">
+                <!-- Hora -->
+                <td z-table-cell class="pl-6 py-3.5 whitespace-nowrap">
+                  <div class="flex items-center gap-2">
+                    <div class="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <ng-icon name="lucideClock" class="size-4" />
+                    </div>
+                    <div>
+                      <p class="font-bold text-sm tabular-nums text-foreground">
+                        {{ c.fecha_hora_inicio | date:'HH:mm' }} – {{ c.fecha_hora_fin | date:'HH:mm' }}
+                      </p>
+                      <p class="text-xs text-muted-foreground">
+                        {{ c.fecha_hora_inicio | date:'dd/MM/yyyy' }}
+                      </p>
+                    </div>
+                  </div>
                 </td>
-                <td z-table-cell class="font-medium">{{ nombreServicio(c.servicio_id) }}</td>
-                <td z-table-cell class="text-sm text-muted-foreground">{{ c.cliente?.nombre || '—' }}</td>
-                <td z-table-cell class="text-sm text-muted-foreground">
-                  {{ c.empleado?.nombre || (c.asignaciones.length ? c.asignaciones.length + ' ofertado(s)' : '—') }}
+
+                <!-- Servicio -->
+                <td z-table-cell class="py-3.5 font-semibold text-foreground">
+                  <div class="flex items-center gap-2">
+                    <span>{{ nombreServicio(c.servicio_id) }}</span>
+                  </div>
                 </td>
-                <td z-table-cell><z-badge [zType]="estadoBadge(c.estado)">{{ labelEstado(c.estado) }}</z-badge></td>
+
+                <!-- Cliente -->
+                <td z-table-cell class="py-3.5">
+                  @if (c.cliente?.nombre) {
+                    <div class="flex items-center gap-2">
+                      <div class="size-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0">
+                        {{ c.cliente?.nombre?.charAt(0)?.toUpperCase() || 'C' }}
+                      </div>
+                      <span class="text-sm font-medium text-foreground">{{ c.cliente?.nombre }}</span>
+                    </div>
+                  } @else {
+                    <span class="text-sm text-muted-foreground">—</span>
+                  }
+                </td>
+
+                <!-- Empleado -->
+                <td z-table-cell class="py-3.5">
+                  @if (c.empleado?.nombre) {
+                    <div class="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                      <ng-icon name="lucideUser" class="size-3.5 text-muted-foreground" />
+                      <span>{{ c.empleado?.nombre }}</span>
+                    </div>
+                  } @else if (c.asignaciones.length) {
+                    <z-badge zType="amber-ghost" class="text-xs">
+                      {{ c.asignaciones.length }} ofertado(s)
+                    </z-badge>
+                  } @else {
+                    <span class="text-sm text-muted-foreground italic">Sin asignar</span>
+                  }
+                </td>
+
+                <!-- Estado -->
+                <td z-table-cell class="pr-6 py-3.5">
+                  <z-badge [zType]="estadoBadge(c.estado)">
+                    {{ labelEstado(c.estado) }}
+                  </z-badge>
+                </td>
               </tr>
             } @empty {
               <tr z-table-row>
                 <td z-table-cell colspan="5" class="p-0">
                   <z-empty
                     zIcon="lucideCalendarDays"
-                    zTitle="Sin citas"
-                    [zDescription]="hayFiltros() ? 'Ninguna cita coincide con los filtros.' : 'Todavía no hay citas registradas.'"
-                    class="py-12"
+                    zTitle="Sin citas registradas"
+                    [zDescription]="hayFiltros() ? 'Ninguna cita coincide con los filtros aplicados.' : 'Todavía no hay citas agendadas.'"
+                    class="py-16"
                   />
                 </td>
               </tr>
@@ -148,15 +288,16 @@
       </table>
     </div>
 
+    <!-- Paginación estilizada -->
     @if (!loading() && totalItems() > 0) {
-      <div class="flex flex-col items-center justify-between gap-4 border-t p-3 sm:flex-row">
+      <div class="flex flex-col items-center justify-between gap-4 border-t bg-muted/20 p-4 sm:flex-row">
         <div class="text-sm text-muted-foreground tabular-nums">
-          {{ totalItems() }} cita(s) · página {{ page() }} de {{ totalPages() }}
+          Mostrando <span class="font-semibold text-foreground">{{ citas().length }}</span> de <span class="font-semibold text-foreground">{{ totalItems() }}</span> cita(s) · página {{ page() }} de {{ totalPages() }}
         </div>
         <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-medium">Filas</span>
-            <z-select [ngModel]="pageSize().toString()" (ngModelChange)="setPageSize($event)">
+            <span class="text-xs font-semibold text-muted-foreground uppercase">Filas</span>
+            <z-select [ngModel]="pageSize().toString()" (ngModelChange)="setPageSize($event)" class="w-20 bg-background">
               <z-select-item zValue="20">20</z-select-item>
               <z-select-item zValue="50">50</z-select-item>
               <z-select-item zValue="100">100</z-select-item>
@@ -172,7 +313,7 @@
                 @for (p of pages(); track p) {
                   <li z-pagination-item>
                     <button type="button" z-pagination-button [zActive]="p === page()" (click)="irAPagina(p)">
-                      <span class="sr-only">Ir a página</span>
+                      <span class="sr-only">Ir a página {{ p }}</span>
                       {{ p }}
                     </button>
                   </li>
@@ -191,3 +332,4 @@
     }
   </div>
 </div>
+

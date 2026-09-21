@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@ang
 import { form, FormField, maxLength, required } from '@angular/forms/signals';
 import { Observable } from 'rxjs';
 
-import { CategoriaService } from '../../data-access/categoria.service';
+import { CategoriaService } from '../../data-access/services/categoria.service';
 import { injectSheetData } from '../../../../shared/components/sheet/sheet.service';
 import {
   CategoriaResponse,
@@ -39,7 +39,7 @@ export class CategoriaFormSheetComponent implements OnInit {
 
   private readonly model = signal({ nombre: '', categoria_padre_id: '' });
 
-  protected readonly categoriaForm = form(this.model, path => {
+  protected readonly categoriaForm = form(this.model, (path) => {
     required(path.nombre, { message: 'El nombre es obligatorio.' });
     maxLength(path.nombre, 100, { message: 'Máximo 100 caracteres.' });
   });
@@ -49,8 +49,8 @@ export class CategoriaFormSheetComponent implements OnInit {
     this.isEditing = !!cat;
 
     this.categoriaService.listar().subscribe({
-      next: data => this.categorias.set(data.filter(c => c.activo && c.id !== cat?.id)),
-      error: err => console.error('Error al cargar categorías', err),
+      next: (data) => this.categorias.set(data.filter((c) => c.activo && c.id !== cat?.id)),
+      error: (err) => console.error('Error al cargar categorías', err),
     });
 
     this.model.set({

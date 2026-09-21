@@ -1,13 +1,33 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+  signal,
+  computed,
+} from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { debounceTime, switchMap, tap, map } from 'rxjs/operators';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucidePlus, lucideTrendingUp, lucideTrendingDown, lucideMinus, lucideAlertCircle, lucideRefreshCw } from '@ng-icons/lucide';
+import {
+  lucidePlus,
+  lucideTrendingUp,
+  lucideTrendingDown,
+  lucideMinus,
+  lucideAlertCircle,
+  lucideRefreshCw,
+} from '@ng-icons/lucide';
 import { ProductoService } from '../data-access/producto.service';
-import { CategoriaService } from '../data-access/categoria.service';
-import { CategoriaResponse, ProductoQuery, ProductoResponse, ProductoKpiResponse, TipoProducto } from '../data-access/inventario.models';
+import { CategoriaService } from '../data-access/services/categoria.service';
+import {
+  CategoriaResponse,
+  ProductoQuery,
+  ProductoResponse,
+  ProductoKpiResponse,
+  TipoProducto,
+} from '../data-access/inventario.models';
 import { ZardCardImports } from '../../../shared/components/card/card.imports';
 import { ZardButtonComponent } from '../../../shared/components/button/button.component';
 import { ZardSelectImports } from '../../../shared/components/select/select.imports';
@@ -31,20 +51,27 @@ import { InventarioActionService } from '../data-access/inventario-action.servic
   imports: [
     FormsModule,
     RouterLink,
-    NgIcon, 
-    ...ZardCardImports, 
+    NgIcon,
+    ...ZardCardImports,
     ZardButtonComponent,
     ZardBadgeComponent,
     ...ZardSelectImports,
     ...ZardPaginationImports,
     ProductoFiltrosComponent,
-    ProductoTableComponent
+    ProductoTableComponent,
   ],
   viewProviders: [
-    provideIcons({ lucidePlus, lucideTrendingUp, lucideTrendingDown, lucideMinus, lucideAlertCircle, lucideRefreshCw })
+    provideIcons({
+      lucidePlus,
+      lucideTrendingUp,
+      lucideTrendingDown,
+      lucideMinus,
+      lucideAlertCircle,
+      lucideRefreshCw,
+    }),
   ],
   templateUrl: './producto-list.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductoListComponent implements OnInit {
   private readonly productoService = inject(ProductoService);
@@ -57,7 +84,9 @@ export class ProductoListComponent implements OnInit {
   private readonly inventarioAction = inject(InventarioActionService);
 
   readonly canCrear = computed(() => this.authService.hasPermission(...PERMISOS.inventario.crear));
-  readonly canEditar = computed(() => this.authService.hasPermission(...PERMISOS.inventario.editar));
+  readonly canEditar = computed(() =>
+    this.authService.hasPermission(...PERMISOS.inventario.editar),
+  );
 
   readonly productos = signal<ProductoResponse[]>([]);
   readonly categorias = signal<CategoriaResponse[]>([]);
@@ -74,14 +103,14 @@ export class ProductoListComponent implements OnInit {
   readonly pageSize = signal(10);
   readonly sort = signal<string>('created_at:desc');
   readonly selectedIds = signal<Set<string>>(new Set());
-  
+
   // Metadatos
   readonly totalItems = signal(0);
   readonly totalPages = signal(0);
   readonly refreshTrigger = signal(0);
   readonly allSelected = computed(() => {
     const p = this.productos();
-    return p.length > 0 && p.every(prod => this.selectedIds().has(prod.id));
+    return p.length > 0 && p.every((prod) => this.selectedIds().has(prod.id));
   });
 
   private readonly query = computed<ProductoQuery>(() => {
@@ -94,7 +123,8 @@ export class ProductoListComponent implements OnInit {
     }
 
     const currentSucursalId = this.sucursalService.selectedSucursalId();
-    const sucursal_id = this.todasLasSucursales() || !currentSucursalId ? null : [currentSucursalId];
+    const sucursal_id =
+      this.todasLasSucursales() || !currentSucursalId ? null : [currentSucursalId];
 
     return {
       q: this.q() || null,
@@ -105,38 +135,40 @@ export class ProductoListComponent implements OnInit {
       page: this.page(),
       page_size: this.pageSize(),
       sort: this.sort(),
-      include: ['categoria', 'existencias']
+      include: ['categoria', 'existencias'],
     };
   });
 
   constructor() {
-    toObservable(this.query).pipe(
-      tap(() => this.loading.set(true)),
-      debounceTime(300),
-      switchMap(query => {
-        return this.productoService.listar(query).pipe(
-          switchMap(res => {
-            return this.productoService.obtenerKpis(query).pipe(
-              tap(kpiRes => this.kpis.set(kpiRes)),
-              map(() => res)
-            );
-          })
-        );
-      })
-    ).subscribe({
-      next: (res) => {
-        this.productos.set(res.data);
-        if (res.meta?.pagination) {
-          this.totalItems.set(res.meta.pagination.total_items);
-          this.totalPages.set(res.meta.pagination.total_pages);
-        }
-        this.loading.set(false);
-      },
-      error: (err) => {
-        console.error('Error al cargar productos:', err);
-        this.loading.set(false);
-      }
-    });
+    toObservable(this.query)
+      .pipe(
+        tap(() => this.loading.set(true)),
+        debounceTime(300),
+        switchMap((query) => {
+          return this.productoService.listar(query).pipe(
+            switchMap((res) => {
+              return this.productoService.obtenerKpis(query).pipe(
+                tap((kpiRes) => this.kpis.set(kpiRes)),
+                map(() => res),
+              );
+            }),
+          );
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          this.productos.set(res.data);
+          if (res.meta?.pagination) {
+            this.totalItems.set(res.meta.pagination.total_items);
+            this.totalPages.set(res.meta.pagination.total_pages);
+          }
+          this.loading.set(false);
+        },
+        error: (err) => {
+          console.error('Error al cargar productos:', err);
+          this.loading.set(false);
+        },
+      });
   }
 
   readonly cards = computed(() => {
@@ -167,7 +199,7 @@ export class ProductoListComponent implements OnInit {
         trend: 'neutral',
         badge: `${kpi.inactivos} inactivos`,
         headline: 'Catálogo',
-        caption: `${kpi.categorias_distintas} categorías activas`
+        caption: `${kpi.categorias_distintas} categorías activas`,
       },
       {
         description: 'Unidades en Stock',
@@ -175,7 +207,7 @@ export class ProductoListComponent implements OnInit {
         trend: itemsBajoStock > 0 ? 'down' : 'up',
         badge: `${itemsBajoStock} bajo stock`,
         headline: 'Disponibilidad',
-        caption: `En ${kpi.productos_con_existencia} productos`
+        caption: `En ${kpi.productos_con_existencia} productos`,
       },
       {
         description: 'Valor del Inventario (Costo)',
@@ -183,7 +215,7 @@ export class ProductoListComponent implements OnInit {
         trend: 'neutral',
         badge: `Costo prom. ${formatCurrency(kpi.costo_promedio)}`,
         headline: 'Inversión',
-        caption: 'Costo total del stock'
+        caption: 'Costo total del stock',
       },
       {
         description: 'Valor del Inventario (Venta)',
@@ -191,8 +223,8 @@ export class ProductoListComponent implements OnInit {
         trend: 'up',
         badge: `Margen prom. ${margen}`,
         headline: 'Proyección',
-        caption: 'Valor potencial de venta'
-      }
+        caption: 'Valor potencial de venta',
+      },
     ];
   });
 
@@ -206,7 +238,7 @@ export class ProductoListComponent implements OnInit {
   ngOnInit() {
     this.categoriaService.listar().subscribe({
       next: (data) => this.categorias.set(data),
-      error: (err) => console.error('Error al cargar categorias:', err)
+      error: (err) => console.error('Error al cargar categorias:', err),
     });
   }
 
@@ -241,7 +273,7 @@ export class ProductoListComponent implements OnInit {
   }
 
   toggleSelection(id: string, checked: boolean) {
-    this.selectedIds.update(set => {
+    this.selectedIds.update((set) => {
       const newSet = new Set(set);
       if (checked) newSet.add(id);
       else newSet.delete(id);
@@ -251,7 +283,7 @@ export class ProductoListComponent implements OnInit {
 
   toggleAll(checked: boolean) {
     if (checked) {
-      const allIds = this.productos().map(p => p.id);
+      const allIds = this.productos().map((p) => p.id);
       this.selectedIds.set(new Set(allIds));
     } else {
       this.selectedIds.set(new Set());
@@ -270,7 +302,7 @@ export class ProductoListComponent implements OnInit {
   }
 
   desactivar(producto: ProductoResponse) {
-    const conStock = (producto.existencias ?? []).some(e => Number(e.cantidad) > 0);
+    const conStock = (producto.existencias ?? []).some((e) => Number(e.cantidad) > 0);
     this.alertDialog.confirm({
       zTitle: `¿Desactivar producto ${producto.sku}?`,
       zDescription: conStock
@@ -283,9 +315,9 @@ export class ProductoListComponent implements OnInit {
           this.productoService.desactivar(producto.id, conStock),
           'Producto desactivado correctamente',
           'Error al desactivar el producto',
-          () => this.refreshTrigger.update(v => v + 1)
+          () => this.refreshTrigger.update((v) => v + 1),
         );
-      }
+      },
     });
   }
 
@@ -300,9 +332,9 @@ export class ProductoListComponent implements OnInit {
           this.productoService.activar(producto.id),
           'Producto activado correctamente',
           'Error al activar el producto',
-          () => this.refreshTrigger.update(v => v + 1)
+          () => this.refreshTrigger.update((v) => v + 1),
         );
-      }
+      },
     });
   }
 
@@ -318,12 +350,12 @@ export class ProductoListComponent implements OnInit {
         this.productoService.eliminar(producto.id).subscribe({
           next: () => {
             this.sonner.success('Producto eliminado correctamente');
-            this.selectedIds.update(set => {
+            this.selectedIds.update((set) => {
               const next = new Set(set);
               next.delete(producto.id);
               return next;
             });
-            this.refreshTrigger.update(v => v + 1);
+            this.refreshTrigger.update((v) => v + 1);
           },
           error: (err) => {
             console.error('Error al eliminar el producto', err);
@@ -335,9 +367,9 @@ export class ProductoListComponent implements OnInit {
             } else {
               this.sonner.error('Error al eliminar el producto');
             }
-          }
+          },
         });
-      }
+      },
     });
   }
 
@@ -351,10 +383,10 @@ export class ProductoListComponent implements OnInit {
         productoId: prod.id,
         onSaved: () => {
           this.sonner.success('Producto actualizado exitosamente');
-          this.refreshTrigger.update(v => v + 1);
-        }
+          this.refreshTrigger.update((v) => v + 1);
+        },
       },
-      zHideFooter: true
+      zHideFooter: true,
     });
   }
 
@@ -371,9 +403,9 @@ export class ProductoListComponent implements OnInit {
           instance.save(),
           'Movimiento registrado exitosamente',
           'Error al registrar el movimiento',
-          () => this.refreshTrigger.update(v => v + 1)
+          () => this.refreshTrigger.update((v) => v + 1),
         );
-      }
+      },
     });
   }
 }

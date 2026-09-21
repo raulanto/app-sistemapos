@@ -4,12 +4,19 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { map, switchMap, retry } from 'rxjs/operators';
 
 import { ProductoService } from '../../data-access/producto.service';
-import { CategoriaService } from '../../data-access/categoria.service';
+import { CategoriaService } from '../../data-access/services/categoria.service';
 import { UnidadMedidaService } from '../../data-access/unidad-medida.service';
 import { SucursalService } from '../../../../core/sucursal/sucursal.service';
 import { MovimientoService } from '../../data-access/movimiento.service';
-import { CategoriaResponse, UnidadMedidaResponse, TipoProducto } from '../../data-access/inventario.models';
-import { injectSheetData, ZardSheetService } from '../../../../shared/components/sheet/sheet.service';
+import {
+  CategoriaResponse,
+  UnidadMedidaResponse,
+  TipoProducto,
+} from '../../data-access/inventario.models';
+import {
+  injectSheetData,
+  ZardSheetService,
+} from '../../../../shared/components/sheet/sheet.service';
 import { ZardSheetRef } from '../../../../shared/components/sheet/sheet-ref';
 import { ZardSonnerService } from '../../../../shared/components/sonner/sonner.service';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -33,7 +40,7 @@ export interface ProductoSheetData {
   selector: 'app-producto-form-sheet',
   standalone: true,
   imports: [
-    ReactiveFormsModule, 
+    ReactiveFormsModule,
     NgIconComponent,
     ...ZardFieldImports,
     ZardInputComponent,
@@ -41,7 +48,7 @@ export interface ProductoSheetData {
     ZardButtonComponent,
     ZardCheckboxComponent,
     ZardTextareaComponent,
-    ImagenGaleriaComponent
+    ImagenGaleriaComponent,
   ],
   templateUrl: './producto-form-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,7 +57,7 @@ export interface ProductoSheetData {
   // El sheet proyecta este componente dentro de un <main> flex: sin display:contents, este
   // host (un elemento inline por defecto) rompe la cadena flex-1/min-h-0 y el <form> nunca
   // llega a scrollear, tapando los botones del footer.
-  host: { style: 'display: contents' }
+  host: { style: 'display: contents' },
 })
 export class ProductoFormSheetComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -99,7 +106,7 @@ export class ProductoFormSheetComponent implements OnInit {
     monedero_monto: [null as number | null],
     tipo: ['simple' as TipoProducto, Validators.required],
     activo: [true],
-    existencias: this.fb.array([])
+    existencias: this.fb.array([]),
   });
 
   /** `fraccionable`/`simple`: puede tener venta fraccionada. `kit`/`servicio`: no aplica. */
@@ -126,7 +133,7 @@ export class ProductoFormSheetComponent implements OnInit {
           this.applyTipoState((prod.tipo || 'simple') as TipoProducto, false);
           this.watchTipoChanges();
         },
-        error: (err) => console.error('Error al obtener producto', err)
+        error: (err) => console.error('Error al obtener producto', err),
       });
     } else {
       this.applyTipoState('simple', false);
@@ -136,7 +143,9 @@ export class ProductoFormSheetComponent implements OnInit {
 
   /** Reacciona a cambios de tipo hechos por el usuario en el select (no al patch inicial). */
   private watchTipoChanges() {
-    this.form.controls.tipo.valueChanges.subscribe(tipo => this.applyTipoState(tipo as TipoProducto, true));
+    this.form.controls.tipo.valueChanges.subscribe((tipo) =>
+      this.applyTipoState(tipo as TipoProducto, true),
+    );
   }
 
   private applyTipoState(tipo: TipoProducto, esCambioDeUsuario: boolean) {
@@ -148,7 +157,10 @@ export class ProductoFormSheetComponent implements OnInit {
       if (esCambioDeUsuario) {
         // El usuario movió el producto a kit/servicio: limpiar la config de fraccionamiento
         // y marcar el control como dirty para que el guardado la borre en el backend.
-        this.form.patchValue({ permite_venta_fraccionada: false, incremento_minimo_venta: null }, { emitEvent: false });
+        this.form.patchValue(
+          { permite_venta_fraccionada: false, incremento_minimo_venta: null },
+          { emitEvent: false },
+        );
         this.form.controls.incremento_minimo_venta.markAsDirty();
       }
       this.form.controls.permite_venta_fraccionada.disable({ emitEvent: false });
@@ -169,14 +181,14 @@ export class ProductoFormSheetComponent implements OnInit {
   cargarCategorias() {
     this.categoriaService.listar().subscribe({
       next: (data) => this.categorias.set(data),
-      error: (err) => console.error('Error al cargar categorias', err)
+      error: (err) => console.error('Error al cargar categorias', err),
     });
   }
 
   cargarUnidadesMedida() {
     this.unidadMedidaService.listar().subscribe({
       next: (data) => this.unidadesMedida.set(data),
-      error: (err) => console.error('Error al cargar unidades de medida', err)
+      error: (err) => console.error('Error al cargar unidades de medida', err),
     });
   }
 
@@ -184,7 +196,8 @@ export class ProductoFormSheetComponent implements OnInit {
   abrirCrearUnidadMedida() {
     this.sheetService.create({
       zTitle: 'Nueva unidad de medida',
-      zDescription: 'Agrega una unidad al catálogo (kg, l, ml, pza, hora, …). Queda disponible para todos los productos.',
+      zDescription:
+        'Agrega una unidad al catálogo (kg, l, ml, pza, hora, …). Queda disponible para todos los productos.',
       zContent: UnidadMedidaFormSheetComponent,
       zOkText: 'Crear',
       zCancelText: 'Cancelar',
@@ -195,7 +208,7 @@ export class ProductoFormSheetComponent implements OnInit {
           obs.subscribe({
             next: (nueva: UnidadMedidaResponse) => {
               this.sonner.success('Unidad de medida creada');
-              this.unidadesMedida.update(list => [...list, nueva]);
+              this.unidadesMedida.update((list) => [...list, nueva]);
               this.form.patchValue({ unidad_medida_id: nueva.id });
               this.form.controls.unidad_medida_id.markAsDirty();
               resolve();
@@ -204,10 +217,10 @@ export class ProductoFormSheetComponent implements OnInit {
               console.error('Error al crear unidad de medida', err);
               this.sonner.error('Error al crear la unidad de medida');
               reject(err);
-            }
+            },
           });
         });
-      }
+      },
     });
   }
 
@@ -219,7 +232,7 @@ export class ProductoFormSheetComponent implements OnInit {
       motivo: ['Inventario inicial'],
       cantidad: [0, [Validators.required, Validators.min(0)]],
       stock_minimo: [0, [Validators.min(0)]],
-      stock_maximo: [0, [Validators.min(0)]]
+      stock_maximo: [0, [Validators.min(0)]],
     });
     this.existenciasArray.push(group);
   }
@@ -238,13 +251,13 @@ export class ProductoFormSheetComponent implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    
+
     if (this.sheetData?.productoId && !this.form.dirty) {
       this.sonner.info('No se detectaron cambios');
       this.sheetRef.close();
       return;
     }
-    
+
     this.loading.set(true);
     // getRawValue() para incluir permite_venta_fraccionada/incremento_minimo_venta
     // aunque el control esté deshabilitado (tipo kit/servicio/fraccionable forzado).
@@ -274,11 +287,15 @@ export class ProductoFormSheetComponent implements OnInit {
       updateData.cambiar_codigo_barras = this.form.get('codigo_barras')?.dirty ?? false;
       updateData.cambiar_descripcion = this.form.get('descripcion')?.dirty ?? false;
       updateData.cambiar_unidad_medida_id = this.form.get('unidad_medida_id')?.dirty ?? false;
-      updateData.cambiar_incremento_minimo_venta = this.form.get('incremento_minimo_venta')?.dirty ?? false;
+      updateData.cambiar_incremento_minimo_venta =
+        this.form.get('incremento_minimo_venta')?.dirty ?? false;
       updateData.cambiar_duracion_minutos = this.form.get('duracion_minutos')?.dirty ?? false;
-      updateData.cambiar_instancia_capacidad_default = this.form.get('instancia_capacidad_default')?.dirty ?? false;
+      updateData.cambiar_instancia_capacidad_default =
+        this.form.get('instancia_capacidad_default')?.dirty ?? false;
       updateData.cambiar_mayoreo =
-        (this.form.get('precio_mayoreo')?.dirty || this.form.get('cantidad_minima_mayoreo')?.dirty) ?? false;
+        (this.form.get('precio_mayoreo')?.dirty ||
+          this.form.get('cantidad_minima_mayoreo')?.dirty) ??
+        false;
       updateData.cambiar_monedero =
         (this.form.get('monedero_pct')?.dirty || this.form.get('monedero_monto')?.dirty) ?? false;
 
@@ -292,8 +309,8 @@ export class ProductoFormSheetComponent implements OnInit {
       request$ = this.productoService.crear(data).pipe(
         switchMap((prodRes: any) => {
           const rowOps: Observable<any>[] = [];
-          
-          this.existenciasArray.controls.forEach(c => {
+
+          this.existenciasArray.controls.forEach((c) => {
             const sucursal_id = c.get('sucursal_id')?.value;
             const cantidad = c.get('cantidad')?.value;
             const stock_minimo = c.get('stock_minimo')?.value;
@@ -303,29 +320,37 @@ export class ProductoFormSheetComponent implements OnInit {
             const motivo = c.get('motivo')?.value;
 
             if (cantidad > 0) {
-              const movObs$ = this.movimientoService.aplicar({
-                 producto_id: prodRes.id,
-                 sucursal_id: sucursal_id,
-                 tipo: tipo,
-                 cantidad: cantidad,
-                 referencia_tipo: referencia_tipo,
-                 motivo: motivo
-              }).pipe(
-                retry({ count: 3, delay: 1000 }),
-                switchMap(() => {
-                  if (stock_minimo > 0 || stock_maximo > 0) {
-                    const umbralesPayload: any = {};
-                    if (stock_minimo > 0) umbralesPayload.stock_minimo = stock_minimo;
-                    if (stock_maximo > 0) umbralesPayload.stock_maximo = stock_maximo;
-                    
-                    return this.productoService.actualizarUmbrales(prodRes.id, sucursal_id, umbralesPayload);
-                  }
-                  return of(null);
+              const movObs$ = this.movimientoService
+                .aplicar({
+                  producto_id: prodRes.id,
+                  sucursal_id: sucursal_id,
+                  tipo: tipo,
+                  cantidad: cantidad,
+                  referencia_tipo: referencia_tipo,
+                  motivo: motivo,
                 })
-              );
+                .pipe(
+                  retry({ count: 3, delay: 1000 }),
+                  switchMap(() => {
+                    if (stock_minimo > 0 || stock_maximo > 0) {
+                      const umbralesPayload: any = {};
+                      if (stock_minimo > 0) umbralesPayload.stock_minimo = stock_minimo;
+                      if (stock_maximo > 0) umbralesPayload.stock_maximo = stock_maximo;
+
+                      return this.productoService.actualizarUmbrales(
+                        prodRes.id,
+                        sucursal_id,
+                        umbralesPayload,
+                      );
+                    }
+                    return of(null);
+                  }),
+                );
               rowOps.push(movObs$);
             } else if (stock_minimo > 0 || stock_maximo > 0) {
-              this.sonner.warning('Algunos umbrales fueron ignorados porque requieren registrar un stock inicial mayor a 0 primero.');
+              this.sonner.warning(
+                'Algunos umbrales fueron ignorados porque requieren registrar un stock inicial mayor a 0 primero.',
+              );
             }
           });
 
@@ -333,7 +358,7 @@ export class ProductoFormSheetComponent implements OnInit {
             return forkJoin(rowOps).pipe(map(() => prodRes));
           }
           return of(prodRes);
-        })
+        }),
       );
     }
 
@@ -348,7 +373,7 @@ export class ProductoFormSheetComponent implements OnInit {
         console.error('Error al guardar', err);
         this.sonner.error('Error al procesar la solicitud');
         this.loading.set(false);
-      }
+      },
     });
   }
 }

@@ -1,7 +1,22 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal, computed } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+  computed,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { AbstractControl, FormBuilder, FormArray, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormArray,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Observable, forkJoin, of } from 'rxjs';
 import { map, switchMap, retry } from 'rxjs/operators';
@@ -26,11 +41,18 @@ import {
 } from '@ng-icons/lucide';
 
 import { ProductoService } from '../data-access/producto.service';
-import { CategoriaService } from '../data-access/categoria.service';
+import { CategoriaService } from '../data-access/services/categoria.service';
 import { UnidadMedidaService } from '../data-access/unidad-medida.service';
 import { SucursalService } from '../../../core/sucursal/sucursal.service';
 import { MovimientoService } from '../data-access/movimiento.service';
-import { CategoriaResponse, ProductoResponse, UnidadMedidaResponse, TipoProducto, IMAGEN_MAX_BYTES, IMAGEN_TIPOS_PERMITIDOS } from '../data-access/inventario.models';
+import {
+  CategoriaResponse,
+  ProductoResponse,
+  UnidadMedidaResponse,
+  TipoProducto,
+  IMAGEN_MAX_BYTES,
+  IMAGEN_TIPOS_PERMITIDOS,
+} from '../data-access/inventario.models';
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
 import { ZardSheetService } from '../../../shared/components/sheet/sheet.service';
 import { UnidadMedidaFormSheetComponent } from '../ui/unidad-medida-form-sheet/unidad-medida-form-sheet.component';
@@ -110,7 +132,9 @@ export class ProductoCreateComponent implements OnInit {
   loading = signal(false);
 
   /** Fotos elegidas del equipo, aún sin subir (se suben tras crear el producto). */
-  readonly imagenesNuevas = signal<{ file: File; alt: string; portada: boolean; previewUrl: string }[]>([]);
+  readonly imagenesNuevas = signal<
+    { file: File; alt: string; portada: boolean; previewUrl: string }[]
+  >([]);
   readonly imagenError = signal<string | null>(null);
 
   form = this.fb.group({
@@ -144,14 +168,14 @@ export class ProductoCreateComponent implements OnInit {
     tipo: ['simple' as TipoProducto, Validators.required],
     existencias: this.fb.array([]),
     componentes: this.fb.array([]),
-    unidades: this.fb.array([])
+    unidades: this.fb.array([]),
   });
 
   private formEvents = toSignal(this.form.events);
 
   constructor() {
     inject(DestroyRef).onDestroy(() => {
-      this.imagenesNuevas().forEach(x => URL.revokeObjectURL(x.previewUrl));
+      this.imagenesNuevas().forEach((x) => URL.revokeObjectURL(x.previewUrl));
     });
   }
 
@@ -200,9 +224,12 @@ export class ProductoCreateComponent implements OnInit {
     for (const [campo, etiqueta] of Object.entries(this.etiquetasCampos)) {
       if (this.form.get(campo)?.invalid) errores.push(etiqueta);
     }
-    if (this.unidadesArray.controls.some(c => c.invalid)) errores.push('Presentaciones de venta');
-    if (this.existenciasArray.controls.some(c => c.invalid)) errores.push('Inventario inicial');
-    if (this.form.get('tipo')?.value === 'kit' && this.componentesArray.controls.some(c => c.invalid)) {
+    if (this.unidadesArray.controls.some((c) => c.invalid)) errores.push('Presentaciones de venta');
+    if (this.existenciasArray.controls.some((c) => c.invalid)) errores.push('Inventario inicial');
+    if (
+      this.form.get('tipo')?.value === 'kit' &&
+      this.componentesArray.controls.some((c) => c.invalid)
+    ) {
       errores.push('Receta del kit');
     }
     return errores;
@@ -226,11 +253,11 @@ export class ProductoCreateComponent implements OnInit {
 
   readonly errInventario = computed(() => {
     this.formEvents();
-    return this.intentoEnvio() && this.existenciasArray.controls.some(c => c.invalid);
+    return this.intentoEnvio() && this.existenciasArray.controls.some((c) => c.invalid);
   });
   readonly errPresentaciones = computed(() => {
     this.formEvents();
-    return this.intentoEnvio() && this.unidadesArray.controls.some(c => c.invalid);
+    return this.intentoEnvio() && this.unidadesArray.controls.some((c) => c.invalid);
   });
 
   /** Una sección se muestra abierta si el usuario la abrió o si tiene errores tras intentar guardar. */
@@ -243,7 +270,7 @@ export class ProductoCreateComponent implements OnInit {
   /** Sincroniza el estado real del <details> (clic en el resumen) con la señal. */
   syncSeccion(id: string, ev: Event) {
     const abierto = (ev.target as HTMLDetailsElement).open;
-    this.seccionesAbiertas.update(s => {
+    this.seccionesAbiertas.update((s) => {
       const n = new Set(s);
       if (abierto) n.add(id);
       else n.delete(id);
@@ -267,7 +294,7 @@ export class ProductoCreateComponent implements OnInit {
         continue;
       }
       const portada = this.imagenesNuevas().length === 0;
-      this.imagenesNuevas.update(list => [
+      this.imagenesNuevas.update((list) => [
         ...list,
         { file, alt: '', portada, previewUrl: URL.createObjectURL(file) },
       ]);
@@ -275,16 +302,16 @@ export class ProductoCreateComponent implements OnInit {
   }
 
   actualizarAltImagen(index: number, alt: string) {
-    this.imagenesNuevas.update(list => list.map((x, i) => (i === index ? { ...x, alt } : x)));
+    this.imagenesNuevas.update((list) => list.map((x, i) => (i === index ? { ...x, alt } : x)));
   }
 
   removerImagen(index: number) {
-    this.imagenesNuevas.update(list => {
+    this.imagenesNuevas.update((list) => {
       const quitada = list[index];
       if (quitada) URL.revokeObjectURL(quitada.previewUrl);
       const rest = list.filter((_, i) => i !== index);
       // Si se quitó la portada, la primera que quede toma su lugar.
-      if (quitada?.portada && rest.length > 0 && !rest.some(x => x.portada)) {
+      if (quitada?.portada && rest.length > 0 && !rest.some((x) => x.portada)) {
         rest[0] = { ...rest[0], portada: true };
       }
       return rest;
@@ -292,7 +319,7 @@ export class ProductoCreateComponent implements OnInit {
   }
 
   marcarPortada(index: number) {
-    this.imagenesNuevas.update(list => list.map((x, i) => ({ ...x, portada: i === index })));
+    this.imagenesNuevas.update((list) => list.map((x, i) => ({ ...x, portada: i === index })));
   }
 
   /** `fraccionable`/`simple`: puede tener venta fraccionada. `kit`/`servicio`: no aplica. */
@@ -317,7 +344,9 @@ export class ProductoCreateComponent implements OnInit {
     this.cargarCategorias();
     this.cargarProductosSimples();
     this.cargarUnidadesMedida();
-    this.form.controls.tipo.valueChanges.subscribe(tipo => this.onTipoChange(tipo as TipoProducto));
+    this.form.controls.tipo.valueChanges.subscribe((tipo) =>
+      this.onTipoChange(tipo as TipoProducto),
+    );
   }
 
   private onTipoChange(tipo: TipoProducto) {
@@ -341,14 +370,14 @@ export class ProductoCreateComponent implements OnInit {
   cargarCategorias() {
     this.categoriaService.listar().subscribe({
       next: (data) => this.categorias.set(data),
-      error: (err) => console.error('Error al cargar categorias', err)
+      error: (err) => console.error('Error al cargar categorias', err),
     });
   }
 
   cargarUnidadesMedida() {
     this.unidadMedidaService.listar().subscribe({
       next: (data) => this.unidadesMedida.set(data),
-      error: (err) => console.error('Error al cargar unidades de medida', err)
+      error: (err) => console.error('Error al cargar unidades de medida', err),
     });
   }
 
@@ -356,7 +385,8 @@ export class ProductoCreateComponent implements OnInit {
   abrirCrearUnidadMedida() {
     this.sheetService.create({
       zTitle: 'Nueva unidad de medida',
-      zDescription: 'Agrega una unidad al catálogo (kg, l, ml, pza, hora, …). Queda disponible para todos los productos.',
+      zDescription:
+        'Agrega una unidad al catálogo (kg, l, ml, pza, hora, …). Queda disponible para todos los productos.',
       zContent: UnidadMedidaFormSheetComponent,
       zOkText: 'Crear',
       zCancelText: 'Cancelar',
@@ -367,7 +397,7 @@ export class ProductoCreateComponent implements OnInit {
           obs.subscribe({
             next: (nueva: UnidadMedidaResponse) => {
               this.sonner.success('Unidad de medida creada');
-              this.unidadesMedida.update(list => [...list, nueva]);
+              this.unidadesMedida.update((list) => [...list, nueva]);
               this.form.patchValue({ unidad_medida_id: nueva.id });
               resolve();
             },
@@ -375,20 +405,20 @@ export class ProductoCreateComponent implements OnInit {
               console.error('Error al crear unidad de medida', err);
               this.sonner.error('Error al crear la unidad de medida');
               reject(err);
-            }
+            },
           });
         });
-      }
+      },
     });
   }
 
   cargarProductosSimples() {
     this.productoService.listar({ activo: true, page_size: 100 }).subscribe({
       next: (res) => {
-        const prods = res.data.filter(p => (p.tipo || 'simple') !== 'kit');
+        const prods = res.data.filter((p) => (p.tipo || 'simple') !== 'kit');
         this.productosSimples.set(prods);
       },
-      error: (err) => console.error('Error al cargar productos simples', err)
+      error: (err) => console.error('Error al cargar productos simples', err),
     });
   }
 
@@ -401,7 +431,7 @@ export class ProductoCreateComponent implements OnInit {
       cantidad: [0, [Validators.required, Validators.min(0)]],
       costo_unitario: [0, [Validators.min(0)]],
       stock_minimo: [0, [Validators.min(0)]],
-      stock_maximo: [0, [Validators.min(0)]]
+      stock_maximo: [0, [Validators.min(0)]],
     });
     this.existenciasArray.push(group);
   }
@@ -413,7 +443,7 @@ export class ProductoCreateComponent implements OnInit {
   agregarComponente() {
     const group = this.fb.group({
       producto_componente_id: ['', Validators.required],
-      cantidad: [1, [Validators.required, Validators.min(0.01)]]
+      cantidad: [1, [Validators.required, Validators.min(0.01)]],
     });
     this.componentesArray.push(group);
   }
@@ -431,9 +461,9 @@ export class ProductoCreateComponent implements OnInit {
         unidades_por_base: [6 as number | null],
         factor: [null as number | null],
         precio_venta: [0, [Validators.required, Validators.min(0)]],
-        codigo_barras: ['']
+        codigo_barras: [''],
       },
-      { validators: equivalenciaUnidadValidator }
+      { validators: equivalenciaUnidadValidator },
     );
     this.unidadesArray.push(group);
   }
@@ -474,110 +504,119 @@ export class ProductoCreateComponent implements OnInit {
 
     // Fotos: se suben tras crear el producto; portada = la marcada, o la primera.
     const fotos = this.imagenesNuevas();
-    const hayPortada = fotos.some(f => f.portada);
+    const hayPortada = fotos.some((f) => f.portada);
 
     const esServicio = data.tipo === 'servicio';
 
-    this.productoService.crear(data).pipe(
-      switchMap(prodRes => {
-        const operations: Observable<any>[] = [];
+    this.productoService
+      .crear(data)
+      .pipe(
+        switchMap((prodRes) => {
+          const operations: Observable<any>[] = [];
 
-        fotos.forEach((f, i) => {
-          operations.push(this.productoService.subirImagen(prodRes.id, {
-            file: f.file,
-            alt_texto: f.alt.trim() || null,
-            orden: i,
-            es_principal: f.portada || (!hayPortada && i === 0),
-          }));
-        });
-
-        // Un servicio nunca mueve inventario ni tiene presentaciones de venta.
-        if (esServicio) {
-          return operations.length > 0
-            ? forkJoin(operations).pipe(map(() => prodRes))
-            : of(prodRes);
-        }
-
-        this.existenciasArray.controls.forEach(c => {
-          const sucursal_id = c.get('sucursal_id')?.value;
-          const cantidad = Number(c.get('cantidad')?.value) || 0;
-          const costo_unitario = Number(c.get('costo_unitario')?.value) || 0;
-          const stock_minimo = Number(c.get('stock_minimo')?.value) || 0;
-          const stock_maximo = Number(c.get('stock_maximo')?.value) || 0;
-          const tipo = c.get('tipo')?.value;
-          const referencia_tipo = c.get('referencia_tipo')?.value;
-          const motivo = c.get('motivo')?.value;
-
-          if (cantidad > 0) {
-            // El movimiento crea la existencia con saldo, umbrales y costo de una sola vez.
-            const payload: any = {
-              producto_id: prodRes.id,
-              sucursal_id,
-              tipo,
-              cantidad,
-              referencia_tipo,
-              motivo
-            };
-            if (stock_minimo > 0) payload.stock_minimo = stock_minimo;
-            if (stock_maximo > 0) payload.stock_maximo = stock_maximo;
-            if (tipo === 'entrada' && costo_unitario > 0) {
-              payload.costo_unitario = costo_unitario;
-              payload.actualizar_costo = true;
-            }
-
+          fotos.forEach((f, i) => {
             operations.push(
-              this.movimientoService.aplicar(payload).pipe(retry({ count: 3, delay: 1000 }))
+              this.productoService.subirImagen(prodRes.id, {
+                file: f.file,
+                alt_texto: f.alt.trim() || null,
+                orden: i,
+                es_principal: f.portada || (!hayPortada && i === 0),
+              }),
             );
-          } else if (stock_minimo > 0 || stock_maximo > 0) {
-            this.sonner.warning('Algunos umbrales fueron ignorados porque requieren registrar un stock inicial mayor a 0 primero.');
-          }
-        });
-
-        if (data.tipo === 'kit') {
-          const componentes = this.componentesArray.controls
-            .map(c => ({
-              producto_componente_id: c.get('producto_componente_id')?.value,
-              cantidad: Number(c.get('cantidad')?.value) || 0,
-            }))
-            .filter(l => l.producto_componente_id && l.cantidad > 0);
-          if (componentes.length > 0) {
-            // Una sola llamada atómica que reemplaza toda la receta.
-            operations.push(this.productoService.reemplazarReceta(prodRes.id, { componentes }));
-          }
-        } else {
-          // Presentaciones de venta (producto_unidad): la unidad base ya vive en el propio producto.
-          this.unidadesArray.controls.forEach(c => {
-            const nombre = (c.get('nombre')?.value || '').trim();
-            if (!nombre) return;
-            const usaFactor = c.get('modo')?.value === 'factor';
-            const equivalencia = usaFactor
-              ? { factor: Number(c.get('factor')?.value) }
-              : { unidades_por_base: Number(c.get('unidades_por_base')?.value) };
-            operations.push(this.productoService.agregarUnidad(prodRes.id, {
-              nombre,
-              unidad_medida: c.get('unidad_medida')?.value,
-              precio_venta: Number(c.get('precio_venta')?.value) || 0,
-              codigo_barras: c.get('codigo_barras')?.value || null,
-              ...equivalencia
-            }));
           });
-        }
 
-        if (operations.length > 0) {
-          return forkJoin(operations).pipe(map(() => prodRes));
-        }
-        return of(prodRes);
-      })
-    ).subscribe({
-      next: (prodRes) => {
-        this.sonner.success('Producto creado exitosamente');
-        this.router.navigate(['/inventario/productos', prodRes.id]);
-      },
-      error: (err) => {
-        console.error('Error al crear producto', err);
-        this.sonner.error('Error al crear el producto');
-        this.loading.set(false);
-      }
-    });
+          // Un servicio nunca mueve inventario ni tiene presentaciones de venta.
+          if (esServicio) {
+            return operations.length > 0
+              ? forkJoin(operations).pipe(map(() => prodRes))
+              : of(prodRes);
+          }
+
+          this.existenciasArray.controls.forEach((c) => {
+            const sucursal_id = c.get('sucursal_id')?.value;
+            const cantidad = Number(c.get('cantidad')?.value) || 0;
+            const costo_unitario = Number(c.get('costo_unitario')?.value) || 0;
+            const stock_minimo = Number(c.get('stock_minimo')?.value) || 0;
+            const stock_maximo = Number(c.get('stock_maximo')?.value) || 0;
+            const tipo = c.get('tipo')?.value;
+            const referencia_tipo = c.get('referencia_tipo')?.value;
+            const motivo = c.get('motivo')?.value;
+
+            if (cantidad > 0) {
+              // El movimiento crea la existencia con saldo, umbrales y costo de una sola vez.
+              const payload: any = {
+                producto_id: prodRes.id,
+                sucursal_id,
+                tipo,
+                cantidad,
+                referencia_tipo,
+                motivo,
+              };
+              if (stock_minimo > 0) payload.stock_minimo = stock_minimo;
+              if (stock_maximo > 0) payload.stock_maximo = stock_maximo;
+              if (tipo === 'entrada' && costo_unitario > 0) {
+                payload.costo_unitario = costo_unitario;
+                payload.actualizar_costo = true;
+              }
+
+              operations.push(
+                this.movimientoService.aplicar(payload).pipe(retry({ count: 3, delay: 1000 })),
+              );
+            } else if (stock_minimo > 0 || stock_maximo > 0) {
+              this.sonner.warning(
+                'Algunos umbrales fueron ignorados porque requieren registrar un stock inicial mayor a 0 primero.',
+              );
+            }
+          });
+
+          if (data.tipo === 'kit') {
+            const componentes = this.componentesArray.controls
+              .map((c) => ({
+                producto_componente_id: c.get('producto_componente_id')?.value,
+                cantidad: Number(c.get('cantidad')?.value) || 0,
+              }))
+              .filter((l) => l.producto_componente_id && l.cantidad > 0);
+            if (componentes.length > 0) {
+              // Una sola llamada atómica que reemplaza toda la receta.
+              operations.push(this.productoService.reemplazarReceta(prodRes.id, { componentes }));
+            }
+          } else {
+            // Presentaciones de venta (producto_unidad): la unidad base ya vive en el propio producto.
+            this.unidadesArray.controls.forEach((c) => {
+              const nombre = (c.get('nombre')?.value || '').trim();
+              if (!nombre) return;
+              const usaFactor = c.get('modo')?.value === 'factor';
+              const equivalencia = usaFactor
+                ? { factor: Number(c.get('factor')?.value) }
+                : { unidades_por_base: Number(c.get('unidades_por_base')?.value) };
+              operations.push(
+                this.productoService.agregarUnidad(prodRes.id, {
+                  nombre,
+                  unidad_medida: c.get('unidad_medida')?.value,
+                  precio_venta: Number(c.get('precio_venta')?.value) || 0,
+                  codigo_barras: c.get('codigo_barras')?.value || null,
+                  ...equivalencia,
+                }),
+              );
+            });
+          }
+
+          if (operations.length > 0) {
+            return forkJoin(operations).pipe(map(() => prodRes));
+          }
+          return of(prodRes);
+        }),
+      )
+      .subscribe({
+        next: (prodRes) => {
+          this.sonner.success('Producto creado exitosamente');
+          this.router.navigate(['/inventario/productos', prodRes.id]);
+        },
+        error: (err) => {
+          console.error('Error al crear producto', err);
+          this.sonner.error('Error al crear el producto');
+          this.loading.set(false);
+        },
+      });
   }
 }

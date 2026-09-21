@@ -8,7 +8,7 @@ import {
   lucideCornerDownRight,
 } from '@ng-icons/lucide';
 
-import { CategoriaService } from '../data-access/categoria.service';
+import { CategoriaService } from '../data-access/services/categoria.service';
 import { CategoriaResponse } from '../data-access/inventario.models';
 import { AuthService } from '@/core/auth/api/auth.service';
 import { PERMISOS } from '@/core/auth/permissions';

@@ -21,6 +21,7 @@ import {
   LandmarkIcon,
   LayersIcon,
   LayoutDashboardIcon,
+  MessageSquareIcon,
   MonitorCheckIcon,
   PackageCheckIcon,
   RotateCcwIcon,
@@ -100,7 +101,11 @@ export class AppSidebarComponent {
   }
 
   protected readonly navSecondary: readonly Sidebar07NavItem[] = [
-    
+    {
+      title: 'Ayuda',
+      url: '/ayuda',
+      icon: MessageSquareIcon,
+    },
     {
       title: 'Configuración',
       url: '/config',

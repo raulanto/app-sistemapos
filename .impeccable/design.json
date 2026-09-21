@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-21T14:03:15Z",
+  "title": "Design System: Sistema POS",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Deep Slate",
+        "canonical": "oklch(0.21 0.006 285.885)"
+      },
+      "secondary": {
+        "role": "neutral",
+        "displayName": "Muted Light",
+        "canonical": "oklch(0.967 0.001 286.375)"
+      },
+      "destructive": {
+        "role": "destructive",
+        "displayName": "Vibrant Red",
+        "canonical": "oklch(0.577 0.245 27.325)"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display (Google Sans)",
+        "purpose": "Encabezados principales de paneles y dashboards."
+      },
+      "body": {
+        "displayName": "Body (Geist Sans)",
+        "purpose": "Texto general, tablas y descripciones de productos."
+      },
+      "mono": {
+        "displayName": "Mono (Geist Mono)",
+        "purpose": "Códigos SKU, precios, cantidades y folios numéricos."
+      }
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Botón para acciones principales como guardar, cobrar o confirmar.",
+      "html": "<button class=\"ds-btn-primary\">Guardar producto</button>",
+      "css": ".ds-btn-primary { background: oklch(0.21 0.006 285.885); color: oklch(0.985 0 0); padding: 8px 16px; border-radius: calc(1rem - 2px); font-weight: 500; border: none; cursor: pointer; transition: opacity 0.2s; } .ds-btn-primary:hover { opacity: 0.9; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Botón secundario para cancelar o filtrar.",
+      "html": "<button class=\"ds-btn-secondary\">Cancelar</button>",
+      "css": ".ds-btn-secondary { background: oklch(0.967 0.001 286.375); color: oklch(0.141 0 0); padding: 8px 16px; border-radius: calc(1rem - 2px); font-weight: 500; border: 1px solid oklch(0.92 0.004 286.32); cursor: pointer; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Precision Control Desk",
+    "overview": "El sistema visual de app-sistemapos está concebido para ofrecer alta densidad informativa sin saturación visual, garantizando operaciones rápidas y eficientes en caja y almacén.",
+    "keyCharacteristics": [
+      "Claridad de alto contraste",
+      "Densidad eficiente",
+      "Bordes suaves y superficies pulidas"
+    ],
+    "rules": [
+      {
+        "name": "The Single Focus Rule",
+        "body": "El color primario se reserva exclusivamente para acciones principales y estados activos de alta prioridad.",
+        "section": "colors"
+      },
+      {
+        "name": "The Flat Surface Rule",
+        "body": "Las tarjetas y elementos de tabla descansan planos. Las sombras únicamente se activan en elementos superpuestos.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Usar tipografía mono (Geist Mono) para precios, SKUs y cantidades numéricas.",
+      "Mantener adaptabilidad a modo oscuro usando variables semánticas."
+    ],
+    "donts": [
+      "Inventar colores fuera del esquema de variables OKLCH.",
+      "Aplicar sombreados pesados en elementos de tabla."
+    ]
+  }
+}

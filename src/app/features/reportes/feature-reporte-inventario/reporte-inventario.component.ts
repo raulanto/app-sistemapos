@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
@@ -8,7 +15,7 @@ import { provideIcons } from '@ng-icons/core';
 import { NgIcon } from '@ng-icons/core';
 import { lucideBoxes, lucideLayers } from '@ng-icons/lucide';
 
-import { CategoriaService } from '@/features/inventario/data-access/categoria.service';
+import { CategoriaService } from '@/features/inventario/data-access/services/categoria.service';
 import { CategoriaResponse } from '@/features/inventario/data-access/models/categoria.model';
 import { ZardEmptyComponent } from '@/shared/components/empty/empty.component';
 import { ZardSelectImports } from '@/shared/components/select/select.imports';
@@ -20,7 +27,10 @@ import { ReporteFiltrosService } from '../data-access/reporte-filtros.service';
 import { ReporteService } from '../data-access/reporte.service';
 import { InventarioValorizadoReporte } from '../data-access/reporte.models';
 import { ReporteFiltrosComponent } from '../ui/reporte-filtros/reporte-filtros.component';
-import { ReporteKpi, ReporteKpiGridComponent } from '../ui/reporte-kpi-grid/reporte-kpi-grid.component';
+import {
+  ReporteKpi,
+  ReporteKpiGridComponent,
+} from '../ui/reporte-kpi-grid/reporte-kpi-grid.component';
 import { ReporteExportarComponent } from '../ui/reporte-exportar/reporte-exportar.component';
 
 @Component({
@@ -56,7 +66,7 @@ export class ReporteInventarioComponent {
     this.categoriaService
       .listar()
       .pipe(catchError(() => of([] as CategoriaResponse[])))
-      .subscribe(cs => this.categorias.set(cs));
+      .subscribe((cs) => this.categorias.set(cs));
 
     effect(() => {
       this.filtros.sucursalId();
@@ -68,9 +78,12 @@ export class ReporteInventarioComponent {
   cargar() {
     this.cargando.set(true);
     this.reporteService
-      .inventarioValorizado({ sucursal_id: this.filtros.sucursalParaQuery(), categoria_id: this.categoriaId() || undefined })
+      .inventarioValorizado({
+        sucursal_id: this.filtros.sucursalParaQuery(),
+        categoria_id: this.categoriaId() || undefined,
+      })
       .pipe(catchError(() => of(null)))
-      .subscribe(r => {
+      .subscribe((r) => {
         this.reporte.set(r);
         this.cargando.set(false);
       });
@@ -88,10 +101,25 @@ export class ReporteInventarioComponent {
     const top = [...categorias].sort((a, b) => Number(b.valor) - Number(a.valor))[0];
 
     return [
-      { label: 'Valor total (a costo)', value: fmtCurrency(inv.valor_total), icon: 'lucideDollarSign', tono: 'accent', destacado: true, caption: `${fmtNum(productos)} producto(s) valorizados` },
+      {
+        label: 'Valor total (a costo)',
+        value: fmtCurrency(inv.valor_total),
+        icon: 'lucideDollarSign',
+        tono: 'accent',
+        destacado: true,
+        caption: `${fmtNum(productos)} producto(s) valorizados`,
+      },
       { label: 'Categorías con stock', value: fmtNum(categorias.length), icon: 'lucideLayers' },
       ...(top
-        ? ([{ label: 'Categoría con más valor', value: top.nombre, icon: 'lucideBoxes', tono: 'positive' as const, caption: `${fmtCurrency(top.valor)} · ${fmtNum(top.numero_productos)} producto(s)` }] satisfies ReporteKpi[])
+        ? ([
+            {
+              label: 'Categoría con más valor',
+              value: top.nombre,
+              icon: 'lucideBoxes',
+              tono: 'positive' as const,
+              caption: `${fmtCurrency(top.valor)} · ${fmtNum(top.numero_productos)} producto(s)`,
+            },
+          ] satisfies ReporteKpi[])
         : []),
     ];
   });
