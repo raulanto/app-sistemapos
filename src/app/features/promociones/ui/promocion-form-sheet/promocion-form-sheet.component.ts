@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { form, FormField, maxLength, min, required } from '@angular/forms/signals';
 import { Observable } from 'rxjs';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -17,8 +24,11 @@ import {
 } from '../../data-access/promociones.models';
 import { injectSheetData } from '../../../../shared/components/sheet/sheet.service';
 import { ProductoService } from '../../../inventario/data-access/producto.service';
-import { CategoriaService } from '../../../inventario/data-access/categoria.service';
-import { CategoriaResponse, ProductoResponse } from '../../../inventario/data-access/inventario.models';
+import { CategoriaService } from '../../../inventario/data-access/services/categoria.service';
+import {
+  CategoriaResponse,
+  ProductoResponse,
+} from '../../../inventario/data-access/inventario.models';
 import { SucursalService } from '../../../../core/sucursal/sucursal.service';
 
 import { ZardFieldImports } from '../../../../shared/components/field/field.imports';
@@ -129,7 +139,7 @@ export class PromocionFormSheetComponent implements OnInit {
 
   private readonly model = signal<PromocionFormValue>({ ...PROMOCION_FORM_INICIAL });
 
-  protected readonly promForm = form(this.model, path => {
+  protected readonly promForm = form(this.model, (path) => {
     required(path.nombre, { message: 'El nombre es obligatorio y único.' });
     maxLength(path.nombre, 100, { message: 'Máximo 100 caracteres.' });
     required(path.tipo, { message: 'Selecciona el tipo de promoción.' });
@@ -143,7 +153,7 @@ export class PromocionFormSheetComponent implements OnInit {
     const t = this.filtro().trim().toLowerCase();
     if (!t) return this.productos().slice(0, 20);
     return this.productos()
-      .filter(p => p.nombre.toLowerCase().includes(t) || p.sku.toLowerCase().includes(t))
+      .filter((p) => p.nombre.toLowerCase().includes(t) || p.sku.toLowerCase().includes(t))
       .slice(0, 20);
   });
 
@@ -158,18 +168,18 @@ export class PromocionFormSheetComponent implements OnInit {
     this.productoService
       .listar({ activo: true, page_size: 100, sort: 'nombre:asc', include: ['unidades'] })
       .subscribe({
-        next: res => {
+        next: (res) => {
           this.productos.set(res.data);
           if (this.sheetData?.promocion) this.hidratarObjetivos(this.sheetData.promocion.objetivos);
         },
-        error: err => console.error('Error al cargar productos', err),
+        error: (err) => console.error('Error al cargar productos', err),
       });
     this.categoriaService.listar().subscribe({
-      next: cs => {
-        this.categorias.set(cs.filter(c => c.activo));
+      next: (cs) => {
+        this.categorias.set(cs.filter((c) => c.activo));
         if (this.sheetData?.promocion) this.hidratarObjetivos(this.sheetData.promocion.objetivos);
       },
-      error: err => console.error('Error al cargar categorías', err),
+      error: (err) => console.error('Error al cargar categorías', err),
     });
 
     const promo = this.sheetData?.promocion;
@@ -178,7 +188,11 @@ export class PromocionFormSheetComponent implements OnInit {
 
     this.diasBits.set(promo.dias_semana ?? 0);
     this.sucursalesSel.set(
-      new Set((promo.sucursales ?? []).map((s: any) => (typeof s === 'string' ? s : s?.id)).filter(Boolean)),
+      new Set(
+        (promo.sucursales ?? [])
+          .map((s: any) => (typeof s === 'string' ? s : s?.id))
+          .filter(Boolean),
+      ),
     );
     this.model.set({
       nombre: promo.nombre,
@@ -191,7 +205,8 @@ export class PromocionFormSheetComponent implements OnInit {
       precio_fijo: promo.precio_fijo != null ? Number(promo.precio_fijo) : null,
       cantidad_minima: promo.cantidad_minima != null ? Number(promo.cantidad_minima) : null,
       tope_descuento: promo.tope_descuento != null ? Number(promo.tope_descuento) : null,
-      monto_minimo_compra: promo.monto_minimo_compra != null ? Number(promo.monto_minimo_compra) : null,
+      monto_minimo_compra:
+        promo.monto_minimo_compra != null ? Number(promo.monto_minimo_compra) : null,
       metodo_pago_requerido: promo.metodo_pago_requerido ?? '',
       cliente_segmento: promo.cliente_segmento ?? '',
       requiere_cupon: promo.requiere_cupon,
@@ -207,7 +222,7 @@ export class PromocionFormSheetComponent implements OnInit {
     return (this.diasBits() & bit) !== 0;
   }
   toggleDia(bit: number) {
-    this.diasBits.update(b => b ^ bit);
+    this.diasBits.update((b) => b ^ bit);
     this.diasDirty = true;
   }
 
@@ -216,7 +231,7 @@ export class PromocionFormSheetComponent implements OnInit {
     return this.sucursalesSel().has(id);
   }
   toggleSucursal(id: string) {
-    this.sucursalesSel.update(s => {
+    this.sucursalesSel.update((s) => {
       const n = new Set(s);
       n.has(id) ? n.delete(id) : n.add(id);
       return n;
@@ -227,7 +242,7 @@ export class PromocionFormSheetComponent implements OnInit {
   // --- Objetivos ---
   private hidratarObjetivos(objs: PromocionResponse['objetivos']) {
     this.objetivos.set(
-      objs.map(o => ({
+      objs.map((o) => ({
         producto_id: o.producto_id,
         producto_unidad_id: o.producto_unidad_id,
         categoria_id: o.categoria_id,
@@ -236,19 +251,23 @@ export class PromocionFormSheetComponent implements OnInit {
     );
   }
 
-  private labelObjetivo(productoId: string | null, unidadId: string | null, categoriaId: string | null): string {
+  private labelObjetivo(
+    productoId: string | null,
+    unidadId: string | null,
+    categoriaId: string | null,
+  ): string {
     if (categoriaId) {
-      const c = this.categorias().find(x => x.id === categoriaId);
+      const c = this.categorias().find((x) => x.id === categoriaId);
       return c ? `Categoría · ${c.nombre}` : 'Categoría';
     }
     if (unidadId) {
       for (const p of this.productos()) {
-        const u = (p.unidades ?? []).find(x => x.id === unidadId);
+        const u = (p.unidades ?? []).find((x) => x.id === unidadId);
         if (u) return `${p.nombre} · ${u.nombre}`;
       }
       return 'Presentación';
     }
-    const p = this.productos().find(x => x.id === productoId);
+    const p = this.productos().find((x) => x.id === productoId);
     return p ? `${p.nombre} (unidad base)` : 'Producto';
   }
 
@@ -256,15 +275,26 @@ export class PromocionFormSheetComponent implements OnInit {
     this.expandido.set(this.expandido() === id ? null : id);
   }
 
-  yaEsObjetivo(productoId: string | null, unidadId: string | null, categoriaId: string | null): boolean {
+  yaEsObjetivo(
+    productoId: string | null,
+    unidadId: string | null,
+    categoriaId: string | null,
+  ): boolean {
     return this.objetivos().some(
-      o => o.producto_id === productoId && o.producto_unidad_id === unidadId && o.categoria_id === categoriaId,
+      (o) =>
+        o.producto_id === productoId &&
+        o.producto_unidad_id === unidadId &&
+        o.categoria_id === categoriaId,
     );
   }
 
-  agregarObjetivo(productoId: string | null, unidadId: string | null, categoriaId: string | null = null) {
+  agregarObjetivo(
+    productoId: string | null,
+    unidadId: string | null,
+    categoriaId: string | null = null,
+  ) {
     if (this.yaEsObjetivo(productoId, unidadId, categoriaId)) return;
-    this.objetivos.update(list => [
+    this.objetivos.update((list) => [
       ...list,
       {
         producto_id: productoId,
@@ -282,14 +312,14 @@ export class PromocionFormSheetComponent implements OnInit {
   }
 
   quitarObjetivo(i: number) {
-    this.objetivos.update(list => list.filter((_, idx) => idx !== i));
+    this.objetivos.update((list) => list.filter((_, idx) => idx !== i));
   }
 
   /** NxM no puede mezclar unidad base y presentación (el backend lo rechaza con 400). */
   readonly nxmMezclaObjetivos = computed(() => {
     if (this.tipoSel() !== 'nxm') return false;
     const objs = this.objetivos();
-    return objs.some(o => o.producto_id) && objs.some(o => o.producto_unidad_id);
+    return objs.some((o) => o.producto_id) && objs.some((o) => o.producto_unidad_id);
   });
 
   private num(v: unknown): number | null {
@@ -308,7 +338,7 @@ export class PromocionFormSheetComponent implements OnInit {
   }
 
   save(): Observable<PromocionResponse> | void {
-    const objetivosReq: ObjetivoRequest[] = this.objetivos().map(o =>
+    const objetivosReq: ObjetivoRequest[] = this.objetivos().map((o) =>
       o.categoria_id
         ? { categoria_id: o.categoria_id }
         : o.producto_unidad_id
@@ -317,7 +347,12 @@ export class PromocionFormSheetComponent implements OnInit {
     );
 
     const root = this.promForm();
-    if (!root.valid() || objetivosReq.length === 0 || this.horarioIncompleto() || this.nxmMezclaObjetivos()) {
+    if (
+      !root.valid() ||
+      objetivosReq.length === 0 ||
+      this.horarioIncompleto() ||
+      this.nxmMezclaObjetivos()
+    ) {
       root.markAsTouched();
       return;
     }
@@ -348,10 +383,14 @@ export class PromocionFormSheetComponent implements OnInit {
         tope_descuento: this.num(d.tope_descuento),
         monto_minimo_compra: this.num(d.monto_minimo_compra),
         cambiar_topes: f.tope_descuento().dirty() || f.monto_minimo_compra().dirty(),
-        metodo_pago_requerido: (d.metodo_pago_requerido || null) as ActualizarPromocionRequest['metodo_pago_requerido'],
+        metodo_pago_requerido: (d.metodo_pago_requerido ||
+          null) as ActualizarPromocionRequest['metodo_pago_requerido'],
         cliente_segmento: d.cliente_segmento?.trim() || null,
         requiere_cupon: !!d.requiere_cupon,
-        cambiar_condiciones: f.metodo_pago_requerido().dirty() || f.cliente_segmento().dirty() || f.requiere_cupon().dirty(),
+        cambiar_condiciones:
+          f.metodo_pago_requerido().dirty() ||
+          f.cliente_segmento().dirty() ||
+          f.requiere_cupon().dirty(),
         sucursales,
         cambiar_sucursales: this.sucursalesDirty,
         vigente_desde: this.toIso(d.vigente_desde),
@@ -371,7 +410,8 @@ export class PromocionFormSheetComponent implements OnInit {
       objetivos: objetivosReq,
       tope_descuento: this.num(d.tope_descuento),
       monto_minimo_compra: this.num(d.monto_minimo_compra),
-      metodo_pago_requerido: (d.metodo_pago_requerido || null) as CrearPromocionRequest['metodo_pago_requerido'],
+      metodo_pago_requerido: (d.metodo_pago_requerido ||
+        null) as CrearPromocionRequest['metodo_pago_requerido'],
       cliente_segmento: d.cliente_segmento?.trim() || null,
       requiere_cupon: !!d.requiere_cupon,
       sucursales,

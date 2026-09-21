@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+  untracked,
+} from '@angular/core';
 import { CurrencyPipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -13,9 +23,13 @@ import {
   lucideSearch,
 } from '@ng-icons/lucide';
 
-import { CategoriaService } from '../../../inventario/data-access/categoria.service';
+import { CategoriaService } from '../../../inventario/data-access/services/categoria.service';
 import { ProductoService } from '../../../inventario/data-access/producto.service';
-import { CategoriaResponse, ProductoResponse, UnidadResponse } from '../../../inventario/data-access/inventario.models';
+import {
+  CategoriaResponse,
+  ProductoResponse,
+  UnidadResponse,
+} from '../../../inventario/data-access/inventario.models';
 import { ZardBadgeComponent } from '../../../../shared/components/badge/badge.component';
 import { ZardButtonComponent } from '../../../../shared/components/button/button.component';
 import { ZardEmptyComponent } from '../../../../shared/components/empty/empty.component';
@@ -84,7 +98,7 @@ export class PosCatalogoComponent {
   readonly productosFiltrados = computed(() => {
     const t = this.q().trim().toLowerCase();
     const cat = this.categoriaSel();
-    return this.productos().filter(p => {
+    return this.productos().filter((p) => {
       if (cat && p.categoria_id !== cat) return false;
       if (!t) return true;
       return (
@@ -100,7 +114,7 @@ export class PosCatalogoComponent {
    * cada unidad activa) es su propia tarjeta; "Sin categoría" al final.
    */
   readonly bloques = computed(() => {
-    const nombrePorId = new Map(this.categorias().map(c => [c.id, c.nombre]));
+    const nombrePorId = new Map(this.categorias().map((c) => [c.id, c.nombre]));
     const grupos = new Map<string, ItemCatalogo[]>();
     for (const p of this.productosFiltrados()) {
       const k = p.categoria_id ?? '';
@@ -119,15 +133,23 @@ export class PosCatalogoComponent {
         id: id || null,
         nombre: nombrePorId.get(id) ?? 'Sin categoría',
         items,
-        count: new Set(items.map(i => i.producto.id)).size,
+        count: new Set(items.map((i) => i.producto.id)).size,
       }))
-      .sort((a, b) => (a.nombre === 'Sin categoría' ? 1 : b.nombre === 'Sin categoría' ? -1 : a.nombre.localeCompare(b.nombre)));
+      .sort((a, b) =>
+        a.nombre === 'Sin categoría'
+          ? 1
+          : b.nombre === 'Sin categoría'
+            ? -1
+            : a.nombre.localeCompare(b.nombre),
+      );
   });
 
   /** Chips: categorías que tienen al menos un producto en el catálogo. */
   readonly categoriasConProductos = computed(() => {
-    const conProd = new Set(this.productos().map(p => p.categoria_id));
-    return this.categorias().filter(c => conProd.has(c.id)).sort((a, b) => a.nombre.localeCompare(b.nombre));
+    const conProd = new Set(this.productos().map((p) => p.categoria_id));
+    return this.categorias()
+      .filter((c) => conProd.has(c.id))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
   });
 
   constructor() {
@@ -153,20 +175,20 @@ export class PosCatalogoComponent {
         include: ['unidades', 'existencias'],
       })
       .subscribe({
-        next: res => {
+        next: (res) => {
           this.productos.set(res.data);
           this.imgRoto.set(new Set());
           this.cargandoCatalogo.set(false);
         },
-        error: err => {
+        error: (err) => {
           console.error('Error al cargar el catálogo', err);
           this.cargandoCatalogo.set(false);
         },
       });
     if (this.categorias().length === 0) {
       this.categoriaService.listar().subscribe({
-        next: cs => this.categorias.set(cs.filter(c => c.activo)),
-        error: err => console.error('Error al cargar categorías', err),
+        next: (cs) => this.categorias.set(cs.filter((c) => c.activo)),
+        error: (err) => console.error('Error al cargar categorías', err),
       });
     }
   }
@@ -192,7 +214,7 @@ export class PosCatalogoComponent {
   }
   /** La imagen `src` no cargó: se descarta y la tarjeta prueba el siguiente candidato. */
   marcarImgRota(src: string | null) {
-    if (src) this.imgRoto.update(s => new Set(s).add(src));
+    if (src) this.imgRoto.update((s) => new Set(s).add(src));
   }
 
   private leerVista(): 'grid' | 'lista' {
@@ -228,13 +250,15 @@ export class PosCatalogoComponent {
     const cod = this.codigo().trim();
     if (!cod) return;
     this.productoService.resolverCodigo(cod).subscribe({
-      next: r => {
-        const prod = this.productos().find(p => p.id === r.producto_id);
+      next: (r) => {
+        const prod = this.productos().find((p) => p.id === r.producto_id);
         if (!prod) {
           this.sonner.error('El código resolvió a un producto que no está en el catálogo cargado');
           return;
         }
-        const uni = r.unidad_id ? (prod.unidades ?? []).find(x => x.id === r.unidad_id) ?? null : null;
+        const uni = r.unidad_id
+          ? ((prod.unidades ?? []).find((x) => x.id === r.unidad_id) ?? null)
+          : null;
         this.agregar.emit({ producto: prod, unidad: uni });
         this.codigo.set('');
       },

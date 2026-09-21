@@ -17,7 +17,7 @@ import {
   TipoPedido,
 } from '../data-access/pedidos.models';
 import { ProductoService } from '../../inventario/data-access/producto.service';
-import { CategoriaService } from '../../inventario/data-access/categoria.service';
+import { CategoriaService } from '../../inventario/data-access/services/categoria.service';
 import {
   CategoriaResponse,
   ProductoResponse,
@@ -298,8 +298,8 @@ export class PedidoFormStore {
   inicializar(id: string | null) {
     this.pedidoId.set(id);
     if (this.esEdicion()) {
-        this.cargando.set(true);
-        this.cargarPedido();
+      this.cargando.set(true);
+      this.cargarPedido();
     }
   }
 
