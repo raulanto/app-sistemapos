@@ -14,6 +14,11 @@ import {
   lucideLayers,
   lucideClock,
   lucideInfo,
+  lucideGlobe,
+  lucideTerminal,
+  lucideX,
+  lucideFileText,
+  lucideLock,
 } from '@ng-icons/lucide';
 
 import { AuditoriaService } from '../data-access/auditoria.service';
@@ -27,6 +32,8 @@ import { ZardInputComponent } from '@/shared/components/input';
 import { ZardSelectImports } from '@/shared/components/select/select.imports';
 import { ZardSkeletonComponent } from '@/shared/components/skeleton/skeleton.component';
 import { ZardEmptyComponent } from '@/shared/components/empty/empty.component';
+
+import { ZardButtonComponent } from '@/shared/components/button/button.component';
 
 @Component({
   selector: 'app-auditoria-list',
@@ -43,6 +50,7 @@ import { ZardEmptyComponent } from '@/shared/components/empty/empty.component';
     ...ZardSelectImports,
     ZardSkeletonComponent,
     ZardEmptyComponent,
+    ZardButtonComponent,
   ],
   viewProviders: [
     provideIcons({
@@ -56,6 +64,11 @@ import { ZardEmptyComponent } from '@/shared/components/empty/empty.component';
       lucideLayers,
       lucideClock,
       lucideInfo,
+      lucideGlobe,
+      lucideTerminal,
+      lucideX,
+      lucideFileText,
+      lucideLock,
     }),
   ],
   templateUrl: './auditoria-list.component.html',
@@ -152,6 +165,17 @@ export class AuditoriaListComponent implements OnInit {
       default:
         return 'outline';
     }
+  }
+
+  claseBadgeAccion(accion: string): string {
+    const act = accion.toLowerCase();
+    if (act.includes('anula') || act.includes('elimina') || act.includes('desactiva') || act.includes('cancel')) {
+      return 'bg-destructive/10 text-destructive border-destructive/20';
+    }
+    if (act.includes('crea') || act.includes('abierto') || act.includes('activa')) {
+      return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
+    }
+    return 'bg-muted text-foreground border-border';
   }
 
   formatearDetalles(detalles: Record<string, unknown> | null | undefined): string {
