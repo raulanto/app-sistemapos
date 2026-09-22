@@ -98,7 +98,8 @@ export class AuditoriaListComponent implements OnInit {
         modulo: this.moduloFiltro() || undefined,
         page: this.page(),
         page_size: this.pageSize(),
-        sort: 'created_at:desc',
+        sort: 'fecha:desc',
+        include: 'usuario',
       })
       .subscribe({
         next: (res) => {
@@ -153,7 +154,7 @@ export class AuditoriaListComponent implements OnInit {
     }
   }
 
-  formatearDetalles(detalles: Record<string, unknown> | null): string {
+  formatearDetalles(detalles: Record<string, unknown> | null | undefined): string {
     if (!detalles) return 'Sin detalles adicionales registrados.';
     try {
       return JSON.stringify(detalles, null, 2);
