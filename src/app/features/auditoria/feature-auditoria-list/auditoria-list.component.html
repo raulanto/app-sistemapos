@@ -1,0 +1,199 @@
+<div class="w-full space-y-6 p-4 sm:p-6 lg:p-8">
+  <!-- ENCABEZADO DE MÓDULO -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight sm:text-3xl text-foreground font-display flex items-center gap-2.5">
+        <ng-icon name="lucideShieldCheck" class="size-7 text-primary" />
+        Auditoría y Bitácora del Sistema
+      </h1>
+      <p class="text-sm text-muted-foreground mt-1">
+        Registro cronológico e inmutable de eventos, modificaciones y acciones realizadas por usuarios en la plataforma.
+      </p>
+    </div>
+    <button
+      type="button"
+      (click)="cargarLogs()"
+      class="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-xs font-semibold text-foreground transition-all hover:bg-muted"
+    >
+      <ng-icon name="lucideRefreshCw" class="size-3.5" [class.animate-spin]="cargando()" />
+      Actualizar bitácora
+    </button>
+  </div>
+
+  <!-- FILTROS Y BÚSQUEDA -->
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="relative w-full sm:w-80">
+      <ng-icon name="lucideSearch" class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+      <input
+        z-input
+        type="text"
+        placeholder="Buscar por acción, usuario o IP..."
+        [ngModel]="q()"
+        (ngModelChange)="buscar($event)"
+        class="pl-9 w-full"
+      />
+    </div>
+
+    <div class="flex items-center gap-3 w-full sm:w-auto">
+      <span class="text-xs font-medium text-muted-foreground flex items-center gap-1.5 whitespace-nowrap">
+        <ng-icon name="lucideFilter" class="size-3.5" /> Módulo:
+      </span>
+      <z-select class="w-48" [ngModel]="moduloFiltro()" (ngModelChange)="filtrarModulo($event)">
+        @for (m of modulosDisponibles; track m.value) {
+          <z-select-item [zValue]="m.value">{{ m.label }}</z-select-item>
+        }
+      </z-select>
+    </div>
+  </div>
+
+  <!-- CONTENIDO DE BITÁCORA -->
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <!-- TABLA DE LOGS (2 COLUMNAS EN DESKTOP) -->
+    <z-card class="lg:col-span-2 overflow-hidden">
+      <z-card-header class="border-b border-border/50 pb-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <z-card-title zTitle="Registros de Actividad" class="text-base font-semibold" />
+            <z-card-description zDescription="Eventos capturados en orden inverso" class="text-xs text-muted-foreground mt-0.5" />
+          </div>
+          @if (meta(); as m) {
+            <span class="font-mono text-xs font-medium text-muted-foreground">
+              Total: {{ m.total_items }} eventos
+            </span>
+          }
+        </div>
+      </z-card-header>
+
+      @if (cargando()) {
+        <div class="p-6 space-y-3">
+          @for (i of [1, 2, 3, 4, 5]; track i) {
+            <z-skeleton class="h-12 w-full rounded-lg" />
+          }
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table z-table class="w-full">
+            <thead z-table-header class="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
+              <tr z-table-row>
+                <th z-table-head class="py-2.5 px-4">Fecha / Hora</th>
+                <th z-table-head class="py-2.5 px-4">Usuario</th>
+                <th z-table-head class="py-2.5 px-4">Módulo</th>
+                <th z-table-head class="py-2.5 px-4">Acción</th>
+              </tr>
+            </thead>
+            <tbody z-table-body class="divide-y divide-border/40">
+              @for (log of logs(); track log.id) {
+                <tr
+                  z-table-row
+                  class="cursor-pointer transition-colors hover:bg-muted/30"
+                  [class.bg-muted/50]="logSeleccionado()?.id === log.id"
+                  (click)="seleccionarLog(log)"
+                >
+                  <td z-table-cell class="whitespace-nowrap px-4 py-3 font-mono text-xs text-muted-foreground">
+                    {{ log.created_at | date: 'dd/MM/yyyy HH:mm:ss' }}
+                  </td>
+                  <td z-table-cell class="px-4 py-3 text-sm font-medium text-foreground">
+                    {{ log.usuario?.nombre || log.usuario_id || 'Sistema' }}
+                  </td>
+                  <td z-table-cell class="px-4 py-3">
+                    <z-badge [zType]="badgeModulo(log.modulo)" class="capitalize text-[11px] px-2 py-0.5">
+                      {{ log.modulo }}
+                    </z-badge>
+                  </td>
+                  <td z-table-cell class="px-4 py-3 text-sm font-mono text-xs text-foreground font-semibold">
+                    {{ log.accion }}
+                  </td>
+                </tr>
+              } @empty {
+                <tr z-table-row>
+                  <td z-table-cell colspan="4" class="p-0">
+                    <z-empty zIcon="lucideShieldCheck" zTitle="Sin registros de auditoría" zDescription="No se encontraron eventos con los filtros seleccionados." class="py-12" />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PAGINACIÓN -->
+        @if (meta(); as m) {
+          <div class="flex items-center justify-between border-t border-border/50 px-4 py-3 text-xs text-muted-foreground">
+            <span>Página {{ m.page }} de {{ m.total_pages }}</span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                [disabled]="!m.has_prev"
+                (click)="cambiarPagina(m.page - 1)"
+                class="rounded-lg border border-border px-3 py-1 font-medium text-foreground transition-all hover:bg-muted disabled:opacity-40"
+              >
+                Anterior
+              </button>
+              <button
+                type="button"
+                [disabled]="!m.has_next"
+                (click)="cambiarPagina(m.page + 1)"
+                class="rounded-lg border border-border px-3 py-1 font-medium text-foreground transition-all hover:bg-muted disabled:opacity-40"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        }
+      }
+    </z-card>
+
+    <!-- PANEL LATERAL DE DETALLES DEL EVENTO -->
+    <z-card class="flex flex-col overflow-hidden">
+      <z-card-header class="border-b border-border/50 pb-4">
+        <z-card-title zTitle="Detalles del Evento" class="text-base font-semibold" />
+        <z-card-description zDescription="Metadatos e inspección del log seleccionado" class="text-xs text-muted-foreground mt-0.5" />
+      </z-card-header>
+      <z-card-content class="pt-4 flex-1">
+        @if (logSeleccionado(); as item) {
+          <div class="space-y-4">
+            <div class="rounded-xl border border-border/60 bg-muted/20 p-3.5 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">ID Evento</span>
+                <span class="font-mono text-xs font-semibold text-primary">#{{ item.id.slice(0, 8) }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Acción</span>
+                <span class="font-mono text-xs font-bold text-foreground">{{ item.accion }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Módulo</span>
+                <z-badge [zType]="badgeModulo(item.modulo)" class="capitalize text-[11px]">
+                  {{ item.modulo }}
+                </z-badge>
+              </div>
+            </div>
+
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center gap-2 text-muted-foreground">
+                <ng-icon name="lucideUser" class="size-4 text-primary" />
+                <span class="font-medium text-foreground">Usuario:</span> {{ item.usuario?.nombre || 'Desconocido' }} ({{ item.usuario?.email || 'N/A' }})
+              </div>
+              <div class="flex items-center gap-2 text-muted-foreground">
+                <ng-icon name="lucideClock" class="size-4 text-primary" />
+                <span class="font-medium text-foreground">Fecha:</span> {{ item.created_at | date: 'dd/MM/yyyy HH:mm:ss' }}
+              </div>
+              @if (item.ip_address) {
+                <div class="flex items-center gap-2 text-muted-foreground">
+                  <ng-icon name="lucideInfo" class="size-4 text-primary" />
+                  <span class="font-medium text-foreground">Dirección IP:</span> <span class="font-mono">{{ item.ip_address }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="space-y-1.5 pt-2">
+              <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payload / Detalles JSON</span>
+              <pre class="w-full max-h-60 overflow-y-auto rounded-xl border border-border/60 bg-muted/40 p-3 font-mono text-[11px] leading-relaxed text-foreground">{{ formatearDetalles(item.detalles) }}</pre>
+            </div>
+          </div>
+        } @else {
+          <z-empty zIcon="lucideInfo" zTitle="Selecciona un evento" zDescription="Haz clic en cualquier fila de la bitácora para inspeccionar sus detalles completos." class="py-12" />
+        }
+      </z-card-content>
+    </z-card>
+  </div>
+</div>

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CurrencyPipe, DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -66,7 +66,6 @@ type BadgeType = 'default' | 'secondary' | 'destructive' | 'outline';
   selector: 'app-dashboard',
   standalone: true,
   imports: [
-    NgTemplateOutlet,
     RouterLink,
     NgIcon,
     CurrencyPipe,
