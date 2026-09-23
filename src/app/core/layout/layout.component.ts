@@ -5,6 +5,7 @@ import { ZardBreadcrumbImports } from '../../shared/components/breadcrumb/breadc
 import { ZardSeparatorComponent } from '../../shared/components/separator/separator.component';
 import { ZardSidebarImports } from '../../shared/components/sidebar/sidebar.imports';
 import { AppSidebarComponent } from './app-sidebar/app-sidebar.component';
+import { NotificacionesPopoverComponent } from '../notificaciones/ui/notificaciones-popover.component';
 import {
   lucideBadgeCheck,
   lucideBell,
@@ -16,6 +17,7 @@ import {
   lucideMoon,
 } from '@ng-icons/lucide';
 import { ThemeService } from '../theme/theme.service';
+
 @Component({
   selector: 'app-layout',
   standalone: true,
@@ -26,6 +28,7 @@ import { ThemeService } from '../theme/theme.service';
     ZardSeparatorComponent,
     NgIcon,
     AppSidebarComponent,
+    NotificacionesPopoverComponent,
   ],
   providers: [
     provideIcons({
@@ -61,17 +64,21 @@ import { ThemeService } from '../theme/theme.service';
               </z-breadcrumb-item>
               <!-- Breadcrumbs can be dynamic based on current route later -->
             </z-breadcrumb>
-            <button
-              class="ml-auto flex items-center justify-center p-2 rounded-md hover:bg-accent hover:text-accent-foreground"
-              (click)="toggleTheme()"
-              title="Cambiar tema"
-            >
-              @if (isDarkTheme()) {
-                <ng-icon name="lucideSun" class="size-4" />
-              } @else {
-                <ng-icon name="lucideMoon" class="size-4" />
-              }
-            </button>
+            <div class="ml-auto flex items-center gap-1">
+              <app-notificaciones-popover />
+
+              <button
+                class="flex items-center justify-center p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                (click)="toggleTheme()"
+                title="Cambiar tema"
+              >
+                @if (isDarkTheme()) {
+                  <ng-icon name="lucideSun" class="size-4" />
+                } @else {
+                  <ng-icon name="lucideMoon" class="size-4" />
+                }
+              </button>
+            </div>
           </div>
         </header>
 

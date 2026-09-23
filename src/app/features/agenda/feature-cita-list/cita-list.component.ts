@@ -3,31 +3,13 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideCalendar,
-  lucideCalendarClock,
-  lucideCalendarDays,
-  lucideCheck,
-  lucidePlus,
-  lucideRefreshCw,
-  lucideX,
-  lucideClock,
-  lucideUser,
-  lucideSearch,
-  lucideFilter,
-  lucideSparkles,
-  lucideAlertCircle,
-  lucideCheckCircle2,
-  lucideClipboardList,
-} from '@ng-icons/lucide';
-
+import { lucideAlertCircle, lucideCalendar, lucideCalendarClock, lucideCalendarDays, lucideCheck, lucideCheckCircle2, lucideClipboardList, lucideClock, lucideFilter, lucidePlus, lucideRefreshCw, lucideSearch, lucideSparkles, lucideUser, lucideX } from '@ng-icons/lucide';
 import { CitaService } from '../data-access/services/cita.service';
 import { CitaResponse, ESTADOS_CITA, EstadoCita, mensajeCitaError } from '../data-access/agenda.models';
 import { ProductoService } from '../../inventario/data-access/producto.service';
 import { ProductoResponse } from '../../inventario/data-access/models/producto.model';
 import { AuthService } from '@/core/auth/api/auth.service';
 import { PERMISOS } from '@/core/auth/permissions';
-
 import { ZardTableImports } from '../../../shared/components/table/table.imports';
 import { ZardCardImports } from '../../../shared/components/card/card.imports';
 import { ZardButtonComponent } from '../../../shared/components/button/button.component';
