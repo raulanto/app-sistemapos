@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '@env/environment';
+import { Router } from '@angular/router';
+import { AuthService } from '../../auth/api/auth.service';
 import { Notificacion, ResumenNotificaciones } from '../models/notificacion.model';
 import { ApiResponse } from '../../api.model';
 import { SignalsService } from '../../signals/services/signals.service';
@@ -22,6 +24,9 @@ export class NotificacionService {
   readonly notificaciones = signal<Notificacion[]>([]);
   readonly loading = signal<boolean>(false);
 
+  private router = inject(Router);
+  private authService = inject(AuthService);
+
   constructor() {
     this.iniciarListeners();
   }
@@ -29,25 +34,28 @@ export class NotificacionService {
   private iniciarListeners() {
     // Conectar al canal global de notificaciones
     this.signalsService.conectar('notificaciones');
-    
-    // Escuchar el evento en tiempo real para no tener que hacer polling
+
+    // 1. Escuchar el evento de nueva notificación
     this.signalsService.escucharEvento<Notificacion>('NuevaNotificacion').subscribe((signal) => {
       if (signal.data) {
-        // 1. Incrementar en +1 el contador de no leídas
         this.unreadCount.update((count) => count + 1);
-        
-        // 2. Agregar la nueva notificación al inicio de la lista local
         this.notificaciones.update((list) => {
-          // Evitar duplicados si por alguna razón llega doble
           if (list.find(n => n.id === signal.data!.id)) return list;
           return [signal.data!, ...list];
         });
-
-        // 3. Mostrar un toast emergente
         this.sonner.info(signal.data.titulo, {
           description: signal.data.mensaje,
         });
       }
+    });
+
+    // 2. Escuchar evento de sesión invalidada
+    this.signalsService.escucharEvento<{ id?: string; usuario_id?: string; motivo?: string }>('SesionInvalida').subscribe((signal) => {
+      this.sonner.error('Sesión finalizada', {
+        description: signal.data?.motivo || 'Se ha iniciado sesión en otro navegador o dispositivo.',
+      });
+      this.authService.clearSession();
+      this.router.navigate(['/auth/login']);
     });
   }
 
