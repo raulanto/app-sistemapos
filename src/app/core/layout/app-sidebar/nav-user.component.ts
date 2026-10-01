@@ -23,10 +23,12 @@ import { CajaService } from '../../../features/ventas/data-access/caja.service';
 import { AuthService } from '../../auth/api/auth.service';
 import { ThemeService } from '../../theme/theme.service';
 
+import { RouterLink } from '@angular/router';
+
 @Component({
   selector: 'lib-sidebar-07-nav-user',
   standalone: true,
-  imports: [...ZardSidebarImports, ...ZardDropdownImports, ZardAvatarComponent, NgIcon],
+  imports: [RouterLink, ...ZardSidebarImports, ...ZardDropdownImports, ZardAvatarComponent, NgIcon],
   viewProviders: [
     provideIcons({
       lucideBadgeCheck,
@@ -91,9 +93,9 @@ import { ThemeService } from '../../theme/theme.service';
           <z-dropdown-menu-separator />
 
           <z-dropdown-menu-group>
-            <z-dropdown-menu-item>
+            <z-dropdown-menu-item routerLink="/usuarios/perfil">
               <ng-icon name="lucideBadgeCheck" />
-              Cuenta
+              Cuenta / Perfil
             </z-dropdown-menu-item>
             <z-dropdown-menu-item>
               <ng-icon name="lucideCreditCard" />
