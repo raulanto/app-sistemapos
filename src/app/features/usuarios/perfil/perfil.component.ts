@@ -22,6 +22,7 @@ import { ZardAvatarComponent } from '@/shared/components/avatar/avatar.component
 import { ZardBadgeComponent } from '@/shared/components/badge/badge.component';
 import { ZardButtonComponent } from '@/shared/components/button/button.component';
 import { ZardCardImports } from '@/shared/components/card/card.imports';
+import { ZardEmptyComponent } from '@/shared/components/empty/empty.component';
 import { ZardSeparatorComponent } from '@/shared/components/separator/separator.component';
 
 @Component({
@@ -35,8 +36,10 @@ import { ZardSeparatorComponent } from '@/shared/components/separator/separator.
     ZardBadgeComponent,
     ZardButtonComponent,
     ...ZardCardImports,
+    ZardEmptyComponent,
     ZardSeparatorComponent,
   ],
+
   providers: [
     provideIcons({
       lucideUser,
@@ -180,10 +183,14 @@ import { ZardSeparatorComponent } from '@/shared/components/separator/separator.
           </z-card-header>
           <z-card-content class="pt-4">
             @if (permisosList().length === 0) {
-              <p class="text-xs text-muted-foreground italic py-6 text-center">
-                No tienes permisos especiales asociados a tu rol.
-              </p>
+              <z-empty
+                zIcon="lucideShield"
+                zTitle="Sin permisos especiales"
+                zDescription="No tienes permisos especiales asociados a tu rol."
+                class="py-8"
+              />
             } @else {
+
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[420px] overflow-y-auto pr-1">
                 @for (permiso of permisosList(); track permiso.id) {
                   <div class="flex items-start gap-2.5 p-3 rounded-lg border border-border/60 bg-muted/20 text-xs">

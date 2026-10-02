@@ -28,5 +28,11 @@ export const INVENTARIO_ROUTES: Routes = [
     path: 'categorias',
     canActivate: [permissionGuard(...PERMISOS.inventario.leer)],
     loadComponent: () => import('./feature-categoria-list/categoria-list.component').then(m => m.CategoriaListComponent)
+  },
+  {
+    path: 'marcas',
+    canActivate: [permissionGuard(...PERMISOS.inventario.leer)],
+    loadComponent: () => import('./feature-marca-list/marca-list.component').then(m => m.MarcaListComponent)
   }
 ];
+

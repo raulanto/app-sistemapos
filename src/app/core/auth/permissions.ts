@@ -16,9 +16,11 @@ export const PERMISOS = {
   inventario: {
     crear: ['inventario.crear'],
     editar: ['inventario.editar'],
+    eliminar: ['inventario.eliminar'],
     leer: ['inventario.leer', 'INV_VER'],
     movimiento: ['inventario.movimiento', 'INV_AJUSTE'],
   },
+
   clientes: {
     crear: ['clientes.crear', 'CLI_CREAR'],
     leer: ['clientes.leer'],

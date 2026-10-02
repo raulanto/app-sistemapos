@@ -2,6 +2,7 @@ import type { ComponenteResponse } from './componente.model';
 import type { ExistenciaResponse } from './existencia.model';
 import type { ImagenResponse } from './imagen.model';
 import type { UnidadResponse } from './unidad.model';
+import type { MarcaEmbed } from './marca.model';
 
 /** `simple`: normal. `fraccionable`: se vende en incrementos parciales de la unidad base.
  *  `kit`: se arma con otros productos (receta). `servicio`: no mueve inventario (flete, mano de obra). */
@@ -14,6 +15,7 @@ export interface ProductoResponse {
   nombre: string;
   descripcion?: string | null;
   categoria_id: string;
+  marca_id?: string | null;
   unidad_medida: string;
   /** FK opcional al catálogo de unidades de medida (define decimales para redondeo de stock). */
   unidad_medida_id?: string | null;
@@ -52,6 +54,7 @@ export interface ProductoResponse {
   activo: boolean;
   tipo?: TipoProducto;
   categoria?: any;
+  marca?: MarcaEmbed | null;
   existencias?: ExistenciaResponse[] | null;
   componentes?: ComponenteResponse[] | null;
   unidades?: UnidadResponse[] | null;
@@ -152,7 +155,8 @@ export interface ProductoQuery {
   page?: number;
   page_size?: number;
   sort?: string;
-  include?: Array<'existencias' | 'categoria' | 'componentes' | 'unidades' | 'imagenes' | { type: 'existencias'; sucursal_id: string }>;
+  include?: Array<'existencias' | 'categoria' | 'marca' | 'componentes' | 'unidades' | 'imagenes' | { type: 'existencias'; sucursal_id: string }>;
+
 }
 
 export interface ProductoKpiResponse {

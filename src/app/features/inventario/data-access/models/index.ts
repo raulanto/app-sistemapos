@@ -22,3 +22,7 @@ export type { ExistenciaResponse, PresentacionDesglose, SucursalDesglose, Desglo
 
 // ── Movimiento ───────────────────────────────────────────
 export type { TipoMovimiento, MovimientoResponse, AplicarMovimientoRequest, TransferenciaRequest } from './movimiento.model';
+
+// ── Marca ────────────────────────────────────────────────
+export type { MarcaResponse, MarcaEmbed, CrearMarcaRequest, ActualizarMarcaRequest, MarcaQuery } from './marca.model';
+

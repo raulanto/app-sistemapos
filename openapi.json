@@ -1413,6 +1413,287 @@
         }
       }
     },
+    "/api/v1/inventario/marcas": {
+      "post": {
+        "tags": ["inventario"],
+        "summary": "Crear Marca",
+        "operationId": "crear_marca_api_v1_inventario_marcas_post",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CrearMarcaRequest" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_MarcaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["inventario"],
+        "summary": "Listar Marcas",
+        "operationId": "listar_marcas_api_v1_inventario_marcas_get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "activo",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Activo" }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Busca en el nombre",
+              "title": "Q"
+            },
+            "description": "Busca en el nombre"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Número de página (1-indexada)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Número de página (1-indexada)"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Tamaño de página",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Tamaño de página"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Orden `campo:asc|desc`. Campos: nombre",
+              "default": "nombre:asc",
+              "title": "Sort"
+            },
+            "description": "Orden `campo:asc|desc`. Campos: nombre"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_list_MarcaResponse__" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/marcas/{marca_id}": {
+      "get": {
+        "tags": ["inventario"],
+        "summary": "Obtener Marca",
+        "operationId": "obtener_marca_api_v1_inventario_marcas__marca_id__get",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "marca_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Marca Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_MarcaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["inventario"],
+        "summary": "Actualizar Marca",
+        "operationId": "actualizar_marca_api_v1_inventario_marcas__marca_id__patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "marca_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Marca Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ActualizarMarcaRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_MarcaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["inventario"],
+        "summary": "Eliminar Marca",
+        "operationId": "eliminar_marca_api_v1_inventario_marcas__marca_id__delete",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "marca_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Marca Id" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/marcas/{marca_id}/desactivar": {
+      "patch": {
+        "tags": ["inventario"],
+        "summary": "Desactivar Marca",
+        "operationId": "desactivar_marca_api_v1_inventario_marcas__marca_id__desactivar_patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "marca_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Marca Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_MarcaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventario/marcas/{marca_id}/activar": {
+      "patch": {
+        "tags": ["inventario"],
+        "summary": "Activar Marca",
+        "operationId": "activar_marca_api_v1_inventario_marcas__marca_id__activar_patch",
+        "security": [{ "OAuth2PasswordBearer": [] }],
+        "parameters": [
+          {
+            "name": "marca_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Marca Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse_MarcaResponse_" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/inventario/unidades-medida": {
       "get": {
         "tags": ["inventario"],
@@ -1906,6 +2187,18 @@
             }
           },
           {
+            "name": "marca_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "array", "items": { "type": "string", "format": "uuid" } },
+                { "type": "null" }
+              ],
+              "title": "Marca Id"
+            }
+          },
+          {
             "name": "activo",
             "in": "query",
             "required": false,
@@ -1990,10 +2283,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, imagenes, unidades",
+              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, imagenes, marca, unidades",
               "title": "Include"
             },
-            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, imagenes, unidades"
+            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, imagenes, marca, unidades"
           }
         ],
         "responses": {
@@ -2035,10 +2328,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, imagenes, unidades",
+              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, imagenes, marca, unidades",
               "title": "Include"
             },
-            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, imagenes, unidades"
+            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, imagenes, marca, unidades"
           }
         ],
         "responses": {
@@ -2078,6 +2371,18 @@
                 { "type": "null" }
               ],
               "title": "Categoria Id"
+            }
+          },
+          {
+            "name": "marca_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "array", "items": { "type": "string", "format": "uuid" } },
+                { "type": "null" }
+              ],
+              "title": "Marca Id"
             }
           },
           {
@@ -2238,10 +2543,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, imagenes, unidades",
+              "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, imagenes, marca, unidades",
               "title": "Include"
             },
-            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, imagenes, unidades"
+            "description": "Relaciones a embeber, separadas por coma. Disponibles: categoria, componentes, existencias, imagenes, marca, unidades"
           }
         ],
         "responses": {
@@ -10147,6 +10452,17 @@
         "type": "object",
         "title": "ActualizarLoteRequest"
       },
+      "ActualizarMarcaRequest": {
+        "properties": {
+          "nombre": {
+            "anyOf": [{ "type": "string", "maxLength": 100, "minLength": 1 }, { "type": "null" }],
+            "title": "Nombre"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ActualizarMarcaRequest"
+      },
       "ActualizarPedidoRequest": {
         "properties": {
           "lineas": {
@@ -10232,6 +10548,11 @@
             "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
             "title": "Categoria Id"
           },
+          "marca_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Marca Id"
+          },
+          "cambiar_marca_id": { "type": "boolean", "title": "Cambiar Marca Id", "default": false },
           "unidad_medida": {
             "anyOf": [{ "type": "string", "maxLength": 20, "minLength": 1 }, { "type": "null" }],
             "title": "Unidad Medida"
@@ -11144,6 +11465,17 @@
         "required": ["data"],
         "title": "ApiResponse[LoteResponse]"
       },
+      "ApiResponse_MarcaResponse_": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": { "$ref": "#/components/schemas/MarcaResponse" },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[MarcaResponse]"
+      },
       "ApiResponse_MonederoResponse_": {
         "properties": {
           "success": { "type": "boolean", "title": "Success", "default": true },
@@ -11732,6 +12064,21 @@
         "type": "object",
         "required": ["data"],
         "title": "ApiResponse[list[LoteResponse]]"
+      },
+      "ApiResponse_list_MarcaResponse__": {
+        "properties": {
+          "success": { "type": "boolean", "title": "Success", "default": true },
+          "data": {
+            "items": { "$ref": "#/components/schemas/MarcaResponse" },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": { "anyOf": [{ "$ref": "#/components/schemas/Meta" }, { "type": "null" }] },
+          "links": { "anyOf": [{ "$ref": "#/components/schemas/Links" }, { "type": "null" }] }
+        },
+        "type": "object",
+        "required": ["data"],
+        "title": "ApiResponse[list[MarcaResponse]]"
       },
       "ApiResponse_list_MovimientoCajaResponse__": {
         "properties": {
@@ -13197,6 +13544,14 @@
         "required": ["codigo_lote", "costo"],
         "title": "CrearLoteRequest"
       },
+      "CrearMarcaRequest": {
+        "properties": {
+          "nombre": { "type": "string", "maxLength": 100, "minLength": 1, "title": "Nombre" }
+        },
+        "type": "object",
+        "required": ["nombre"],
+        "title": "CrearMarcaRequest"
+      },
       "CrearPedidoRequest": {
         "properties": {
           "tipo": { "$ref": "#/components/schemas/TipoPedido" },
@@ -13263,6 +13618,10 @@
           "sku": { "type": "string", "maxLength": 50, "minLength": 1, "title": "Sku" },
           "nombre": { "type": "string", "maxLength": 150, "minLength": 1, "title": "Nombre" },
           "categoria_id": { "type": "string", "format": "uuid", "title": "Categoria Id" },
+          "marca_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Marca Id"
+          },
           "unidad_medida": {
             "type": "string",
             "maxLength": 20,
@@ -14932,6 +15291,26 @@
         "required": ["id", "producto_id", "codigo_lote", "costo", "activo"],
         "title": "LoteResponse"
       },
+      "MarcaEmbed": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "nombre": { "type": "string", "title": "Nombre" },
+          "activo": { "type": "boolean", "title": "Activo" }
+        },
+        "type": "object",
+        "required": ["id", "nombre", "activo"],
+        "title": "MarcaEmbed"
+      },
+      "MarcaResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "nombre": { "type": "string", "title": "Nombre" },
+          "activo": { "type": "boolean", "title": "Activo" }
+        },
+        "type": "object",
+        "required": ["id", "nombre", "activo"],
+        "title": "MarcaResponse"
+      },
       "MermaAjusteTotalResponse": {
         "properties": {
           "tipo": { "type": "string", "title": "Tipo" },
@@ -15855,6 +16234,10 @@
             "title": "Descripcion"
           },
           "categoria_id": { "type": "string", "format": "uuid", "title": "Categoria Id" },
+          "marca_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Marca Id"
+          },
           "unidad_medida": { "type": "string", "title": "Unidad Medida" },
           "unidad_medida_id": {
             "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
@@ -15958,6 +16341,7 @@
           "categoria": {
             "anyOf": [{ "$ref": "#/components/schemas/CategoriaEmbed" }, { "type": "null" }]
           },
+          "marca": { "anyOf": [{ "$ref": "#/components/schemas/MarcaEmbed" }, { "type": "null" }] },
           "existencias": {
             "anyOf": [
               { "items": { "$ref": "#/components/schemas/ExistenciaEmbed" }, "type": "array" },

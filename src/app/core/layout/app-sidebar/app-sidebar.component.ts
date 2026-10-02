@@ -169,6 +169,8 @@ export class AppSidebarComponent {
         { title: 'Productos', url: '/inventario/productos', icon: LayersIcon },
         { title: 'Nuevo Producto', url: '/inventario/productos/nuevo', icon: CirclePlusIcon },
         { title: 'Categorías', url: '/inventario/categorias', icon: FolderKanbanIcon },
+        { title: 'Marcas', url: '/inventario/marcas', icon: TagIcon },
+
       ],
     },
     {

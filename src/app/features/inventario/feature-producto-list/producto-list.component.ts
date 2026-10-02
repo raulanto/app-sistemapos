@@ -146,9 +146,10 @@ export class ProductoListComponent implements OnInit {
       page: this.page(),
       page_size: this.pageSize(),
       sort: this.sort(),
-      include: ['categoria', 'existencias'],
+      include: ['categoria', 'existencias', 'marca'],
     };
   });
+
 
   constructor() {
     toObservable(this.query)

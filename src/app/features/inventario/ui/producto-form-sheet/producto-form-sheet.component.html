@@ -47,6 +47,25 @@
     </div>
   </div>
 
+  <div class="grid grid-cols-1 gap-4">
+    <div z-field>
+      <label z-field-label>Marca (opcional)</label>
+      <div class="flex items-center gap-2">
+        <z-select class="flex-1" formControlName="marca_id" placeholder="Sin marca seleccionada">
+          <z-select-item zValue="">Sin marca</z-select-item>
+          @for (m of marcas(); track m.id) {
+            <z-select-item [zValue]="m.id">{{ m.nombre }}</z-select-item>
+          }
+        </z-select>
+        <button type="button" z-button zType="outline" (click)="abrirCrearMarca()">
+          <ng-icon name="lucidePlus" class="mr-1.5"></ng-icon>
+          Nueva
+        </button>
+      </div>
+    </div>
+  </div>
+
+
   <div class="grid grid-cols-2 gap-4">
     <div z-field>
       <label z-field-label for="precio_venta">Precio de Venta *</label>

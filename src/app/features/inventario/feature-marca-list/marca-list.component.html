@@ -1,0 +1,147 @@
+<div class="p-6 w-full mx-auto space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-extrabold tracking-tight">Marcas</h1>
+      <p class="text-sm text-muted-foreground mt-1">
+        Administra las marcas del catálogo para asociarlas a tus productos.
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        z-button
+        zType="outline"
+        [disabled]="refreshing() || loading()"
+        (click)="cargar(true)"
+        title="Refrescar catálogo">
+        <ng-icon
+          name="lucideRefreshCw"
+          [class.animate-spin]="refreshing()"
+          class="mr-2 size-4" />
+        Refrescar
+      </button>
+      @if (canCrear()) {
+        <button z-button zType="default" (click)="openCreateSheet()">
+          <ng-icon name="lucidePlus" class="mr-2 size-4" /> Nueva marca
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Barra de Filtro y Contador -->
+  <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+    <div class="relative flex-1 max-w-sm">
+      <ng-icon name="lucideSearch" class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+      <input
+        z-input
+        type="text"
+        placeholder="Buscar marca por nombre..."
+        class="pl-9 text-sm"
+        [ngModel]="busqueda()"
+        (ngModelChange)="busqueda.set($event)" />
+    </div>
+
+    <div class="flex items-center gap-2 text-xs text-muted-foreground self-end sm:self-center">
+      <z-badge zType="outline" class="font-mono">
+        Total: {{ totalMarcas() }}
+      </z-badge>
+      <z-badge zType="secondary" class="font-mono">
+        Activas: {{ totalActivas() }}
+      </z-badge>
+    </div>
+  </div>
+
+  <!-- Contenido de la Tabla / Lista -->
+  <div z-card class="overflow-hidden">
+    <z-card-content class="p-0">
+      @if (loading()) {
+        <div class="space-y-2 p-4">
+          <z-skeleton class="h-12 w-full" />
+          <z-skeleton class="h-12 w-full" />
+          <z-skeleton class="h-12 w-full" />
+        </div>
+      } @else if (marcasFiltradas().length === 0) {
+        @if (busqueda()) {
+          <z-empty
+            zIcon="lucideSearch"
+            zTitle="Sin coincidencias"
+            [zDescription]="'No se encontraron marcas que coincidan con &quot;' + busqueda() + '&quot;.'"
+            class="py-12" />
+        } @else {
+          <z-empty
+            zIcon="lucideTag"
+            zTitle="Sin marcas"
+            zDescription="Crea la primera marca para asociarla a tus productos."
+            class="py-14" />
+        }
+      } @else {
+        <ul class="divide-y divide-border">
+          @for (marca of marcasFiltradas(); track marca.id) {
+            <li
+              class="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-muted/40 transition-colors"
+              [class.opacity-60]="!marca.activo">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/30">
+                  <ng-icon name="lucideTag" class="size-4 text-primary" />
+                </div>
+                <div class="truncate">
+                  <p class="font-medium text-foreground text-sm truncate">{{ marca.nombre }}</p>
+                </div>
+                @if (!marca.activo) {
+                  <z-badge zType="secondary" class="text-[11px] shrink-0">Inactiva</z-badge>
+                }
+              </div>
+
+              <div class="flex items-center gap-1 shrink-0">
+                @if (canEditar()) {
+                  <button
+                    z-button
+                    zType="ghost"
+                    zSize="icon-sm"
+                    class="text-muted-foreground hover:text-foreground"
+                    title="Editar marca"
+                    (click)="openEditSheet(marca)">
+                    <ng-icon name="lucidePencil" class="size-4" />
+                  </button>
+                  @if (marca.activo) {
+                    <button
+                      z-button
+                      zType="ghost"
+                      zSize="icon-sm"
+                      class="text-muted-foreground hover:text-destructive"
+                      title="Desactivar marca"
+                      (click)="desactivar(marca)">
+                      <ng-icon name="lucideBan" class="size-4" />
+                    </button>
+                  } @else {
+                    <button
+                      z-button
+                      zType="ghost"
+                      zSize="icon-sm"
+                      class="text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400"
+                      title="Activar marca"
+                      (click)="activar(marca)">
+                      <ng-icon name="lucideCheckCircle2" class="size-4" />
+                    </button>
+                  }
+                }
+                @if (canEliminar()) {
+                  <button
+                    z-button
+                    zType="ghost"
+                    zSize="icon-sm"
+                    class="text-muted-foreground hover:text-destructive"
+                    title="Eliminar permanentemente"
+                    (click)="eliminar(marca)">
+                    <ng-icon name="lucideTrash" class="size-4" />
+                  </button>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </z-card-content>
+  </div>
+</div>
+
