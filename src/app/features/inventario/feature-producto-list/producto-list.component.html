@@ -39,31 +39,182 @@
     </div>
   </div>
 
-  <!-- KPIs -->
-  <div class="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:shadow-xs sm:grid-cols-2 xl:grid-cols-4">
-    @for (card of cards(); track card.description) {
-      <z-card class="gap-3 transition-shadow duration-200 hover:shadow-md">
-        <z-card-header>
-          <z-card-description [zDescription]="card.description" class="text-xs font-medium uppercase tracking-wide" />
-          <z-card-title [zTitle]="card.value" class="mt-1 text-2xl font-semibold tabular-nums lg:text-3xl" />
-          <z-card-action>
-            <z-badge zType="outline" class="gap-1 font-medium">
-              <ng-icon [name]="trendIcon(card.trend)" class="size-3.5" />
-              {{ card.badge }}
-            </z-badge>
-          </z-card-action>
-        </z-card-header>
-
-        <z-card-footer class="flex-col items-start gap-1 border-t border-border/60 bg-transparent pt-3 text-sm">
-          <div class="line-clamp-1 flex items-center gap-1.5 font-medium">
-            {{ card.headline }}
-            <ng-icon [name]="trendIcon(card.trend)" class="size-4 text-muted-foreground" />
+  <!-- Rich Metric KPI Cards (Inspiradas en Dashboard DevOps / Inventory Ops) -->
+  @if (kpis(); as kpi) {
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <!-- Card 1: Estado del Catálogo (Active / Inactive bar) -->
+      <div class="flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4.5 shadow-xs transition-all hover:border-border hover:shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="flex size-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <ng-icon name="lucidePackage" class="size-4" />
+            </div>
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Catálogo Activo</span>
           </div>
-          <div class="text-xs text-muted-foreground">{{ card.caption }}</div>
-        </z-card-footer>
-      </z-card>
-    }
-  </div>
+          <z-badge zType="outline" class="text-[11px] font-mono gap-1 text-muted-foreground">
+            {{ kpi.categorias_distintas }} Cat.
+          </z-badge>
+        </div>
+
+        <div class="my-3 flex items-baseline gap-2">
+          <span class="text-3xl font-extrabold tracking-tight tabular-nums">{{ kpi.activos }}</span>
+          <span class="text-xs font-semibold text-muted-foreground">de {{ kpi.total }} productos</span>
+        </div>
+
+        <!-- Micro status bar distribuyendo activos vs inactivos -->
+        <div class="space-y-2">
+          <div class="flex h-2.5 w-full overflow-hidden rounded-full bg-muted/60 p-0.5">
+            <div
+              class="h-full rounded-full bg-emerald-500 transition-all duration-500"
+              [style.width.%]="kpi.total > 0 ? (kpi.activos / kpi.total) * 100 : 0"
+              title="Activos"
+            ></div>
+            <div
+              class="h-full rounded-full bg-rose-500 transition-all duration-500"
+              [style.width.%]="kpi.total > 0 ? (kpi.inactivos / kpi.total) * 100 : 0"
+              title="Inactivos"
+            ></div>
+          </div>
+          <div class="flex items-center justify-between text-[11px] font-medium text-muted-foreground">
+            <span class="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+              <span class="size-1.5 rounded-full bg-emerald-500"></span> {{ kpi.activos }} Activos
+            </span>
+            <span class="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-semibold">
+              <span class="size-1.5 rounded-full bg-rose-500"></span> {{ kpi.inactivos }} Inactivos
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Nivel de Stock y Alertas (Stock Health Meter) -->
+      <div class="flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4.5 shadow-xs transition-all hover:border-border hover:shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="flex size-7 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <ng-icon name="lucideTrendingUp" class="size-4" />
+            </div>
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Salud de Stock</span>
+          </div>
+          @if (kpi.bajo_stock > 0) {
+            <z-badge zType="destructive" class="text-[10px] font-medium gap-1 px-2 py-0.5">
+              <ng-icon name="lucideAlertCircle" class="size-3" />
+              {{ kpi.bajo_stock }} Bajo stock
+            </z-badge>
+          } @else {
+            <z-badge zType="outline" class="text-[10px] font-medium text-emerald-600 bg-emerald-500/10 border-emerald-500/20 px-2 py-0.5">
+              Óptimo
+            </z-badge>
+          }
+        </div>
+
+        <div class="my-3 flex items-baseline gap-2">
+          <span class="text-3xl font-extrabold tracking-tight tabular-nums">{{ kpi.unidades_en_stock | number }}</span>
+          <span class="text-xs font-semibold text-muted-foreground">unidades en inventario</span>
+        </div>
+
+        <!-- Micro Sparkline de Salud de Inventario (Con / Sin stock) -->
+        <div class="space-y-2">
+          <div class="flex h-2.5 w-full overflow-hidden rounded-full bg-muted/60 p-0.5">
+            <div
+              class="h-full rounded-full bg-emerald-500 transition-all duration-500"
+              [style.width.%]="kpi.total > 0 ? (kpi.productos_con_existencia / kpi.total) * 100 : 0"
+              title="Con Existencia"
+            ></div>
+            <div
+              class="h-full rounded-full bg-amber-500 transition-all duration-500"
+              [style.width.%]="kpi.total > 0 ? (kpi.bajo_stock / kpi.total) * 100 : 0"
+              title="Bajo Stock"
+            ></div>
+            <div
+              class="h-full rounded-full bg-rose-500 transition-all duration-500"
+              [style.width.%]="kpi.total > 0 ? (kpi.productos_sin_existencia / kpi.total) * 100 : 0"
+              title="Sin Stock"
+            ></div>
+          </div>
+          <div class="flex items-center justify-between text-[11px] font-medium text-muted-foreground">
+            <span class="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+              <span class="size-1.5 rounded-full bg-emerald-500"></span> {{ kpi.productos_con_existencia }} Con Stock
+            </span>
+            <span class="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-semibold">
+              <span class="size-1.5 rounded-full bg-rose-500"></span> {{ kpi.productos_sin_existencia }} Agotados
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Valoración de Inventario (Costo vs Venta) -->
+      <div class="flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4.5 shadow-xs transition-all hover:border-border hover:shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="flex size-7 items-center justify-center rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <ng-icon name="lucideTrendingDown" class="size-4" />
+            </div>
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Inversión (Costo)</span>
+          </div>
+          <z-badge zType="outline" class="text-[11px] font-mono text-muted-foreground">
+            Prom. {{ (kpi.costo_promedio || '0') | currency }}
+          </z-badge>
+        </div>
+
+        <div class="my-3 flex items-baseline gap-2">
+          <span class="text-3xl font-extrabold tracking-tight tabular-nums">{{ (kpi.valor_inventario_costo || '0') | currency }}</span>
+        </div>
+
+        <!-- Progresión Visual de Valoración -->
+        <div class="space-y-1.5 border-t border-border/50 pt-2 text-[11px]">
+          <div class="flex items-center justify-between text-muted-foreground">
+            <span>Rango de costo:</span>
+            <span class="font-mono font-medium text-foreground">
+              {{ (kpi.costo_min || '0') | currency }} - {{ (kpi.costo_max || '0') | currency }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between text-muted-foreground">
+            <span>Margen estimado:</span>
+            <span class="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+              +{{ (kpi.margen_promedio || '0') }}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: Proyección Comercial (Valor Venta Potencial) -->
+      <div class="flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4.5 shadow-xs transition-all hover:border-border hover:shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="flex size-7 items-center justify-center rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400">
+              <ng-icon name="lucideTrendingUp" class="size-4" />
+            </div>
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Valor Comercial</span>
+          </div>
+          <z-badge zType="outline" class="text-[11px] font-mono text-emerald-600 bg-emerald-500/10 border-emerald-500/20">
+            +{{ (kpi.margen_promedio || '0') }}% Retorno
+          </z-badge>
+        </div>
+
+        <div class="my-3 flex items-baseline gap-2">
+          <span class="text-3xl font-extrabold tracking-tight tabular-nums text-foreground">
+            {{ (kpi.valor_inventario_venta || '0') | currency }}
+          </span>
+        </div>
+
+        <!-- Barra de Progreso Ganancia Potencial -->
+        <div class="space-y-1.5 border-t border-border/50 pt-2 text-[11px]">
+          <div class="flex items-center justify-between text-muted-foreground">
+            <span>Rango precio venta:</span>
+            <span class="font-mono font-medium text-foreground">
+              {{ (kpi.precio_venta_min || '0') | currency }} - {{ (kpi.precio_venta_max || '0') | currency }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between text-muted-foreground">
+            <span>Con Código de Barras:</span>
+            <span class="font-mono font-medium text-foreground">
+              {{ kpi.con_codigo_barras }} / {{ kpi.total }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 
   @if (vistaMode() === 'tabla') {
     <app-producto-filtros

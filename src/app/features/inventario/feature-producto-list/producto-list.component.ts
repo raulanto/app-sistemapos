@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { debounceTime, switchMap, tap, map } from 'rxjs/operators';
 import { NgIcon, provideIcons } from '@ng-icons/core';
+import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import {
   lucidePlus,
   lucideTrendingUp,
@@ -20,6 +21,7 @@ import {
   lucideRefreshCw,
   lucideLayoutGrid,
   lucideList,
+  lucidePackage,
 } from '@ng-icons/lucide';
 import { ProductoService } from '../data-access/producto.service';
 import { CategoriaService } from '../data-access/services/categoria.service';
@@ -58,6 +60,8 @@ import { InventarioActionService } from '../data-access/inventario-action.servic
     FormsModule,
     RouterLink,
     NgIcon,
+    CurrencyPipe,
+    DecimalPipe,
     ...ZardCardImports,
     ZardButtonComponent,
     ZardBadgeComponent,
@@ -78,6 +82,7 @@ import { InventarioActionService } from '../data-access/inventario-action.servic
       lucideRefreshCw,
       lucideLayoutGrid,
       lucideList,
+      lucidePackage,
     }),
   ],
   templateUrl: './producto-list.component.html',

@@ -26,34 +26,46 @@ import { ZardPaginationImports } from '../../../../shared/components/pagination/
   template: `
     <div class="space-y-6 pt-4">
       
-      <!-- GRÁFICA DE LÍNEA DE SALIDAS Y VENTAS POR DÍA -->
+      <!-- GRÁFICA DE LÍNEA DE ENTRADAS Y SALIDAS POR DÍA -->
       <div z-card class="p-4 space-y-3">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
           <div class="flex items-center gap-2">
-            <ng-icon name="lucideTrendingUp" class="size-4 text-emerald-600 dark:text-emerald-400" />
-            <h4 class="text-sm font-semibold text-foreground">Ventas y Salidas Diarias</h4>
+            <ng-icon name="lucideTrendingUp" class="size-4 text-primary" />
+            <div>
+              <h4 class="text-sm font-bold text-foreground">Flujo diario de movimientos</h4>
+              <p class="text-xs text-muted-foreground">Comparativa de entradas y salidas registradas.</p>
+            </div>
           </div>
-          <span class="text-xs text-muted-foreground font-mono">
-            Total salidas: {{ totalSalidas() | number: '1.0-2' }}
-          </span>
+          <div class="flex items-center gap-3 text-xs font-mono">
+            <span class="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
+              <span class="size-2 rounded-full bg-emerald-500"></span>
+              Entradas: {{ totalEntradas() | number: '1.0-2' }}
+            </span>
+            <span class="inline-flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-semibold">
+              <span class="size-2 rounded-full bg-rose-500"></span>
+              Salidas: {{ totalSalidas() | number: '1.0-2' }}
+            </span>
+          </div>
         </div>
 
-        @if (chartSalidasData().length > 0) {
+        @if (chartMovimientosData().length > 0) {
           <z-chart
-            class="h-[250px] w-full"
-            zType="line"
-            [zData]="chartSalidasData()"
-            [zConfig]="salidasConfig"
-            [zSeries]="salidasSeries"
+            class="h-[260px] w-full"
+            zType="bar"
+            [zData]="chartMovimientosData()"
+            [zConfig]="chartConfig"
+            [zSeries]="chartSeries"
             [zOption]="chartOptions"
             [zYAxis]="true"
+            [zStacked]="false"
             zXAxisKey="fecha"
           >
             <z-chart-tooltip />
+            <z-chart-legend />
           </z-chart>
         } @else {
-          <div class="py-6 text-center text-xs text-muted-foreground">
-            No se registran salidas ni ventas en el historial de movimientos.
+          <div class="py-8 text-center text-xs text-muted-foreground">
+            No se registran entradas ni salidas en el historial de movimientos.
           </div>
         }
       </div>
@@ -97,9 +109,9 @@ import { ZardPaginationImports } from '../../../../shared/components/pagination/
                     <td z-table-cell>
                       <z-badge
                         [zType]="
-                          mov.tipo === 'entrada'
+                          mov.tipo === 'entrada' || mov.tipo === 'ajuste_positivo'
                             ? 'default'
-                            : mov.tipo === 'salida' || mov.tipo === 'merma'
+                            : mov.tipo === 'salida' || mov.tipo === 'merma' || mov.tipo === 'ajuste_negativo'
                               ? 'destructive'
                               : 'secondary'
                         "
@@ -113,7 +125,7 @@ import { ZardPaginationImports } from '../../../../shared/components/pagination/
                       {{
                         mov.tipo === 'entrada' || mov.tipo === 'ajuste_positivo'
                           ? '+'
-                          : mov.tipo === 'salida' || mov.tipo === 'merma'
+                          : mov.tipo === 'salida' || mov.tipo === 'merma' || mov.tipo === 'ajuste_negativo'
                             ? '-'
                             : ''
                       }}{{ mov.cantidad }}
@@ -213,18 +225,14 @@ export class ProductoTabMovimientosComponent {
     return `${start}-${end}`;
   });
 
-  salidasConfig = {
-    salidas: { label: 'Ventas / Salidas', color: '#10b981' },
+  chartConfig = {
+    entradas: { label: 'Entradas', color: '#10b981' },
+    salidas: { label: 'Salidas', color: '#f43f5e' },
   };
 
-  salidasSeries = [
-    {
-      dataKey: 'salidas',
-      smooth: true,
-      showSymbol: true,
-      strokeWidth: 2.5,
-      symbolSize: 7,
-    },
+  chartSeries = [
+    { dataKey: 'entradas' },
+    { dataKey: 'salidas' },
   ];
 
   chartOptions = {
@@ -235,50 +243,45 @@ export class ProductoTabMovimientosComponent {
       bottom: 5,
       containLabel: true,
     },
-    series: [
-      {
-        smooth: true,
-        areaStyle: {
-          color: {
-            type: 'linear',
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: 'rgba(16, 185, 129, 0.35)' },
-              { offset: 1, color: 'rgba(16, 185, 129, 0.01)' },
-            ],
-          },
-        },
-      },
-    ],
   };
 
-  chartSalidasData = computed(() => {
+  chartMovimientosData = computed(() => {
     const movs = this.movimientos();
     const sorted = [...movs].reverse();
-    const agrupado = new Map<string, number>();
+    const agrupado = new Map<string, { entradas: number; salidas: number }>();
 
     for (const mov of sorted) {
+      const fecha = new Date(mov.created_at).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+      });
+      if (!agrupado.has(fecha)) {
+        agrupado.set(fecha, { entradas: 0, salidas: 0 });
+      }
+      const entry = agrupado.get(fecha)!;
       const tipo = String(mov.tipo).toLowerCase();
-      if (tipo === 'salida' || tipo === 'merma' || tipo === 'ajuste_negativo' || tipo === 'venta') {
-        const fecha = new Date(mov.created_at).toLocaleDateString(undefined, {
-          month: 'short',
-          day: 'numeric',
-        });
-        agrupado.set(fecha, (agrupado.get(fecha) ?? 0) + Number(mov.cantidad));
+      const cantidad = Number(mov.cantidad) || 0;
+
+      if (tipo === 'entrada' || tipo === 'ajuste_positivo' || tipo === 'compra') {
+        entry.entradas += cantidad;
+      } else if (tipo === 'salida' || tipo === 'merma' || tipo === 'ajuste_negativo' || tipo === 'venta') {
+        entry.salidas += cantidad;
       }
     }
 
-    return Array.from(agrupado.entries()).map(([fecha, salidas]) => ({
+    return Array.from(agrupado.entries()).map(([fecha, vals]) => ({
       fecha,
-      salidas,
+      entradas: vals.entradas,
+      salidas: vals.salidas,
     }));
   });
 
+  totalEntradas = computed(() =>
+    this.chartMovimientosData().reduce((sum, item) => sum + item.entradas, 0),
+  );
+
   totalSalidas = computed(() =>
-    this.chartSalidasData().reduce((sum, item) => sum + item.salidas, 0),
+    this.chartMovimientosData().reduce((sum, item) => sum + item.salidas, 0),
   );
 }
 

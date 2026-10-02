@@ -29,8 +29,9 @@
                 <ng-icon [name]="sortIconName('precio_venta')" class="size-3.5 text-muted-foreground" />
               </button>
             </th>
-            <th z-table-head>Estado</th>
+            <th z-table-head class="text-right">Estado</th>
             <th z-table-head class="text-right">Existencias</th>
+            <th z-table-head class="text-center w-36">Últimos Movimientos</th>
             <th z-table-head class="text-right">Acciones</th>
           </tr>
         </thead>
@@ -48,8 +49,9 @@
                 </td>
                 <td z-table-cell><z-skeleton class="h-4 w-20" /></td>
                 <td z-table-cell><z-skeleton class="ml-auto h-4 w-16" /></td>
-                <td z-table-cell><z-skeleton class="h-5 w-16 rounded-full" /></td>
+                <td z-table-cell><z-skeleton class="ml-auto h-5 w-16 rounded-full" /></td>
                 <td z-table-cell><z-skeleton class="ml-auto h-4 w-12" /></td>
+                <td z-table-cell><z-skeleton class="mx-auto h-6 w-20 rounded" /></td>
                 <td z-table-cell><z-skeleton class="ml-auto h-4 w-20" /></td>
               </tr>
             }
@@ -63,8 +65,33 @@
                   ></z-checkbox>
                 </td>
                 <td z-table-cell>
-                  <div class="font-medium tabular-nums">{{ producto.sku }}</div>
-                  <div class="text-xs text-muted-foreground tabular-nums">{{ producto.codigo_barras || '—' }}</div>
+                  <div class="flex items-center gap-1.5 font-medium tabular-nums group/sku">
+                    <span>{{ producto.sku }}</span>
+                    <button
+                      type="button"
+                      class="opacity-0 group-hover/sku:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-0.5 rounded"
+                      (click)="copiarTexto(producto.sku, 'SKU copiado')"
+                      title="Copiar SKU"
+                    >
+                      <ng-icon name="lucideCopy" class="size-3" />
+                    </button>
+                  </div>
+                  @if (producto.codigo_barras) {
+                    <div class="flex items-center gap-1 text-xs text-muted-foreground tabular-nums group/barcode">
+                      <ng-icon name="lucideBarcode" class="size-3 text-muted-foreground/70" />
+                      <span>{{ producto.codigo_barras }}</span>
+                      <button
+                        type="button"
+                        class="opacity-0 group-hover/barcode:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-0.5 rounded"
+                        (click)="copiarTexto(producto.codigo_barras, 'Código de barras copiado')"
+                        title="Copiar código de barras"
+                      >
+                        <ng-icon name="lucideCopy" class="size-3" />
+                      </button>
+                    </div>
+                  } @else {
+                    <div class="text-xs text-muted-foreground/60 italic">Sin código</div>
+                  }
                 </td>
                 <td z-table-cell>
                   <div class="flex items-center gap-3">
@@ -86,8 +113,24 @@
                         </a>
                         @if (producto.tipo === 'kit') {
                           <z-badge zType="secondary" class="gap-1 text-[10px]">
-                            <ng-icon name="lucideLayers" />
+                            <ng-icon name="lucideLayers" class="size-3" />
                             Kit
+                          </z-badge>
+                        }
+                        @if (producto.requiere_lote) {
+                          <z-badge zType="outline" class="gap-1 text-[10px] text-amber-600 dark:text-amber-400 border-amber-500/20 bg-amber-500/10" title="Requiere control por lote">
+                            <ng-icon name="lucideBox" class="size-3" />
+                            Lote
+                          </z-badge>
+                        }
+                        @if (producto.es_sobre_pedido) {
+                          <z-badge zType="outline" class="gap-1 text-[10px] text-blue-600 dark:text-blue-400 border-blue-500/20 bg-blue-500/10" title="Venta sobre pedido">
+                            Sobre Pedido
+                          </z-badge>
+                        }
+                        @if (producto.monedero_pct || producto.monedero_monto) {
+                          <z-badge zType="outline" class="gap-1 text-[10px] text-purple-600 dark:text-purple-400 border-purple-500/20 bg-purple-500/10" title="Genera cashback">
+                            Cashback
                           </z-badge>
                         }
                       </div>
@@ -111,10 +154,30 @@
                 </td>
 
                 <td z-table-cell class="text-right">
-                  <div class="font-medium tabular-nums">{{ producto.precio_venta | currency }}</div>
-                  <div class="text-xs text-muted-foreground tabular-nums">Costo {{ producto.costo | currency }}</div>
+                  <div class="font-semibold tabular-nums text-foreground">{{ producto.precio_venta | currency }}</div>
+                  <div class="flex items-center justify-end gap-1.5 mt-0.5">
+                    <span class="text-[11px] text-muted-foreground tabular-nums">Costo {{ producto.costo | currency }}</span>
+                    @let margen = getMargenPorcentaje(producto);
+                    @if (margen !== null) {
+                      <span
+                        class="text-[10px] font-semibold px-1 rounded font-mono"
+                        [class.bg-emerald-500\/10]="margen >= 20"
+                        [class.text-emerald-600]="margen >= 20"
+                        [class.dark:text-emerald-400]="margen >= 20"
+                        [class.bg-amber-500\/10]="margen > 0 && margen < 20"
+                        [class.text-amber-600]="margen > 0 && margen < 20"
+                        [class.dark:text-amber-400]="margen > 0 && margen < 20"
+                        [class.bg-rose-500\/10]="margen <= 0"
+                        [class.text-rose-600]="margen <= 0"
+                        [class.dark:text-rose-400]="margen <= 0"
+                        [title]="'Margen de ganancia bruto: ' + margen + '%'"
+                      >
+                        {{ margen > 0 ? '+' : '' }}{{ margen }}%
+                      </span>
+                    }
+                  </div>
                 </td>
-                <td z-table-cell>
+                <td z-table-cell class="text-right">
                   <z-badge zType="outline" class="gap-1.5 px-1.5 text-muted-foreground">
                     <span
                       class="size-1.5 rounded-full"
@@ -150,6 +213,53 @@
                       </div>
                     </z-hover-card>
                   </ng-template>
+                </td>
+                <!-- Mini Sparkline / Micro Historial de Entradas y Salidas -->
+                <td z-table-cell class="text-center">
+                  @let historial = getHistorialSparkline(producto);
+                  <div
+                    class="mx-auto flex h-7 w-32 cursor-help items-end justify-between gap-[2px] rounded-md border border-border/40 bg-muted/20 px-1.5 py-1 transition-colors hover:bg-muted/50"
+                    [zHoverCard]="historialHover"
+                  >
+                    @for (item of historial.bars; track $index) {
+                      <div class="group/bar flex h-full flex-1 flex-col justify-end items-center">
+                        <div
+                          class="w-full rounded-[1px] transition-all duration-200"
+                          [class.bg-emerald-500]="item.tipo === 'entrada'"
+                          [class.group-hover\/bar:bg-emerald-400]="item.tipo === 'entrada'"
+                          [class.bg-rose-500]="item.tipo === 'salida'"
+                          [class.group-hover\/bar:bg-rose-400]="item.tipo === 'salida'"
+                          [class.bg-muted-foreground\/20]="item.tipo === 'ninguno'"
+                          [style.height.%]="item.heightPct"
+                        ></div>
+                      </div>
+                    }
+
+                    <ng-template #historialHover>
+                      <z-hover-card class="w-60 space-y-2.5 p-3 text-xs">
+                        <div class="flex items-center justify-between border-b pb-1.5 font-semibold text-foreground">
+                          <span>Historial Reciente</span>
+                          <span class="text-[10px] font-normal text-muted-foreground">Últimos 15 registros</span>
+                        </div>
+                        <div class="space-y-1.5">
+                          <div class="flex items-center justify-between">
+                            <span class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+                              <span class="size-2 rounded-full bg-emerald-500"></span>
+                              Entradas acumuladas:
+                            </span>
+                            <span class="font-bold tabular-nums text-foreground">+{{ historial.totalEntradas | number }}</span>
+                          </div>
+                          <div class="flex items-center justify-between">
+                            <span class="flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-medium">
+                              <span class="size-2 rounded-full bg-rose-500"></span>
+                              Salidas acumuladas:
+                            </span>
+                            <span class="font-bold tabular-nums text-foreground">-{{ historial.totalSalidas | number }}</span>
+                          </div>
+                        </div>
+                      </z-hover-card>
+                    </ng-template>
+                  </div>
                 </td>
                 <td z-table-cell>
                   <div class="flex items-center justify-end gap-1">
