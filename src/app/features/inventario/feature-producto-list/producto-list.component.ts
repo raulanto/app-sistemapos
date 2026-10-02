@@ -18,6 +18,8 @@ import {
   lucideMinus,
   lucideAlertCircle,
   lucideRefreshCw,
+  lucideLayoutGrid,
+  lucideList,
 } from '@ng-icons/lucide';
 import { ProductoService } from '../data-access/producto.service';
 import { CategoriaService } from '../data-access/services/categoria.service';
@@ -40,7 +42,9 @@ import { AuthService } from '@/core/auth/api/auth.service';
 import { PERMISOS } from '@/core/auth/permissions';
 import { SucursalService } from '@/core/sucursal/sucursal.service';
 import { ProductoFiltrosComponent } from '../ui/producto-filtros/producto-filtros.component';
+import { ProductoFiltrosSidebarComponent } from '../ui/producto-filtros-sidebar/producto-filtros-sidebar.component';
 import { ProductoTableComponent } from '../ui/producto-table/producto-table.component';
+import { ProductoGridComponent } from '../ui/producto-grid/producto-grid.component';
 import { ProductoFormSheetComponent } from '../ui/producto-form-sheet/producto-form-sheet.component';
 import { MovimientoFormSheetComponent } from '../ui/movimiento-form-sheet/movimiento-form-sheet.component';
 import { InventarioActionService } from '../data-access/inventario-action.service';
@@ -58,7 +62,9 @@ import { InventarioActionService } from '../data-access/inventario-action.servic
     ...ZardSelectImports,
     ...ZardPaginationImports,
     ProductoFiltrosComponent,
+    ProductoFiltrosSidebarComponent,
     ProductoTableComponent,
+    ProductoGridComponent,
   ],
   viewProviders: [
     provideIcons({
@@ -68,6 +74,8 @@ import { InventarioActionService } from '../data-access/inventario-action.servic
       lucideMinus,
       lucideAlertCircle,
       lucideRefreshCw,
+      lucideLayoutGrid,
+      lucideList,
     }),
   ],
   templateUrl: './producto-list.component.html',
@@ -92,6 +100,9 @@ export class ProductoListComponent implements OnInit {
   readonly categorias = signal<CategoriaResponse[]>([]);
   readonly loading = signal(false);
   readonly kpis = signal<ProductoKpiResponse | null>(null);
+
+  // Vista: tabla vs grid
+  readonly vistaMode = signal<'tabla' | 'grid'>('tabla');
 
   // Filtros y Paginación
   readonly q = signal<string>('');

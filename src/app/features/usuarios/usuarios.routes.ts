@@ -15,4 +15,9 @@ export const USUARIOS_ROUTES: Routes = [
     canActivate: [permissionGuard(...PERMISOS.roles.gestionar)],
     loadComponent: () => import('./feature-rol-list/rol-list.component').then(m => m.RolListComponent),
   },
+  {
+    path: 'perfil',
+    title: 'Mi Perfil - Sistema POS',
+    loadComponent: () => import('./perfil/perfil.component').then(m => m.PerfilComponent),
+  },
 ];

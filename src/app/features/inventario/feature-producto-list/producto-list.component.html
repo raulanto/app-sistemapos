@@ -5,6 +5,29 @@
       <p class="text-muted-foreground">Gestiona el catálogo de productos y precios.</p>
     </div>
     <div class="flex items-center gap-2">
+      <div class="flex items-center rounded-lg border border-border bg-card p-1">
+        <button
+          z-button
+          [zType]="vistaMode() === 'tabla' ? 'default' : 'ghost'"
+          zSize="sm"
+          class="gap-1.5 text-xs font-medium"
+          (click)="vistaMode.set('tabla')"
+        >
+          <ng-icon name="lucideList" class="size-3.5" />
+          Tabla
+        </button>
+        <button
+          z-button
+          [zType]="vistaMode() === 'grid' ? 'default' : 'ghost'"
+          zSize="sm"
+          class="gap-1.5 text-xs font-medium"
+          (click)="vistaMode.set('grid')"
+        >
+          <ng-icon name="lucideLayoutGrid" class="size-3.5" />
+          Cuadrícula
+        </button>
+      </div>
+
       <button z-button zType="outline" zSize="icon" (click)="refreshTrigger.update(v => v + 1)" aria-label="Refrescar datos">
         <ng-icon name="lucideRefreshCw" class="size-4" />
       </button>
@@ -42,19 +65,20 @@
     }
   </div>
 
-  <app-producto-filtros
-    [q]="q()"
-    [categorias]="categorias()"
-    [categoriaId]="categoriaId()"
-    [tipo]="tipo()"
-    [activo]="activo()"
-    [todasLasSucursales]="todasLasSucursales()"
-    (qChange)="updateSearch($event)"
-    (categoriaIdChange)="updateCategoria($event)"
-    (tipoChange)="updateTipo($event)"
-    (activoChange)="updateActivo($event)"
-    (todasLasSucursalesChange)="updateTodasLasSucursales($event)"
-  ></app-producto-filtros>
+  @if (vistaMode() === 'tabla') {
+    <app-producto-filtros
+      [q]="q()"
+      [categorias]="categorias()"
+      [categoriaId]="categoriaId()"
+      [tipo]="tipo()"
+      [activo]="activo()"
+      [todasLasSucursales]="todasLasSucursales()"
+      (qChange)="updateSearch($event)"
+      (categoriaIdChange)="updateCategoria($event)"
+      (tipoChange)="updateTipo($event)"
+      (activoChange)="updateActivo($event)"
+      (todasLasSucursalesChange)="updateTodasLasSucursales($event)"
+    />
 
     <app-producto-table
       [productos]="productos()"
@@ -79,4 +103,55 @@
       (editar)="openEditSheet($event)"
       (crearMovimiento)="openMovimientoSheet($event)"
     ></app-producto-table>
+  } @else {
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <!-- Sidebar de Filtros Lateral para Vista Cuadrícula (Estilo Catálogo) -->
+      <div class="lg:col-span-1">
+        <app-producto-filtros-sidebar
+          [q]="q()"
+          [categorias]="categorias()"
+          [categoriaId]="categoriaId()"
+          [tipo]="tipo()"
+          [activo]="activo()"
+          [todasLasSucursales]="todasLasSucursales()"
+          (qChange)="updateSearch($event)"
+          (categoriaIdChange)="updateCategoria($event)"
+          (tipoChange)="updateTipo($event)"
+          (activoChange)="updateActivo($event)"
+          (todasLasSucursalesChange)="updateTodasLasSucursales($event)"
+        />
+      </div>
+
+      <!-- Cuadrícula / Grid de Productos -->
+      <div class="lg:col-span-3 space-y-4">
+        <div class="flex items-center justify-between bg-card p-3 border border-border rounded-xl">
+          <div class="text-sm font-medium text-muted-foreground">
+            <span class="font-bold text-foreground">{{ totalItems() }}</span> productos disponibles
+          </div>
+
+          <div class="flex items-center gap-2">
+            <z-select class="w-44" [ngModel]="sort()" (ngModelChange)="sort.set($event); page.set(1)">
+              <z-select-item zValue="created_at:desc">Más recientes</z-select-item>
+              <z-select-item zValue="nombre:asc">Nombre (A-Z)</z-select-item>
+              <z-select-item zValue="nombre:desc">Nombre (Z-A)</z-select-item>
+              <z-select-item zValue="precio_venta:asc">Precio (Menor a Mayor)</z-select-item>
+              <z-select-item zValue="precio_venta:desc">Precio (Mayor a Menor)</z-select-item>
+            </z-select>
+          </div>
+        </div>
+
+        <app-producto-grid
+          [productos]="productos()"
+          [loading]="loading()"
+          [canEditar]="canEditar()"
+          [canCrearMovimiento]="canCrear()"
+          (desactivar)="desactivar($event)"
+          (activar)="activar($event)"
+          (eliminar)="eliminar($event)"
+          (editar)="openEditSheet($event)"
+          (crearMovimiento)="openMovimientoSheet($event)"
+        ></app-producto-grid>
+      </div>
+    </div>
+  }
 </div>
