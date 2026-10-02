@@ -23,8 +23,10 @@ import {
 } from '@ng-icons/lucide';
 import { ProductoService } from '../data-access/producto.service';
 import { CategoriaService } from '../data-access/services/categoria.service';
+import { MarcaService } from '../data-access/services/marca.service';
 import {
   CategoriaResponse,
+  MarcaResponse,
   ProductoQuery,
   ProductoResponse,
   ProductoKpiResponse,
@@ -84,6 +86,7 @@ import { InventarioActionService } from '../data-access/inventario-action.servic
 export class ProductoListComponent implements OnInit {
   private readonly productoService = inject(ProductoService);
   private readonly categoriaService = inject(CategoriaService);
+  private readonly marcaService = inject(MarcaService);
   private readonly alertDialog = inject(ZardAlertDialogService);
   private readonly sonner = inject(ZardSonnerService);
   private readonly sheetService = inject(ZardSheetService);
@@ -98,6 +101,7 @@ export class ProductoListComponent implements OnInit {
 
   readonly productos = signal<ProductoResponse[]>([]);
   readonly categorias = signal<CategoriaResponse[]>([]);
+  readonly marcas = signal<MarcaResponse[]>([]);
   readonly loading = signal(false);
   readonly kpis = signal<ProductoKpiResponse | null>(null);
 
@@ -107,6 +111,7 @@ export class ProductoListComponent implements OnInit {
   // Filtros y Paginación
   readonly q = signal<string>('');
   readonly categoriaId = signal<string[]>([]);
+  readonly marcaId = signal<string[]>([]);
   readonly tipo = signal<string[]>([]);
   readonly activo = signal<string[]>([]);
   readonly todasLasSucursales = signal(this.authService.currentUser()?.rol?.codigo === 'admin');
@@ -140,6 +145,7 @@ export class ProductoListComponent implements OnInit {
     return {
       q: this.q() || null,
       categoria_id: this.categoriaId().length > 0 ? this.categoriaId() : null,
+      marca_id: this.marcaId().length > 0 ? this.marcaId() : null,
       tipo: this.tipo().length > 0 ? (this.tipo() as TipoProducto[]) : null,
       activo: activoVal,
       sucursal_id,
@@ -252,6 +258,10 @@ export class ProductoListComponent implements OnInit {
       next: (data) => this.categorias.set(data),
       error: (err) => console.error('Error al cargar categorias:', err),
     });
+    this.marcaService.obtenerTodas().subscribe({
+      next: (data) => this.marcas.set(data),
+      error: (err) => console.error('Error al cargar marcas:', err),
+    });
   }
 
   updateSearch(val: string) {
@@ -266,6 +276,11 @@ export class ProductoListComponent implements OnInit {
 
   updateCategoria(val: string[]) {
     this.categoriaId.set(val);
+    this.page.set(1);
+  }
+
+  updateMarca(val: string[]) {
+    this.marcaId.set(val);
     this.page.set(1);
   }
 

@@ -148,6 +148,7 @@ export interface ActualizarProductoRequest {
 
 export interface ProductoQuery {
   categoria_id?: string[] | null;
+  marca_id?: string[] | null;
   tipo?: TipoProducto[] | null;
   activo?: boolean | null;
   q?: string | null;

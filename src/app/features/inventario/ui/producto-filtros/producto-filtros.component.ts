@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideSearch, lucideX, lucideFilterX } from '@ng-icons/lucide';
 
-import { CategoriaResponse } from '../../data-access/inventario.models';
+import { CategoriaResponse, MarcaResponse } from '../../data-access/inventario.models';
 import { ZardInputComponent } from '../../../../shared/components/input/input.component';
 import { ZardInputGroupImports } from '../../../../shared/components/input-group/input-group.imports';
 import { ZardComboboxImports } from '../../../../shared/components/combobox/combobox.imports';
@@ -36,12 +36,15 @@ export class ProductoFiltrosComponent {
   q = input<string>('');
   categorias = input<CategoriaResponse[]>([]);
   categoriaId = input<string[]>([]);
+  marcas = input<MarcaResponse[]>([]);
+  marcaId = input<string[]>([]);
   tipo = input<string[]>([]);
   activo = input<string[]>([]);
   todasLasSucursales = input<boolean>(false);
 
   qChange = output<string>();
   categoriaIdChange = output<string[]>();
+  marcaIdChange = output<string[]>();
   tipoChange = output<string[]>();
   activoChange = output<string[]>();
   todasLasSucursalesChange = output<boolean>();
@@ -63,11 +66,20 @@ export class ProductoFiltrosComponent {
     this.categorias().map(c => ({ value: c.id, label: c.nombre })),
   );
 
+  readonly marcaOptions = computed<ZardComboboxOption[]>(() =>
+    this.marcas().map(m => ({ value: m.id, label: m.nombre })),
+  );
+
   /** El toggle-group trabaja con un valor único; `activo` se mantiene como string[] hacia el padre. */
   readonly estadoValue = computed(() => (this.activo().length === 1 ? this.activo()[0] : ''));
 
   readonly hayFiltrosActivos = computed(
-    () => !!this.q() || this.categoriaId().length > 0 || this.tipo().length > 0 || this.activo().length > 0,
+    () =>
+      !!this.q() ||
+      this.categoriaId().length > 0 ||
+      this.marcaId().length > 0 ||
+      this.tipo().length > 0 ||
+      this.activo().length > 0,
   );
 
   onEstadoChange(value: string | string[]): void {
@@ -82,6 +94,7 @@ export class ProductoFiltrosComponent {
   limpiarFiltros(): void {
     this.qChange.emit('');
     this.categoriaIdChange.emit([]);
+    this.marcaIdChange.emit([]);
     this.tipoChange.emit([]);
     this.activoChange.emit([]);
   }

@@ -43,6 +43,11 @@ export class ProductoService {
           params = params.append('categoria_id', id);
         });
       }
+      if (query.marca_id && query.marca_id.length > 0) {
+        query.marca_id.forEach(id => {
+          params = params.append('marca_id', id);
+        });
+      }
       if (query.tipo && query.tipo.length > 0) {
         query.tipo.forEach(t => {
           params = params.append('tipo', t);

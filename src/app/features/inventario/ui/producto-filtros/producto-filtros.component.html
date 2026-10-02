@@ -32,6 +32,18 @@
     emptyText="Sin resultados"
   />
 
+  <!-- Marca (buscable, multi) -->
+  <z-combobox
+    class="w-full sm:w-56"
+    [zMultiple]="true"
+    [options]="marcaOptions()"
+    [ngModel]="marcaId()"
+    (ngModelChange)="marcaIdChange.emit($event)"
+    placeholder="Marca"
+    searchPlaceholder="Buscar marca..."
+    emptyText="Sin resultados"
+  />
+
   <!-- Tipo de Producto (buscable, multi) -->
   <z-combobox
     class="w-full sm:w-48"

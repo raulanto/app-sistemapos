@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideSearch, lucideX, lucideFilterX, lucideChevronDown, lucideSlidersHorizontal } from '@ng-icons/lucide';
 
-import { CategoriaResponse } from '../../data-access/inventario.models';
+import { CategoriaResponse, MarcaResponse } from '../../data-access/inventario.models';
 import { ZardInputComponent } from '../../../../shared/components/input/input.component';
 import { ZardInputGroupImports } from '../../../../shared/components/input-group/input-group.imports';
 import { ZardCheckboxComponent } from '../../../../shared/components/checkbox/checkbox.component';
@@ -114,6 +114,41 @@ import { ZardCardImports } from '../../../../shared/components/card/card.imports
         }
       </div>
 
+      <!-- Lista de Marcas con Checkboxes -->
+      @if (marcas().length > 0) {
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Marcas</label>
+            @if (marcaId().length > 0) {
+              <span class="text-[11px] font-mono text-primary font-medium">({{ marcaId().length }})</span>
+            }
+          </div>
+
+          <div class="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+            @for (m of marcasVisibles(); track m.id) {
+              <z-checkbox
+                [zId]="'marca-' + m.id"
+                [ngModel]="isMarcaSelected(m.id)"
+                (ngModelChange)="toggleMarca(m.id, $event)"
+                class="text-xs font-normal text-foreground hover:text-primary transition-colors cursor-pointer"
+              >
+                {{ m.nombre }}
+              </z-checkbox>
+            }
+          </div>
+
+          @if (marcas().length > 8) {
+            <button
+              type="button"
+              class="text-xs text-primary font-medium hover:underline pt-1"
+              (click)="mostrarTodasMarcas.update(v => !v)"
+            >
+              {{ mostrarTodasMarcas() ? 'Ver menos' : 'Ver todas (' + marcas().length + ')' }}
+            </button>
+          }
+        </div>
+      }
+
       <!-- Tipo de Producto -->
       <div class="space-y-2">
         <label class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tipo de Producto</label>
@@ -152,17 +187,21 @@ export class ProductoFiltrosSidebarComponent {
   q = input<string>('');
   categorias = input<CategoriaResponse[]>([]);
   categoriaId = input<string[]>([]);
+  marcas = input<MarcaResponse[]>([]);
+  marcaId = input<string[]>([]);
   tipo = input<string[]>([]);
   activo = input<string[]>([]);
   todasLasSucursales = input<boolean>(false);
 
   qChange = output<string>();
   categoriaIdChange = output<string[]>();
+  marcaIdChange = output<string[]>();
   tipoChange = output<string[]>();
   activoChange = output<string[]>();
   todasLasSucursalesChange = output<boolean>();
 
   readonly mostrarTodasCategorias = signal(false);
+  readonly mostrarTodasMarcas = signal(false);
 
   readonly tiposDisponibles = [
     { value: 'simple', label: 'Simple' },
@@ -177,8 +216,19 @@ export class ProductoFiltrosSidebarComponent {
     return list.slice(0, 8);
   });
 
+  readonly marcasVisibles = computed(() => {
+    const list = this.marcas();
+    if (this.mostrarTodasMarcas()) return list;
+    return list.slice(0, 8);
+  });
+
   readonly hayFiltrosActivos = computed(
-    () => !!this.q() || this.categoriaId().length > 0 || this.tipo().length > 0 || this.activo().length > 0,
+    () =>
+      !!this.q() ||
+      this.categoriaId().length > 0 ||
+      this.marcaId().length > 0 ||
+      this.tipo().length > 0 ||
+      this.activo().length > 0,
   );
 
   isCategoriaSelected(id: string): boolean {
@@ -190,6 +240,17 @@ export class ProductoFiltrosSidebarComponent {
     if (checked) current.add(id);
     else current.delete(id);
     this.categoriaIdChange.emit(Array.from(current));
+  }
+
+  isMarcaSelected(id: string): boolean {
+    return this.marcaId().includes(id);
+  }
+
+  toggleMarca(id: string, checked: boolean): void {
+    const current = new Set(this.marcaId());
+    if (checked) current.add(id);
+    else current.delete(id);
+    this.marcaIdChange.emit(Array.from(current));
   }
 
   isTipoSelected(value: string): boolean {
@@ -206,6 +267,7 @@ export class ProductoFiltrosSidebarComponent {
   limpiarFiltros(): void {
     this.qChange.emit('');
     this.categoriaIdChange.emit([]);
+    this.marcaIdChange.emit([]);
     this.tipoChange.emit([]);
     this.activoChange.emit([]);
   }
