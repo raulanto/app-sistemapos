@@ -69,6 +69,15 @@ import { ZardSeparatorComponent } from '../../../../shared/components/separator/
                 producto().categoria?.nombre || 'General'
               }}</strong></span
             >
+            @if (producto().marca) {
+              <span>•</span>
+              <span
+                >Marca:
+                <strong class="font-medium text-foreground/80">{{
+                  producto().marca?.nombre
+                }}</strong></span
+              >
+            }
             <span>•</span>
             <span
               >Unidad base:
@@ -76,6 +85,7 @@ import { ZardSeparatorComponent } from '../../../../shared/components/separator/
                 producto().unidad_medida
               }}</strong></span
             >
+
           </div>
         </div>
 

@@ -698,6 +698,25 @@
               <z-field-error [zErrors]="categoriaError()"></z-field-error>
             </div>
 
+            <!-- Marca -->
+            <div z-field>
+              <div class="flex items-end gap-2">
+                <div class="flex-1">
+                  <label z-field-label>Marca (opcional)</label>
+                  <z-select formControlName="marca_id" placeholder="Sin marca">
+                    <z-select-item zValue="">Sin marca</z-select-item>
+                    @for (m of marcas(); track m.id) {
+                      <z-select-item [zValue]="m.id">{{ m.nombre }}</z-select-item>
+                    }
+                  </z-select>
+                </div>
+                <button type="button" z-button zType="outline" zSize="default" (click)="abrirCrearMarca()">
+                  <ng-icon name="lucidePlus" class="mr-1" />
+                  Nueva
+                </button>
+              </div>
+            </div>
+
             <!-- Tipo de Producto -->
             <div z-field [attr.data-invalid]="tipoError().length ? 'true' : null">
               <label z-field-label>Tipo de producto *</label>

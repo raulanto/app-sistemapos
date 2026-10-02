@@ -109,9 +109,15 @@ import { ZardEmptyComponent } from '../../../../shared/components/empty/empty.co
               <!-- Información del Producto -->
               <div class="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
                 <div>
-                  <div class="text-[11px] font-mono text-muted-foreground uppercase tracking-wider truncate">
-                    {{ producto.categoria?.nombre || 'Sin categoría' }}
+                  <div class="text-[11px] font-mono text-muted-foreground uppercase tracking-wider truncate flex items-center justify-between gap-1">
+                    <span class="truncate">{{ producto.categoria?.nombre || 'Sin categoría' }}</span>
+                    @if (producto.marca) {
+                      <span class="text-primary font-sans font-medium text-[10px] normal-case shrink-0">
+                        {{ producto.marca.nombre }}
+                      </span>
+                    }
                   </div>
+
                   <a
                     routerLink="/inventario/productos/{{ producto.id }}"
                     class="font-semibold text-sm text-foreground hover:text-primary transition-colors line-clamp-2 leading-snug mt-0.5"

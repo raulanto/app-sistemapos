@@ -308,7 +308,8 @@ export class ProductoDetailComponent implements OnInit {
     });
   }
 
-  private static readonly INCLUDES = 'categoria,existencias,componentes,imagenes';
+  private static readonly INCLUDES = 'categoria,marca,existencias,componentes,imagenes';
+
 
   /** Carga inicial: muestra skeleton mientras llega todo. */
   cargarDatos(id: string) {

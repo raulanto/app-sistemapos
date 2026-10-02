@@ -15,7 +15,9 @@ import {
   lucideLayers,
   lucidePackage,
   lucideTrash2,
+  lucideTag,
 } from '@ng-icons/lucide';
+
 import { ProductoResponse } from '../../data-access/inventario.models';
 import { ZardTableImports } from '../../../../shared/components/table/table.imports';
 import { ZardPaginationImports } from '../../../../shared/components/pagination/pagination.imports';
@@ -63,7 +65,9 @@ import { inject } from '@angular/core';
       lucideLayers,
       lucidePackage,
       lucideTrash2,
+      lucideTag,
     })
+
   ],
   templateUrl: './producto-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush

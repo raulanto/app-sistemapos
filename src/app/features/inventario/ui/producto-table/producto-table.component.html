@@ -100,7 +100,16 @@
                     </div>
                   </div>
                 </td>
-                <td z-table-cell class="text-muted-foreground">{{ producto.categoria?.nombre || 'Sin categoría' }}</td>
+                <td z-table-cell class="text-muted-foreground">
+                  <div>{{ producto.categoria?.nombre || 'Sin categoría' }}</div>
+                  @if (producto.marca) {
+                    <div class="text-[11px] text-muted-foreground/80 flex items-center gap-1 font-medium">
+                      <ng-icon name="lucideTag" class="size-3 text-muted-foreground" />
+                      {{ producto.marca.nombre }}
+                    </div>
+                  }
+                </td>
+
                 <td z-table-cell class="text-right">
                   <div class="font-medium tabular-nums">{{ producto.precio_venta | currency }}</div>
                   <div class="text-xs text-muted-foreground tabular-nums">Costo {{ producto.costo | currency }}</div>

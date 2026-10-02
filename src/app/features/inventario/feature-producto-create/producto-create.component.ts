@@ -45,8 +45,10 @@ import { CategoriaService } from '../data-access/services/categoria.service';
 import { UnidadMedidaService } from '../data-access/unidad-medida.service';
 import { SucursalService } from '../../../core/sucursal/sucursal.service';
 import { MovimientoService } from '../data-access/movimiento.service';
+import { MarcaService } from '../data-access/services/marca.service';
 import {
   CategoriaResponse,
+  MarcaResponse,
   ProductoResponse,
   UnidadMedidaResponse,
   TipoProducto,
@@ -56,6 +58,7 @@ import {
 import { ZardSonnerService } from '../../../shared/components/sonner/sonner.service';
 import { ZardSheetService } from '../../../shared/components/sheet/sheet.service';
 import { UnidadMedidaFormSheetComponent } from '../ui/unidad-medida-form-sheet/unidad-medida-form-sheet.component';
+import { MarcaFormSheetComponent } from '../ui/marca-form-sheet/marca-form-sheet.component';
 
 import { ZardCardImports } from '../../../shared/components/card/card.imports';
 import { ZardFieldImports } from '../../../shared/components/field/field.imports';
@@ -120,6 +123,7 @@ export class ProductoCreateComponent implements OnInit {
   private productoService = inject(ProductoService);
   private categoriaService = inject(CategoriaService);
   private unidadMedidaService = inject(UnidadMedidaService);
+  private marcaService = inject(MarcaService);
   public sucursalService = inject(SucursalService);
   private movimientoService = inject(MovimientoService);
   private sonner = inject(ZardSonnerService);
@@ -127,9 +131,11 @@ export class ProductoCreateComponent implements OnInit {
   private router = inject(Router);
 
   categorias = signal<CategoriaResponse[]>([]);
+  marcas = signal<MarcaResponse[]>([]);
   productosSimples = signal<ProductoResponse[]>([]);
   unidadesMedida = signal<UnidadMedidaResponse[]>([]);
   loading = signal(false);
+  private abriendoFormSheetMarca = false;
 
   /** Fotos elegidas del equipo, aún sin subir (se suben tras crear el producto). */
   readonly imagenesNuevas = signal<
@@ -143,6 +149,7 @@ export class ProductoCreateComponent implements OnInit {
     nombre: ['', Validators.required],
     descripcion: [''],
     categoria_id: ['', Validators.required],
+    marca_id: [null as string | null],
     unidad_medida: ['UNIDAD', Validators.required],
     unidad_medida_id: [null as string | null],
     precio_venta: ['0.00', [Validators.required, Validators.min(0.01)]],
@@ -342,6 +349,7 @@ export class ProductoCreateComponent implements OnInit {
 
   ngOnInit() {
     this.cargarCategorias();
+    this.cargarMarcas();
     this.cargarProductosSimples();
     this.cargarUnidadesMedida();
     this.form.controls.tipo.valueChanges.subscribe((tipo) =>
@@ -371,6 +379,50 @@ export class ProductoCreateComponent implements OnInit {
     this.categoriaService.listar().subscribe({
       next: (data) => this.categorias.set(data),
       error: (err) => console.error('Error al cargar categorias', err),
+    });
+  }
+
+  cargarMarcas() {
+    this.marcaService.obtenerTodas().subscribe({
+      next: (data) => this.marcas.set(data),
+      error: (err) => console.error('Error al cargar marcas', err),
+    });
+  }
+
+  abrirCrearMarca() {
+    if (this.abriendoFormSheetMarca) return;
+    this.abriendoFormSheetMarca = true;
+
+    this.sheetService.create({
+      zTitle: 'Nueva marca',
+      zDescription: 'Crea una marca para organizar tus productos.',
+      zContent: MarcaFormSheetComponent,
+      zOkText: 'Guardar marca',
+      zCancelText: 'Cancelar',
+      zOnCancel: () => {
+        this.abriendoFormSheetMarca = false;
+      },
+      zOnOk: (instance: any) => {
+        const obs = instance.save();
+        if (!obs) return false;
+        return new Promise<void>((resolve, reject) => {
+          obs.subscribe({
+            next: (nueva: MarcaResponse) => {
+              this.sonner.success('Marca creada exitosamente');
+              this.marcas.update((list) => [...list, nueva]);
+              this.form.patchValue({ marca_id: nueva.id });
+              this.abriendoFormSheetMarca = false;
+              resolve();
+            },
+            error: (err: any) => {
+              console.error('Error al crear marca', err);
+              this.sonner.error('Error al guardar la marca');
+              this.abriendoFormSheetMarca = false;
+              reject(err);
+            },
+          });
+        });
+      },
     });
   }
 
@@ -491,6 +543,7 @@ export class ProductoCreateComponent implements OnInit {
     if (data.codigo_barras === '') data.codigo_barras = null;
     if (data.descripcion === '') data.descripcion = null;
     if (data.unidad_medida_id === '') data.unidad_medida_id = null;
+    if (data.marca_id === '') data.marca_id = null;
 
     const numOrNull = (v: any) => (v === '' || v == null ? null : Number(v));
     data.incremento_minimo_venta = numOrNull(data.incremento_minimo_venta);
