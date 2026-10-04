@@ -1,22 +1,33 @@
-<div class="flex flex-wrap gap-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:shadow-xs">
+<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-flow-col xl:auto-cols-fr">
   @for (k of kpis(); track k.label) {
-    <z-card [class]="cardClasses(k)">
-      <z-card-header>
-        <z-card-description [zDescription]="k.label" class="text-xs font-medium uppercase tracking-wide" />
-        <z-card-title [zTitle]="k.value" class="mt-1 font-semibold tabular-nums" [class]="valorClase(k.tono) + (k.destacado ? ' text-3xl lg:text-4xl' : ' text-2xl lg:text-3xl')" />
-        @if (k.icon) {
-          <z-card-action>
-            <span class="grid size-9 place-items-center rounded-full" [class]="iconBadgeBg(k.tono)">
-              <ng-icon [name]="k.icon" class="size-5" />
-            </span>
-          </z-card-action>
+    <div class="flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4 shadow-xs transition-all hover:border-border hover:shadow-sm min-w-0">
+      <div class="flex items-center justify-between gap-1.5">
+        <div class="flex items-center gap-1.5 min-w-0">
+          @if (k.icon) {
+            <div class="flex size-7 shrink-0 items-center justify-center rounded-md" [class]="iconBadgeBg(k.tono)">
+              <ng-icon [name]="k.icon" class="size-4" />
+            </div>
+          }
+          <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">{{ k.label }}</span>
+        </div>
+        @if (k.destacado) {
+          <span class="text-[10px] font-mono font-semibold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded shrink-0">
+            Principal
+          </span>
         }
-      </z-card-header>
+      </div>
+
+      <div class="my-2.5 flex items-baseline gap-2">
+        <span class="text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums truncate" [class]="valorClase(k.tono)">
+          {{ k.value }}
+        </span>
+      </div>
+
       @if (k.caption) {
-        <z-card-footer class="border-t border-border/60 pt-3 text-xs text-muted-foreground">
-          {{ k.caption }}
-        </z-card-footer>
+        <div class="space-y-1 border-t border-border/50 pt-2 text-[11px] text-muted-foreground">
+          <span class="font-medium text-foreground truncate block">{{ k.caption }}</span>
+        </div>
       }
-    </z-card>
+    </div>
   }
 </div>

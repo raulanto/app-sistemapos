@@ -308,8 +308,8 @@
     @if (reporte(); as r) {
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <!-- Top Productos Vendidos Hoy -->
-        <z-card class="overflow-hidden border-border/70">
-          <z-card-header class="border-b border-border/50 pb-4">
+        <z-card class="overflow-hidden border-border/70 shadow-xs">
+          <z-card-header class="border-b border-border/50 p-5 sm:p-6">
             <z-card-title zTitle="Top Productos Vendidos Hoy" class="text-base font-semibold" />
             <z-card-description zDescription="Artículos con mayor demanda en la jornada actual" class="text-xs text-muted-foreground mt-0.5" />
           </z-card-header>
@@ -317,28 +317,28 @@
             <table z-table class="w-full">
               <thead z-table-header class="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
                 <tr z-table-row>
-                  <th z-table-head class="py-2.5 px-4">Producto</th>
-                  <th z-table-head class="py-2.5 px-4 text-right">Cant. Vendida</th>
-                  <th z-table-head class="py-2.5 px-4 text-right">Ingreso Total</th>
+                  <th z-table-head class="py-3 px-5">Producto</th>
+                  <th z-table-head class="py-3 px-5 text-right">Cant. Vendida</th>
+                  <th z-table-head class="py-3 px-5 text-right">Ingreso Total</th>
                 </tr>
               </thead>
               <tbody z-table-body class="divide-y divide-border/40">
                 @for (p of r.top_productos_hoy; track p.producto_id) {
                   <tr z-table-row class="hover:bg-muted/20">
-                    <td z-table-cell class="px-4 py-3 text-sm font-medium text-foreground">
+                    <td z-table-cell class="px-5 py-3.5 text-sm font-medium text-foreground">
                       {{ p.nombre }}
                     </td>
-                    <td z-table-cell class="px-4 py-3 text-right font-mono text-sm tabular-nums text-muted-foreground">
+                    <td z-table-cell class="px-5 py-3.5 text-right font-mono text-sm tabular-nums text-muted-foreground">
                       {{ p.cantidad_vendida | number: '1.0-4' }}
                     </td>
-                    <td z-table-cell class="px-4 py-3 text-right font-mono text-sm font-semibold tabular-nums text-foreground">
+                    <td z-table-cell class="px-5 py-3.5 text-right font-mono text-sm font-semibold tabular-nums text-foreground">
                       {{ p.monto_total | currency }}
                     </td>
                   </tr>
                 } @empty {
                   <tr z-table-row>
-                    <td z-table-cell colspan="3" class="p-0">
-                      <z-empty zIcon="lucideBoxes" zTitle="Sin movimiento de productos" zDescription="Aún no hay ventas registradas en el día." class="py-8" />
+                    <td z-table-cell colspan="3" class="p-6">
+                      <z-empty zIcon="lucideBoxes" zTitle="Sin ventas todavía hoy" zDescription="Aún no hay movimiento registrado en la jornada." class="py-12" />
                     </td>
                   </tr>
                 }
@@ -348,8 +348,8 @@
         </z-card>
 
         <!-- Turnos de Caja Abiertos -->
-        <z-card class="overflow-hidden border-border/70">
-          <z-card-header class="border-b border-border/50 pb-4">
+        <z-card class="overflow-hidden border-border/70 shadow-xs">
+          <z-card-header class="border-b border-border/50 p-5 sm:p-6">
             <z-card-title zTitle="Turnos de Caja Operando" class="text-base font-semibold" />
             <z-card-description zDescription="Cajas y turnos activos en este momento" class="text-xs text-muted-foreground mt-0.5" />
           </z-card-header>
@@ -357,28 +357,28 @@
             <table z-table class="w-full">
               <thead z-table-header class="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
                 <tr z-table-row>
-                  <th z-table-head class="py-2.5 px-4">Folio Turno</th>
-                  <th z-table-head class="py-2.5 px-4">Abierto Desde</th>
-                  <th z-table-head class="py-2.5 px-4 text-right">Fondo Inicial</th>
+                  <th z-table-head class="py-3 px-5">Folio Turno</th>
+                  <th z-table-head class="py-3 px-5">Abierto Desde</th>
+                  <th z-table-head class="py-3 px-5 text-right">Fondo Inicial</th>
                 </tr>
               </thead>
               <tbody z-table-body class="divide-y divide-border/40">
                 @for (c of r.cajas_abiertas; track c.caja_turno_id) {
                   <tr z-table-row class="hover:bg-muted/20">
-                    <td z-table-cell class="px-4 py-3 font-mono text-xs font-semibold text-primary">
+                    <td z-table-cell class="px-5 py-3.5 font-mono text-xs font-semibold text-primary">
                       #{{ c.caja_turno_id.slice(0, 8) }}
                     </td>
-                    <td z-table-cell class="px-4 py-3 text-xs text-muted-foreground">
+                    <td z-table-cell class="px-5 py-3.5 text-xs text-muted-foreground">
                       {{ c.abierto_en | date: 'dd/MM/yyyy HH:mm' }}
                     </td>
-                    <td z-table-cell class="px-4 py-3 text-right font-mono text-sm font-medium tabular-nums text-foreground">
+                    <td z-table-cell class="px-5 py-3.5 text-right font-mono text-sm font-medium tabular-nums text-foreground">
                       {{ c.saldo_inicial | currency }}
                     </td>
                   </tr>
                 } @empty {
                   <tr z-table-row>
-                    <td z-table-cell colspan="3" class="p-0">
-                      <z-empty zIcon="lucideLandmark" zTitle="No hay cajas abiertas" zDescription="Todos los turnos se encuentran cerrados." class="py-8" />
+                    <td z-table-cell colspan="3" class="p-6">
+                      <z-empty zIcon="lucideLandmark" zTitle="Ningún turno abierto" zDescription="Todos los turnos de caja se encuentran cerrados." class="py-12" />
                     </td>
                   </tr>
                 }
