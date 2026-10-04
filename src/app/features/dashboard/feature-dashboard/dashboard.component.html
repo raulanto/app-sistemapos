@@ -2,7 +2,7 @@
   <!-- ENCABEZADO Y FILTRO SUCURSAL -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
     <div>
-      <h1 class="text-2xl font-bold tracking-tight sm:text-3xl text-foreground font-display">Panel general de operaciones</h1>
+      <h1 class="text-2xl font-bold tracking-tight sm:text-3xl text-foreground font-display">Panel General de Operaciones</h1>
       <p class="text-sm text-muted-foreground mt-1">
         @if (nombreUsuario()) {
           Bienvenido, <span class="font-medium text-foreground">{{ nombreUsuario() }}</span>. Monitoreo en tiempo real de ventas, caja, inventario y rendimiento.
@@ -15,7 +15,7 @@
     @if (esGlobal()) {
       <div class="flex items-center gap-2.5 rounded-xl border border-border bg-card p-2 px-3 shadow-xs">
         <ng-icon name="lucideStore" class="size-4 text-muted-foreground" />
-        <span class="text-xs font-medium text-muted-foreground">Filtro Sucursal:</span>
+        <span class="text-xs font-medium text-muted-foreground">Sucursal:</span>
         <z-select class="w-52" [ngModel]="sucursalId()" (ngModelChange)="setSucursal($event)">
           <z-select-item zValue="">Todas las sucursales</z-select-item>
           @for (s of sucursalService.sucursales(); track s.id) {
@@ -30,7 +30,7 @@
     <div class="space-y-6">
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         @for (i of [1, 2, 3, 4]; track i) {
-          <z-skeleton class="h-32 rounded-xl" />
+          <z-skeleton class="h-36 rounded-xl" />
         }
       </div>
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -39,42 +39,192 @@
       </div>
     </div>
   } @else {
-    <!-- SECCIÓN 1: KPIs PRINCIPALES DE VENTAS Y OPERACIÓN -->
+    <!-- SECCIÓN 1: METRIC CARDS EN ESTILO DEVOPS / OPERACIONES EN VIVO -->
     @if (canVentas() || canCaja()) {
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        @for (card of ventasCajaCards(); track card.description) {
-          <z-card class="relative overflow-hidden transition-all duration-200 hover:border-primary/40 hover:shadow-xs">
-            <z-card-header class="pb-2">
+      @if (reporte(); as rep) {
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <!-- CARD 1: VENTAS DE HOY -->
+          <div class="flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4.5 shadow-xs transition-all hover:border-border hover:shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="flex size-7 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <ng-icon name="lucideTrendingUp" class="size-4" />
+                </div>
+                <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Ventas de Hoy</span>
+              </div>
+              <z-badge zType="outline" class="text-[11px] font-mono text-emerald-600 bg-emerald-500/10 border-emerald-500/20">
+                {{ rep.ventas_hoy.numero_ventas }} Tx
+              </z-badge>
+            </div>
+
+            <div class="my-3 flex items-baseline gap-2">
+              <span class="text-3xl font-extrabold tracking-tight tabular-nums text-foreground">
+                {{ rep.ventas_hoy.total_vendido | currency }}
+              </span>
+            </div>
+
+            <!-- Progresión / Comparación contra Ayer -->
+            <div class="space-y-1.5 border-t border-border/50 pt-2 text-[11px]">
+              <div class="flex items-center justify-between text-muted-foreground">
+                <span>Ventas ayer:</span>
+                <span class="font-mono font-medium text-foreground">{{ rep.ventas_ayer.total_vendido | currency }}</span>
+              </div>
+              <div class="flex items-center justify-between text-muted-foreground">
+                <span>Transacciones hoy:</span>
+                <span class="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                  {{ rep.ventas_hoy.numero_ventas }} ventas registradas
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 2: ESTADO DE CAJA Y ARQUEO EN VIVO -->
+          <div class="flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4.5 shadow-xs transition-all hover:border-border hover:shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="flex size-7 items-center justify-center rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <ng-icon name="lucideLandmark" class="size-4" />
+                </div>
+                <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Caja Activa</span>
+              </div>
+              @if (turnoActual()) {
+                <z-badge zType="default" class="text-[10px] bg-emerald-500/15 text-emerald-600 border-emerald-500/30 dark:text-emerald-400 font-medium">
+                  <span class="size-1.5 rounded-full bg-emerald-500 animate-pulse mr-1"></span>
+                  Turno Abierto
+                </z-badge>
+              } @else {
+                <z-badge zType="outline" class="text-[10px] font-medium text-muted-foreground">
+                  Sin Turno
+                </z-badge>
+              }
+            </div>
+
+            <div class="my-3 flex items-baseline gap-2">
+              <span class="text-3xl font-extrabold tracking-tight tabular-nums text-foreground">
+                {{ efectivoEsperado() | currency }}
+              </span>
+              <span class="text-xs text-muted-foreground font-medium">esperado</span>
+            </div>
+
+            <div class="space-y-1.5 border-t border-border/50 pt-2 text-[11px]">
+              <div class="flex items-center justify-between text-muted-foreground">
+                <span>Cajas abiertas:</span>
+                <span class="font-mono font-semibold text-foreground">{{ rep.cajas_abiertas.length }} operando</span>
+              </div>
+              <div class="flex items-center justify-between text-muted-foreground">
+                <span>Turno actual:</span>
+                <span class="font-mono font-medium text-foreground">
+                  {{ turnoActual()?.caja?.nombre || 'Global' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 3: SALUD Y REABASTECIMIENTO DE INVENTARIO -->
+          @if (canInventario() && productoKpis(); as kpi) {
+            <div class="flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4.5 shadow-xs transition-all hover:border-border hover:shadow-sm">
               <div class="flex items-center justify-between">
-                <z-card-description [zDescription]="card.description" class="text-xs font-semibold uppercase tracking-wider text-muted-foreground" />
-                <z-badge [zType]="card.trend === 'alert' ? 'destructive' : card.trend === 'up' ? 'default' : 'outline'" class="gap-1 text-xs font-mono">
-                  <ng-icon [name]="trendIcon(card.trend)" class="size-3.5" />
-                  {{ card.badge }}
+                <div class="flex items-center gap-2">
+                  <div class="flex size-7 items-center justify-center rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <ng-icon name="lucideBoxes" class="size-4" />
+                  </div>
+                  <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Salud Stock</span>
+                </div>
+                @if (kpi.bajo_stock > 0) {
+                  <z-badge zType="destructive" class="text-[10px] font-medium gap-1 px-2 py-0.5">
+                    <ng-icon name="lucideAlertTriangle" class="size-3" />
+                    {{ kpi.bajo_stock }} Bajo stock
+                  </z-badge>
+                } @else {
+                  <z-badge zType="outline" class="text-[10px] font-medium text-emerald-600 bg-emerald-500/10 border-emerald-500/20 px-2 py-0.5">
+                    Óptimo
+                  </z-badge>
+                }
+              </div>
+
+              <div class="my-3 flex items-baseline gap-2">
+                <span class="text-3xl font-extrabold tracking-tight tabular-nums text-foreground">
+                  {{ kpi.unidades_en_stock | number }}
+                </span>
+                <span class="text-xs font-medium text-muted-foreground">unidades totales</span>
+              </div>
+
+              <!-- Micro status bar de inventario con/sin stock -->
+              <div class="space-y-2">
+                <div class="flex h-2 w-full overflow-hidden rounded-full bg-muted/60 p-0.5">
+                  <div
+                    class="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                    [style.width.%]="kpi.total > 0 ? (kpi.productos_con_existencia / kpi.total) * 100 : 0"
+                    title="Con Stock"
+                  ></div>
+                  <div
+                    class="h-full rounded-full bg-rose-500 transition-all duration-500"
+                    [style.width.%]="kpi.total > 0 ? (kpi.productos_sin_existencia / kpi.total) * 100 : 0"
+                    title="Sin Stock"
+                  ></div>
+                </div>
+                <div class="flex items-center justify-between text-[11px] font-medium text-muted-foreground">
+                  <span class="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                    <span class="size-1.5 rounded-full bg-emerald-500"></span> {{ kpi.productos_con_existencia }} Disponibles
+                  </span>
+                  <span class="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-semibold">
+                    <span class="size-1.5 rounded-full bg-rose-500"></span> {{ kpi.productos_sin_existencia }} Agotados
+                  </span>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- CARD 4: CUENTAS POR COBRAR (CREDITO) Y CLIENTES -->
+          @if (canClientes()) {
+            <div class="flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4.5 shadow-xs transition-all hover:border-border hover:shadow-sm">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="flex size-7 items-center justify-center rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                    <ng-icon name="lucideUsers" class="size-4" />
+                  </div>
+                  <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Clientes & Crédito</span>
+                </div>
+                <z-badge zType="outline" class="text-[11px] font-mono text-muted-foreground">
+                  {{ clientesTotal() }} Clientes
                 </z-badge>
               </div>
-              <z-card-title [zTitle]="card.value" class="mt-2 text-2xl font-bold tracking-tight tabular-nums font-mono text-foreground lg:text-3xl" />
-            </z-card-header>
-            <z-card-footer class="flex-col items-start gap-0.5 border-t border-border/40 bg-muted/20 pt-2.5 text-xs text-muted-foreground">
-              <div class="flex items-center gap-1.5 font-medium text-foreground">
-                <span>{{ card.headline }}</span>
+
+              <div class="my-3 flex items-baseline gap-2">
+                <span class="text-3xl font-extrabold tracking-tight tabular-nums text-foreground">
+                  {{ clientesConSaldo() }}
+                </span>
+                <span class="text-xs font-medium text-muted-foreground">con crédito activo</span>
               </div>
-              <span>{{ card.caption }}</span>
-            </z-card-footer>
-          </z-card>
-        }
-      </div>
+
+              <div class="space-y-1.5 border-t border-border/50 pt-2 text-[11px]">
+                <div class="flex items-center justify-between text-muted-foreground">
+                  <span>Base de clientes:</span>
+                  <span class="font-mono font-medium text-foreground">{{ clientesTotal() }} registrados</span>
+                </div>
+                <div class="flex items-center justify-between text-muted-foreground">
+                  <span>Cuentas de crédito:</span>
+                  <span class="font-mono font-semibold text-amber-600 dark:text-amber-400">
+                    {{ clientesConSaldo() }} pendientes
+                  </span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
     }
 
     <!-- SECCIÓN 2: ANALÍTICA Y ÚLTIMAS TRANSACCIONES -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <!-- Gráfica de Tendencia de Ventas (2 columnas) -->
       @if (canVentas()) {
-        <z-card class="lg:col-span-2 flex flex-col justify-between">
+        <z-card class="lg:col-span-2 flex flex-col justify-between border-border/70">
           <z-card-header class="border-b border-border/50 pb-4">
             <div class="flex items-center justify-between">
               <div>
                 <z-card-title zTitle="Tendencia de Ventas (Últimos 7 días)" class="text-base font-semibold" />
-                <z-card-description zDescription="Comportamiento diario de transacciones finalizadas" class="text-xs text-muted-foreground mt-0.5" />
+                <z-card-description zDescription="Comportamiento diario de transacciones en la plataforma POS" class="text-xs text-muted-foreground mt-0.5" />
               </div>
               <a routerLink="/ventas/historial" class="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
                 Historial completo →
@@ -100,14 +250,14 @@
         </z-card>
 
         <!-- Últimas Ventas en Vivo -->
-        <z-card class="flex flex-col overflow-hidden">
+        <z-card class="flex flex-col overflow-hidden border-border/70">
           <z-card-header class="border-b border-border/50 pb-4">
             <div class="flex items-center justify-between">
               <div>
                 <z-card-title zTitle="Últimas Ventas" class="text-base font-semibold" />
                 <z-card-description zDescription="Transacciones recientes en caja" class="text-xs text-muted-foreground mt-0.5" />
               </div>
-              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 <span class="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span> En vivo
               </span>
             </div>
@@ -158,10 +308,10 @@
     @if (reporte(); as r) {
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <!-- Top Productos Vendidos Hoy -->
-        <z-card class="overflow-hidden">
+        <z-card class="overflow-hidden border-border/70">
           <z-card-header class="border-b border-border/50 pb-4">
             <z-card-title zTitle="Top Productos Vendidos Hoy" class="text-base font-semibold" />
-            <z-card-description zDescription="Artículos con mayor demanda en mostrador" class="text-xs text-muted-foreground mt-0.5" />
+            <z-card-description zDescription="Artículos con mayor demanda en la jornada actual" class="text-xs text-muted-foreground mt-0.5" />
           </z-card-header>
           <div class="overflow-x-auto">
             <table z-table class="w-full">
@@ -198,10 +348,10 @@
         </z-card>
 
         <!-- Turnos de Caja Abiertos -->
-        <z-card class="overflow-hidden">
+        <z-card class="overflow-hidden border-border/70">
           <z-card-header class="border-b border-border/50 pb-4">
-            <z-card-title zTitle="Turnos de Caja Abiertos" class="text-base font-semibold" />
-            <z-card-description zDescription="Estado operativo de cajas y cajeros activos" class="text-xs text-muted-foreground mt-0.5" />
+            <z-card-title zTitle="Turnos de Caja Operando" class="text-base font-semibold" />
+            <z-card-description zDescription="Cajas y turnos activos en este momento" class="text-xs text-muted-foreground mt-0.5" />
           </z-card-header>
           <div class="overflow-x-auto">
             <table z-table class="w-full">
@@ -239,62 +389,11 @@
       </div>
     }
 
-    <!-- SECCIÓN 4: INVENTARIO & DISTRIBUCIÓN DE CATÁLOGO -->
-    @if (inventarioCards().length) {
-      <div class="space-y-4 pt-2">
-        <div class="flex items-center justify-between border-b border-border/60 pb-2">
-          <h2 class="flex items-center gap-2 text-base font-bold text-foreground">
-            <ng-icon name="lucideBoxes" class="size-4 text-primary" /> Gestión de Inventario
-          </h2>
-          <a routerLink="/inventario/productos" class="text-xs font-semibold text-primary hover:underline">Ver catálogo completo →</a>
-        </div>
-
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          @for (card of inventarioCards(); track card.description) {
-            <z-card class="transition-all duration-200 hover:border-primary/40 hover:shadow-xs">
-              <z-card-header class="pb-2">
-                <div class="flex items-center justify-between">
-                  <z-card-description [zDescription]="card.description" class="text-xs font-semibold uppercase tracking-wider text-muted-foreground" />
-                  <z-badge [zType]="card.trend === 'alert' ? 'destructive' : 'outline'" class="gap-1 text-xs font-mono">
-                    <ng-icon [name]="trendIcon(card.trend)" class="size-3.5" />
-                    {{ card.badge }}
-                  </z-badge>
-                </div>
-                <z-card-title [zTitle]="card.value" class="mt-2 text-2xl font-bold tracking-tight tabular-nums font-mono text-foreground" />
-              </z-card-header>
-              <z-card-footer class="flex-col items-start gap-0.5 border-t border-border/40 bg-muted/20 pt-2.5 text-xs text-muted-foreground">
-                <span class="font-medium text-foreground">{{ card.headline }}</span>
-                <span>{{ card.caption }}</span>
-              </z-card-footer>
-            </z-card>
-          }
-        </div>
-
-        <!-- Reparto por tipo de producto -->
-        <z-card class="max-w-xl">
-          <z-card-header class="border-b border-border/50 pb-3">
-            <z-card-title zTitle="Distribución de Productos por Tipo" class="text-sm font-semibold" />
-            <z-card-description zDescription="Proporción de productos simples, kits y servicios" class="text-xs text-muted-foreground" />
-          </z-card-header>
-          <z-card-content class="pt-4">
-            @if (productosPorTipoChart().length) {
-              <z-chart class="block w-full h-64" zType="pie" [zData]="productosPorTipoChart()" [zSeries]="productosTipoSeries" zXAxisKey="tipo">
-                <z-chart-tooltip />
-                <z-chart-legend />
-              </z-chart>
-            } @else {
-              <z-empty zIcon="lucideBoxes" zTitle="Sin catálogo registrado" class="py-6" />
-            }
-          </z-card-content>
-        </z-card>
-      </div>
-    }
-
-    <!-- SECCIÓN 5: CLIENTES & CRÉDITOS Y PEDIDOS -->
+    <!-- SECCIÓN 4: CLIENTES CON CRÉDITO Y PEDIDOS -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 pt-2">
       <!-- Clientes con crédito pendiente -->
       @if (clientesCards().length) {
-        <z-card class="overflow-hidden flex flex-col justify-between">
+        <z-card class="overflow-hidden flex flex-col justify-between border-border/70">
           <div>
             <z-card-header class="border-b border-border/50 pb-4">
               <div class="flex items-center justify-between">
@@ -343,7 +442,7 @@
 
       <!-- Pedidos Recientes -->
       @if (pedidosCards().length) {
-        <z-card class="overflow-hidden flex flex-col justify-between">
+        <z-card class="overflow-hidden flex flex-col justify-between border-border/70">
           <div>
             <z-card-header class="border-b border-border/50 pb-4">
               <div class="flex items-center justify-between">
@@ -396,60 +495,5 @@
         </z-card>
       }
     </div>
-
-    <!-- SECCIÓN 6: PROMOCIONES ACTIVAS -->
-    @if (promocionesCards().length) {
-      <div class="pt-2">
-        <z-card class="overflow-hidden">
-          <z-card-header class="border-b border-border/50 pb-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <z-card-title zTitle="Promociones y Descuentos Vigentes" class="text-base font-semibold" />
-                <z-card-description zDescription="Reglas de descuento aplicables automáticamente en punto de venta" class="text-xs text-muted-foreground mt-0.5" />
-              </div>
-              <a routerLink="/promociones" class="text-xs font-semibold text-primary hover:underline">Gestionar promociones →</a>
-            </div>
-          </z-card-header>
-          <div class="overflow-x-auto">
-            <table z-table class="w-full">
-              <thead z-table-header class="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
-                <tr z-table-row>
-                  <th z-table-head class="py-2.5 px-4">Nombre de Promoción</th>
-                  <th z-table-head class="py-2.5 px-4">Tipo</th>
-                  <th z-table-head class="py-2.5 px-4 text-center">Cupón</th>
-                  <th z-table-head class="py-2.5 px-4 text-right">Vigencia</th>
-                </tr>
-              </thead>
-              <tbody z-table-body class="divide-y divide-border/40">
-                @for (pr of promocionesTabla(); track pr.id) {
-                  <tr z-table-row class="hover:bg-muted/20">
-                    <td z-table-cell class="px-4 py-3 text-sm font-semibold text-foreground">
-                      {{ pr.nombre }}
-                    </td>
-                    <td z-table-cell class="px-4 py-3 text-xs capitalize text-muted-foreground">
-                      {{ pr.tipo.replace('_', ' ') }}
-                    </td>
-                    <td z-table-cell class="px-4 py-3 text-center">
-                      <z-badge [zType]="pr.requiere_cupon ? 'secondary' : 'outline'" class="text-[11px]">
-                        {{ pr.requiere_cupon ? 'Requiere cupón' : 'Automática' }}
-                      </z-badge>
-                    </td>
-                    <td z-table-cell class="px-4 py-3 text-right font-mono text-xs text-muted-foreground">
-                      {{ pr.vigente_hasta ? (pr.vigente_hasta | date: 'dd/MM/yyyy') : 'Sin límite' }}
-                    </td>
-                  </tr>
-                } @empty {
-                  <tr z-table-row>
-                    <td z-table-cell colspan="4" class="p-0">
-                      <z-empty zIcon="lucideTag" zTitle="Sin promociones activas" zDescription="No hay descuentos configurados actualmente." class="py-8" />
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </z-card>
-      </div>
-    }
   }
 </div>

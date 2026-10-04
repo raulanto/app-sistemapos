@@ -61,6 +61,23 @@ export class UsuarioAdminService {
     return this.http.post<void>(`${this.API_URL}/${id}/cambiar-password`, request);
   }
 
+  /**
+   * Actualiza el perfil propio del usuario autenticado (nombre, email, sucursal_id).
+   */
+  actualizarPerfilPropio(id: string, cambios: EditarUsuarioRequest): Observable<UsuarioResponse> {
+    return this.actualizar(id, cambios);
+  }
+
+  /**
+   * Cambia la contraseña del propio usuario solicitando su contraseña actual.
+   */
+  cambiarPasswordPropia(id: string, passwordActual: string, passwordNueva: string): Observable<void> {
+    return this.cambiarPassword(id, {
+      password_actual: passwordActual,
+      password_nueva: passwordNueva,
+    });
+  }
+
   desactivar(id: string): Observable<UsuarioResponse> {
     return this.http.patch<ApiResponse<UsuarioResponse>>(`${this.API_URL}/${id}/desactivar`, {}).pipe(map(res => res.data));
   }

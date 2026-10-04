@@ -132,25 +132,25 @@ export class DashboardComponent implements OnInit {
 
   readonly cargando = signal(true);
 
-  private readonly ventasHoy = signal(0);
-  private readonly ventasPorDia = signal<{ fecha: string; total: number }[]>([]);
-  private readonly ultimasVentas = signal<VentaListItem[]>([]);
-  private readonly turnoActual = signal<CajaTurnoResponse | null>(null);
-  private readonly efectivoEsperado = signal(0);
-  private readonly cajasActivas = signal(0);
-  private readonly turnosAbiertos = signal(0);
-  private readonly productoKpis = signal<ProductoKpiResponse | null>(null);
-  private readonly clientesTotal = signal(0);
-  private readonly clientesConSaldo = signal(0);
-  private readonly clientesConSaldoLista = signal<ClienteResponse[]>([]);
-  private readonly pedidoResumen = signal<PedidoResumen | null>(null);
-  private readonly pedidosRecientes = signal<PedidoListItem[]>([]);
-  private readonly promocionesActivas = signal(0);
-  private readonly promocionesLista = signal<PromocionResponse[]>([]);
-  private readonly sucursalesActivas = signal(0);
-  private readonly usuariosTotal = signal(0);
-  private readonly usuariosRecientes = signal<UsuarioResponse[]>([]);
-  private readonly rolesTotal = signal(0);
+  readonly ventasHoy = signal(0);
+  readonly ventasPorDia = signal<{ fecha: string; total: number }[]>([]);
+  readonly ultimasVentas = signal<VentaListItem[]>([]);
+  readonly turnoActual = signal<CajaTurnoResponse | null>(null);
+  readonly efectivoEsperado = signal(0);
+  readonly cajasActivas = signal(0);
+  readonly turnosAbiertos = signal(0);
+  readonly productoKpis = signal<ProductoKpiResponse | null>(null);
+  readonly clientesTotal = signal(0);
+  readonly clientesConSaldo = signal(0);
+  readonly clientesConSaldoLista = signal<ClienteResponse[]>([]);
+  readonly pedidoResumen = signal<PedidoResumen | null>(null);
+  readonly pedidosRecientes = signal<PedidoListItem[]>([]);
+  readonly promocionesActivas = signal(0);
+  readonly promocionesLista = signal<PromocionResponse[]>([]);
+  readonly sucursalesActivas = signal(0);
+  readonly usuariosTotal = signal(0);
+  readonly usuariosRecientes = signal<UsuarioResponse[]>([]);
+  readonly rolesTotal = signal(0);
 
   ngOnInit() {
     this.cargarDatos();
