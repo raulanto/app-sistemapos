@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Directive, input, signal, type Type } from '@angular/core';
+import { Component, Directive, input, signal, type Type } from '@angular/core';
 import { NgComponentOutlet } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
@@ -56,7 +56,9 @@ export class NavHoverDirective {
   ],
   template: `
     <div z-sidebar-group>
-      <div z-sidebar-group-label class="text-[0.7rem] font-semibold uppercase tracking-wider text-sidebar-foreground/80">Plataforma</div>
+      <div z-sidebar-group-label class="text-[0.7rem] font-semibold uppercase tracking-wider text-sidebar-foreground/80">
+        {{ groupLabel() }}
+      </div>
 
       <ul z-sidebar-menu>
         @for (item of items(); track item.title) {
@@ -118,9 +120,9 @@ export class NavHoverDirective {
       </ul>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
 })
 export class NavMainComponent {
   readonly items = input<readonly Sidebar07NavItem[]>([]);
+  readonly groupLabel = input<string>('Plataforma');
 }

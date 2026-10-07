@@ -1,99 +1,86 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ZardBreadcrumbImports } from '../../shared/components/breadcrumb/breadcrumb.imports';
 import { ZardSeparatorComponent } from '../../shared/components/separator/separator.component';
 import { ZardSidebarImports } from '../../shared/components/sidebar/sidebar.imports';
 import { AppSidebarComponent } from './app-sidebar/app-sidebar.component';
 import { NotificacionesPopoverComponent } from '../notificaciones/ui/notificaciones-popover.component';
-import {
-  lucideBadgeCheck,
-  lucideBell,
-  lucideChevronsUpDown,
-  lucideCreditCard,
-  lucideLogOut,
-  lucideSparkles,
-  lucideSun,
-  lucideMoon,
-} from '@ng-icons/lucide';
-import { ThemeService } from '../theme/theme.service';
+import { ThemeCustomizerPopoverComponent } from '../theme/ui/theme-customizer-popover.component';
+import { LayoutConfigService } from './config/layout-config.service';
 
 @Component({
   selector: 'app-layout',
-  standalone: true,
   imports: [
     RouterOutlet,
     ...ZardSidebarImports,
     ...ZardBreadcrumbImports,
     ZardSeparatorComponent,
-    NgIcon,
     AppSidebarComponent,
     NotificacionesPopoverComponent,
-  ],
-  providers: [
-    provideIcons({
-      lucideBadgeCheck,
-      lucideBell,
-      lucideChevronsUpDown,
-      lucideCreditCard,
-      lucideLogOut,
-      lucideSparkles,
-      lucideSun,
-      lucideMoon,
-    }),
+    ThemeCustomizerPopoverComponent,
   ],
   template: `
     <z-sidebar-provider>
       <app-sidebar />
 
       <main z-sidebar-inset>
-        <header
-          class="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12"
-        >
-          <div class="flex items-center w-full gap-2 px-4">
-            <button z-sidebar-trigger class="-ml-1" aria-label="Toggle Sidebar"></button>
+        @if (headerConfig().showSidebarTrigger || headerConfig().showBreadcrumb || headerConfig().showNotifications || headerConfig().showThemeCustomizer) {
+          <header
+            class="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b border-border/40"
+            [class.sticky]="headerConfig().sticky"
+            [class.top-0]="headerConfig().sticky"
+            [class.z-20]="headerConfig().sticky"
+            [class.bg-background/80]="headerConfig().sticky"
+            [class.backdrop-blur-md]="headerConfig().sticky"
+          >
+            <div class="flex items-center w-full gap-2 px-4">
+              @if (headerConfig().showSidebarTrigger) {
+                <button z-sidebar-trigger class="-ml-1" aria-label="Alternar barra lateral"></button>
 
-            <z-separator
-              zOrientation="vertical"
-              class="mr-2 data-[orientation=vertical]:h-4 data-[orientation=vertical]:self-center"
-            />
-
-            <z-breadcrumb>
-              <z-breadcrumb-item class="hidden md:block">
-                <a z-breadcrumb-link href="#">Sistema POS</a>
-              </z-breadcrumb-item>
-              <!-- Breadcrumbs can be dynamic based on current route later -->
-            </z-breadcrumb>
-            <div class="ml-auto flex items-center gap-1">
-              <app-notificaciones-popover />
-
-              <button
-                class="flex items-center justify-center p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-                (click)="toggleTheme()"
-                title="Cambiar tema"
-              >
-                @if (isDarkTheme()) {
-                  <ng-icon name="lucideSun" class="size-4" />
-                } @else {
-                  <ng-icon name="lucideMoon" class="size-4" />
+                @if (headerConfig().showBreadcrumb) {
+                  <z-separator
+                    zOrientation="vertical"
+                    class="mr-2 data-[orientation=vertical]:h-4 data-[orientation=vertical]:self-center"
+                  />
                 }
-              </button>
-            </div>
-          </div>
-        </header>
+              }
 
-        <div class="flex flex-1 flex-col p-0 md:p-0 pt-0 bg-muted/20 relative">
+              @if (headerConfig().showBreadcrumb) {
+                <z-breadcrumb>
+                  <z-breadcrumb-item class="hidden md:block">
+                    <a z-breadcrumb-link href="#">Sistema POS</a>
+                  </z-breadcrumb-item>
+                </z-breadcrumb>
+              }
+
+              <div class="ml-auto flex items-center gap-1.5">
+                @if (headerConfig().showNotifications) {
+                  <app-notificaciones-popover />
+                }
+                @if (headerConfig().showThemeCustomizer) {
+                  <app-theme-customizer-popover />
+                }
+              </div>
+            </div>
+          </header>
+        }
+
+        <div
+          class="flex flex-1 flex-col bg-muted/20 relative"
+          [class.w-full]="contentConfig().containerWidth === 'fluid'"
+          [class.max-w-7xl]="contentConfig().containerWidth === 'contained'"
+          [class.max-w-5xl]="contentConfig().containerWidth === 'narrow'"
+          [class.mx-auto]="contentConfig().containerWidth !== 'fluid'"
+        >
           <router-outlet></router-outlet>
         </div>
       </main>
     </z-sidebar-provider>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LayoutComponent {
-  readonly isDarkTheme = computed(() => this.themeService.currentTheme() === 'dark');
-  private themeService = inject(ThemeService);
-  toggleTheme() {
-    this.themeService.toggleTheme();
-  }
+  private readonly layoutConfigService = inject(LayoutConfigService);
+
+  readonly headerConfig = this.layoutConfigService.header;
+  readonly contentConfig = this.layoutConfigService.content;
 }

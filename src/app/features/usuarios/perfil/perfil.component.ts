@@ -20,6 +20,7 @@ import {
   lucideCheck,
   lucideShieldCheck,
   lucideUserCheck,
+  lucidePalette,
 } from '@ng-icons/lucide';
 
 import { AuthService } from '@/core/auth/api/auth.service';
@@ -38,6 +39,8 @@ import { ZardSelectImports } from '@/shared/components/select/select.imports';
 import { ZardTabsImports } from '@/shared/components/tabs/tabs.imports';
 import { ZardAlertComponent } from '@/shared/components/alert/alert.component';
 import { ZardSonnerService } from '@/shared/components/sonner/sonner.service';
+import { ThemeCustomizerComponent } from '@/core/theme/ui/theme-customizer.component';
+import { ThemeCustomizerPopoverComponent } from '@/core/theme/ui/theme-customizer-popover.component';
 
 @Component({
   selector: 'app-perfil',
@@ -58,6 +61,8 @@ import { ZardSonnerService } from '@/shared/components/sonner/sonner.service';
     ...ZardSelectImports,
     ...ZardTabsImports,
     ZardAlertComponent,
+    ThemeCustomizerComponent,
+    ThemeCustomizerPopoverComponent,
   ],
   providers: [
     provideIcons({
@@ -78,6 +83,7 @@ import { ZardSonnerService } from '@/shared/components/sonner/sonner.service';
       lucideCheck,
       lucideShieldCheck,
       lucideUserCheck,
+      lucidePalette,
     }),
   ],
   template: `
@@ -87,20 +93,12 @@ import { ZardSonnerService } from '@/shared/components/sonner/sonner.service';
         <div>
           <h1 class="text-2xl font-bold tracking-tight sm:text-3xl text-foreground font-display">Mi Perfil y Configuración</h1>
           <p class="text-sm text-muted-foreground mt-1">
-            Administra tus credenciales personales, sucursal activa, seguridad y privilegios en el sistema.
+            Administra tus credenciales personales, sucursal activa, apariencia, seguridad y privilegios en el sistema.
           </p>
         </div>
 
         <div class="flex items-center gap-2">
-          <button z-button zType="outline" zSize="sm" class="gap-2" (click)="toggleTheme()">
-            @if (isDarkTheme()) {
-              <ng-icon name="lucideSun" class="size-4" />
-              Modo Claro
-            } @else {
-              <ng-icon name="lucideMoon" class="size-4" />
-              Modo Oscuro
-            }
-          </button>
+          <app-theme-customizer-popover />
         </div>
       </div>
 
@@ -406,6 +404,26 @@ import { ZardSonnerService } from '@/shared/components/sonner/sonner.service';
                     }
                   </div>
                 }
+              </z-card-content>
+            </z-card>
+          </div>
+        </z-tab>
+
+        <!-- TAB 4: APARIENCIA Y TEMA -->
+        <z-tab label="Apariencia y Tema" zIcon="lucidePalette">
+          <div class="max-w-3xl mx-auto pt-4">
+            <z-card>
+              <z-card-header class="border-b border-border/50 pb-4">
+                <div class="flex items-center gap-2">
+                  <ng-icon name="lucidePalette" class="size-5 text-primary" />
+                  <div>
+                    <z-card-title zTitle="Personalización de Tema y Colores" class="text-base font-semibold" />
+                    <z-card-description zDescription="Personaliza el modo de color, la paleta de acentos y los bordes para toda la interfaz" class="text-xs text-muted-foreground" />
+                  </div>
+                </div>
+              </z-card-header>
+              <z-card-content class="pt-5">
+                <app-theme-customizer />
               </z-card-content>
             </z-card>
           </div>

@@ -1,0 +1,41 @@
+{
+  "version": "1.0.0",
+  "sidebar": {
+    "collapsible": "icon",
+    "position": "left",
+    "variant": "inset",
+    "showTeamSwitcher": true,
+    "showSearch": true,
+    "showSecondaryNav": true,
+    "showUserMenu": true,
+    "groupLabel": "Plataforma",
+    "itemsOrder": [
+      { "id": "dashboard", "title": "Dashboard", "visible": true },
+      { "id": "ventas", "title": "Ventas (POS)", "visible": true },
+      { "id": "pedidos", "title": "Pedidos", "visible": true },
+      { "id": "agenda", "title": "Agenda y Citas", "visible": true },
+      { "id": "inventario", "title": "Inventario", "visible": true },
+      { "id": "clientes", "title": "Clientes", "visible": true },
+      { "id": "proveedores", "title": "Proveedores", "visible": true },
+      { "id": "promociones", "title": "Promociones", "visible": true },
+      { "id": "cajas", "title": "Control de Cajas", "visible": true },
+      { "id": "sucursales", "title": "Sucursales", "visible": true },
+      { "id": "usuarios", "title": "Usuarios y Roles", "visible": true },
+      { "id": "reportes", "title": "Reportes y Analítica", "visible": true },
+      { "id": "auditoria", "title": "Auditoría", "visible": true }
+    ]
+  },
+  "header": {
+    "sticky": true,
+    "showSidebarTrigger": true,
+    "showBreadcrumb": true,
+    "showNotifications": true,
+    "showThemeCustomizer": true,
+    "showSearchTrigger": false
+  },
+  "content": {
+    "containerWidth": "fluid",
+    "density": "normal",
+    "showBreadcrumbs": true
+  }
+}

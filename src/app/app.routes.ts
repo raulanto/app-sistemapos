@@ -92,6 +92,13 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/ayuda/ayuda.routes').then((m) => m.AYUDA_ROUTES),
       },
+      {
+        path: 'configuracion',
+        title: 'Configuración - Sistema POS',
+        loadChildren: () =>
+          import('./features/configuracion/configuracion.routes').then((m) => m.CONFIGURACION_ROUTES),
+      },
+      { path: 'config', redirectTo: 'configuracion', pathMatch: 'full' },
       { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
       {
         path: '**',
