@@ -40,4 +40,13 @@ export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
     density: 'normal',
     showBreadcrumbs: true,
   },
+  theme: {
+    mode: 'system',
+    baseTone: 'zinc',
+    color: 'zinc',
+    customHex: '#3b82f6',
+    sidebarStyle: 'default',
+    contrast: 'default',
+    radius: 'lg',
+  },
 };

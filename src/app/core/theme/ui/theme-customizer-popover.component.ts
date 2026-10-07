@@ -55,7 +55,7 @@ import { ZardPopoverImports } from '../../../shared/components/popover/popover.i
     </button>
 
     <ng-template #popoverTpl>
-      <div class="w-80 sm:w-96 p-4 bg-popover text-popover-foreground rounded-lg border border-border shadow-xl">
+      <div class="w-80 sm:w-[28rem] max-h-[82vh] overflow-y-auto p-4 bg-popover text-popover-foreground rounded-xl border border-border shadow-2xl">
         <app-theme-customizer />
       </div>
     </ng-template>

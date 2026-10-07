@@ -445,8 +445,8 @@ import { ZardSonnerService } from '@/shared/components/sonner/sonner.service';
           <div class="max-w-3xl mx-auto pt-4">
             <z-card>
               <z-card-header class="border-b border-border/50 pb-4">
-                <z-card-title zTitle="Personalización de Tema Visual" class="text-base font-semibold" />
-                <z-card-description zDescription="Modos de luz/oscuridad, 8 paletas de color OKLCH y radios de esquinas" class="text-xs text-muted-foreground" />
+                <z-card-title zTitle="Personalización de Tema Visual y Apariencia" class="text-base font-semibold" />
+                <z-card-description zDescription="Modos de luz/oscuridad, escalas de fondo y grises base, 11 paletas OKLCH, color personalizado de marca, estilo de barra lateral y contraste" class="text-xs text-muted-foreground" />
               </z-card-header>
               <z-card-content class="pt-5">
                 <app-theme-customizer />

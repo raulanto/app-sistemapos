@@ -42,10 +42,30 @@ describe('ThemeCustomizerComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('should render base tone options and allow selection', () => {
+    expect(component.baseTones.length).toBe(6);
+    component.setBaseTone('slate');
+    expect(themeService.baseTone()).toBe('slate');
+  });
+
   it('should render color options and allow selection', () => {
-    expect(component.colorThemes.length).toBe(8);
+    expect(component.colorThemes.length).toBe(12);
     component.setColor('blue');
     expect(themeService.color()).toBe('blue');
+  });
+
+  it('should allow custom color change', () => {
+    component.onCustomColorChange('#10b981');
+    expect(themeService.color()).toBe('custom');
+    expect(themeService.customHex()).toBe('#10b981');
+  });
+
+  it('should allow sidebar style and contrast changes', () => {
+    component.setSidebarStyle('contrast');
+    expect(themeService.sidebarStyle()).toBe('contrast');
+
+    component.setContrast('high');
+    expect(themeService.contrast()).toBe('high');
   });
 
   it('should allow mode changes', () => {

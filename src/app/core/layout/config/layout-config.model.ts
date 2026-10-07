@@ -1,3 +1,12 @@
+import {
+  ThemeMode,
+  ThemeBaseTone,
+  ThemeColor,
+  ThemeSidebarStyle,
+  ThemeContrast,
+  ThemeRadius,
+} from '../../theme/theme.service';
+
 export type SidebarCollapsibleMode = 'offcanvas' | 'icon' | 'none';
 export type SidebarPosition = 'left' | 'right';
 export type SidebarVariant = 'sidebar' | 'floating' | 'inset';
@@ -38,10 +47,21 @@ export interface ContentConfig {
   showBreadcrumbs: boolean;
 }
 
+export interface LayoutThemeConfig {
+  mode: ThemeMode;
+  baseTone: ThemeBaseTone;
+  color: ThemeColor;
+  customHex: string;
+  sidebarStyle: ThemeSidebarStyle;
+  contrast: ThemeContrast;
+  radius: ThemeRadius;
+}
+
 export interface LayoutConfig {
   version: string;
   lastUpdated?: string;
   sidebar: SidebarConfig;
   header: HeaderConfig;
   content: ContentConfig;
+  theme?: LayoutThemeConfig;
 }

@@ -90,6 +90,300 @@
 }
 
 /* ==========================================================================
+   ESCALAS DE FONDO Y GRISES BASE (OKLCH)
+   ========================================================================== */
+
+/* --- Zinc (Predeterminado - Matiz 286, Chroma ultra bajo) --- */
+[data-theme-base="zinc"] {
+  --background: oklch(0.99 0.002 286);
+  --foreground: oklch(0.14 0.005 286);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.14 0.005 286);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.14 0.005 286);
+  --secondary: oklch(0.965 0.004 286);
+  --secondary-foreground: oklch(0.20 0.006 286);
+  --muted: oklch(0.965 0.004 286);
+  --muted-foreground: oklch(0.55 0.015 286);
+  --accent: oklch(0.965 0.004 286);
+  --accent-foreground: oklch(0.20 0.006 286);
+  --border: oklch(0.91 0.005 286);
+  --input: oklch(0.91 0.005 286);
+  --sidebar: oklch(0.985 0.003 286);
+  --sidebar-foreground: oklch(0.14 0.005 286);
+  --sidebar-accent: oklch(0.92 0.005 286);
+  --sidebar-accent-foreground: oklch(0.20 0.006 286);
+  --sidebar-border: oklch(0.90 0.005 286);
+}
+.dark[data-theme-base="zinc"],
+.dark [data-theme-base="zinc"] {
+  --background: oklch(0.14 0.005 286);
+  --foreground: oklch(0.98 0.002 286);
+  --card: oklch(0.19 0.006 286);
+  --card-foreground: oklch(0.98 0.002 286);
+  --popover: oklch(0.19 0.006 286);
+  --popover-foreground: oklch(0.98 0.002 286);
+  --secondary: oklch(0.26 0.006 286);
+  --secondary-foreground: oklch(0.98 0.002 286);
+  --muted: oklch(0.26 0.006 286);
+  --muted-foreground: oklch(0.70 0.015 286);
+  --accent: oklch(0.26 0.006 286);
+  --accent-foreground: oklch(0.98 0.002 286);
+  --border: oklch(0.32 0.006 286);
+  --input: oklch(0.32 0.006 286);
+  --sidebar: oklch(0.17 0.005 286);
+  --sidebar-foreground: oklch(0.98 0.002 286);
+  --sidebar-accent: oklch(0.26 0.006 286);
+  --sidebar-accent-foreground: oklch(0.98 0.002 286);
+  --sidebar-border: oklch(0.28 0.006 286);
+}
+
+/* --- Slate (Pizarra Fría / Azulada - Matiz 250) --- */
+[data-theme-base="slate"] {
+  --background: oklch(0.985 0.006 250);
+  --foreground: oklch(0.15 0.02 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.02 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.02 250);
+  --secondary: oklch(0.96 0.01 250);
+  --secondary-foreground: oklch(0.20 0.025 250);
+  --muted: oklch(0.96 0.01 250);
+  --muted-foreground: oklch(0.55 0.03 250);
+  --accent: oklch(0.96 0.01 250);
+  --accent-foreground: oklch(0.20 0.025 250);
+  --border: oklch(0.90 0.012 250);
+  --input: oklch(0.90 0.012 250);
+  --sidebar: oklch(0.975 0.008 250);
+  --sidebar-foreground: oklch(0.15 0.02 250);
+  --sidebar-accent: oklch(0.92 0.015 250);
+  --sidebar-accent-foreground: oklch(0.20 0.025 250);
+  --sidebar-border: oklch(0.89 0.012 250);
+}
+.dark[data-theme-base="slate"],
+.dark [data-theme-base="slate"] {
+  --background: oklch(0.15 0.02 250);
+  --foreground: oklch(0.98 0.005 250);
+  --card: oklch(0.20 0.025 250);
+  --card-foreground: oklch(0.98 0.005 250);
+  --popover: oklch(0.20 0.025 250);
+  --popover-foreground: oklch(0.98 0.005 250);
+  --secondary: oklch(0.27 0.025 250);
+  --secondary-foreground: oklch(0.98 0.005 250);
+  --muted: oklch(0.27 0.025 250);
+  --muted-foreground: oklch(0.70 0.03 250);
+  --accent: oklch(0.27 0.025 250);
+  --accent-foreground: oklch(0.98 0.005 250);
+  --border: oklch(0.33 0.025 250);
+  --input: oklch(0.33 0.025 250);
+  --sidebar: oklch(0.18 0.022 250);
+  --sidebar-foreground: oklch(0.98 0.005 250);
+  --sidebar-accent: oklch(0.26 0.025 250);
+  --sidebar-accent-foreground: oklch(0.98 0.005 250);
+  --sidebar-border: oklch(0.30 0.025 250);
+}
+
+/* --- Stone (Piedra Cálida - Matiz 70) --- */
+[data-theme-base="stone"] {
+  --background: oklch(0.985 0.006 70);
+  --foreground: oklch(0.15 0.015 70);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.015 70);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.015 70);
+  --secondary: oklch(0.96 0.01 70);
+  --secondary-foreground: oklch(0.20 0.015 70);
+  --muted: oklch(0.96 0.01 70);
+  --muted-foreground: oklch(0.55 0.02 70);
+  --accent: oklch(0.96 0.01 70);
+  --accent-foreground: oklch(0.20 0.015 70);
+  --border: oklch(0.90 0.012 70);
+  --input: oklch(0.90 0.012 70);
+  --sidebar: oklch(0.975 0.008 70);
+  --sidebar-foreground: oklch(0.15 0.015 70);
+  --sidebar-accent: oklch(0.92 0.012 70);
+  --sidebar-accent-foreground: oklch(0.20 0.015 70);
+  --sidebar-border: oklch(0.89 0.012 70);
+}
+.dark[data-theme-base="stone"],
+.dark [data-theme-base="stone"] {
+  --background: oklch(0.15 0.015 70);
+  --foreground: oklch(0.98 0.005 70);
+  --card: oklch(0.20 0.015 70);
+  --card-foreground: oklch(0.98 0.005 70);
+  --popover: oklch(0.20 0.015 70);
+  --popover-foreground: oklch(0.98 0.005 70);
+  --secondary: oklch(0.26 0.015 70);
+  --secondary-foreground: oklch(0.98 0.005 70);
+  --muted: oklch(0.26 0.015 70);
+  --muted-foreground: oklch(0.70 0.02 70);
+  --accent: oklch(0.26 0.015 70);
+  --accent-foreground: oklch(0.98 0.005 70);
+  --border: oklch(0.32 0.015 70);
+  --input: oklch(0.32 0.015 70);
+  --sidebar: oklch(0.18 0.015 70);
+  --sidebar-foreground: oklch(0.98 0.005 70);
+  --sidebar-accent: oklch(0.26 0.015 70);
+  --sidebar-accent-foreground: oklch(0.98 0.005 70);
+  --sidebar-border: oklch(0.29 0.015 70);
+}
+
+/* --- Neutral (Gris Neutro Puro - Cero Cromaticidad) --- */
+[data-theme-base="neutral"] {
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.14 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.14 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.14 0 0);
+  --secondary: oklch(0.965 0 0);
+  --secondary-foreground: oklch(0.20 0 0);
+  --muted: oklch(0.965 0 0);
+  --muted-foreground: oklch(0.55 0 0);
+  --accent: oklch(0.965 0 0);
+  --accent-foreground: oklch(0.20 0 0);
+  --border: oklch(0.91 0 0);
+  --input: oklch(0.91 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.14 0 0);
+  --sidebar-accent: oklch(0.92 0 0);
+  --sidebar-accent-foreground: oklch(0.20 0 0);
+  --sidebar-border: oklch(0.90 0 0);
+}
+.dark[data-theme-base="neutral"],
+.dark [data-theme-base="neutral"] {
+  --background: oklch(0.14 0 0);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.19 0 0);
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.19 0 0);
+  --popover-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.26 0 0);
+  --secondary-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.26 0 0);
+  --muted-foreground: oklch(0.70 0 0);
+  --accent: oklch(0.26 0 0);
+  --accent-foreground: oklch(0.98 0 0);
+  --border: oklch(0.32 0 0);
+  --input: oklch(0.32 0 0);
+  --sidebar: oklch(0.17 0 0);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.26 0 0);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.28 0 0);
+}
+
+/* --- Mauve (Lavanda / Malva Sutil - Matiz 300) --- */
+[data-theme-base="mauve"] {
+  --background: oklch(0.985 0.006 300);
+  --foreground: oklch(0.15 0.02 300);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.02 300);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.02 300);
+  --secondary: oklch(0.96 0.01 300);
+  --secondary-foreground: oklch(0.20 0.025 300);
+  --muted: oklch(0.96 0.01 300);
+  --muted-foreground: oklch(0.55 0.025 300);
+  --accent: oklch(0.96 0.01 300);
+  --accent-foreground: oklch(0.20 0.025 300);
+  --border: oklch(0.90 0.012 300);
+  --input: oklch(0.90 0.012 300);
+  --sidebar: oklch(0.975 0.008 300);
+  --sidebar-foreground: oklch(0.15 0.02 300);
+  --sidebar-accent: oklch(0.92 0.015 300);
+  --sidebar-accent-foreground: oklch(0.20 0.025 300);
+  --sidebar-border: oklch(0.89 0.012 300);
+}
+.dark[data-theme-base="mauve"],
+.dark [data-theme-base="mauve"] {
+  --background: oklch(0.15 0.02 300);
+  --foreground: oklch(0.98 0.005 300);
+  --card: oklch(0.20 0.025 300);
+  --card-foreground: oklch(0.98 0.005 300);
+  --popover: oklch(0.20 0.025 300);
+  --popover-foreground: oklch(0.98 0.005 300);
+  --secondary: oklch(0.27 0.025 300);
+  --secondary-foreground: oklch(0.98 0.005 300);
+  --muted: oklch(0.27 0.025 300);
+  --muted-foreground: oklch(0.70 0.025 300);
+  --accent: oklch(0.27 0.025 300);
+  --accent-foreground: oklch(0.98 0.005 300);
+  --border: oklch(0.33 0.025 300);
+  --input: oklch(0.33 0.025 300);
+  --sidebar: oklch(0.18 0.022 300);
+  --sidebar-foreground: oklch(0.98 0.005 300);
+  --sidebar-accent: oklch(0.26 0.025 300);
+  --sidebar-accent-foreground: oklch(0.98 0.005 300);
+  --sidebar-border: oklch(0.30 0.025 300);
+}
+
+/* --- OLED (Negro Puro Pitch Black - Solo en modo oscuro) --- */
+.dark[data-theme-base="oled"],
+.dark [data-theme-base="oled"] {
+  --background: oklch(0 0 0);
+  --foreground: oklch(0.99 0 0);
+  --card: oklch(0.10 0.003 286);
+  --card-foreground: oklch(0.99 0 0);
+  --popover: oklch(0.12 0.003 286);
+  --popover-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.18 0.004 286);
+  --secondary-foreground: oklch(0.99 0 0);
+  --muted: oklch(0.15 0.004 286);
+  --muted-foreground: oklch(0.72 0.01 286);
+  --accent: oklch(0.18 0.004 286);
+  --accent-foreground: oklch(0.99 0 0);
+  --border: oklch(0.25 0.005 286);
+  --input: oklch(0.25 0.005 286);
+  --sidebar: oklch(0.04 0.002 286);
+  --sidebar-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.16 0.004 286);
+  --sidebar-accent-foreground: oklch(0.99 0 0);
+  --sidebar-border: oklch(0.20 0.005 286);
+}
+
+/* ==========================================================================
+   ESTILOS DE BARRA LATERAL (SIDEBAR THEME)
+   ========================================================================== */
+[data-theme-sidebar="contrast"] {
+  --sidebar: oklch(0.18 0.006 286);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.26 0.006 286);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.26 0.006 286);
+}
+.dark[data-theme-sidebar="contrast"],
+.dark [data-theme-sidebar="contrast"] {
+  --sidebar: oklch(0.08 0.005 286);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.16 0.006 286);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.18 0.006 286);
+}
+
+[data-theme-sidebar="accent-tinted"] {
+  --sidebar: color-mix(in oklch, var(--primary) 7%, var(--sidebar));
+  --sidebar-border: color-mix(in oklch, var(--primary) 15%, var(--sidebar-border));
+}
+
+/* ==========================================================================
+   NIVELES DE CONTRASTE DE SUPERFICIE
+   ========================================================================== */
+[data-theme-contrast="subtle"] {
+  --border: color-mix(in oklch, var(--border) 60%, transparent);
+  --input: color-mix(in oklch, var(--input) 60%, transparent);
+}
+[data-theme-contrast="high"] {
+  --border: color-mix(in oklch, var(--border) 70%, black);
+  --input: color-mix(in oklch, var(--input) 70%, black);
+}
+.dark[data-theme-contrast="high"],
+.dark [data-theme-contrast="high"] {
+  --border: color-mix(in oklch, var(--border) 70%, white);
+  --input: color-mix(in oklch, var(--input) 70%, white);
+}
+
+/* ==========================================================================
    PALETAS DE COLOR DE ÉNFASIS (OKLCH)
    ========================================================================== */
 
@@ -259,9 +553,75 @@
   --chart-1: oklch(0.72 0.18 48);
 }
 
+/* --- Índigo Profundo --- */
+[data-theme-color="indigo"] {
+  --primary: oklch(0.48 0.24 275);
+  --primary-foreground: oklch(0.99 0 0);
+  --ring: oklch(0.48 0.24 275);
+  --sidebar-primary: oklch(0.48 0.24 275);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-ring: oklch(0.48 0.24 275);
+  --chart-1: oklch(0.48 0.24 275);
+}
+.dark[data-theme-color="indigo"],
+.dark [data-theme-color="indigo"] {
+  --primary: oklch(0.70 0.20 275);
+  --primary-foreground: oklch(0.14 0.02 275);
+  --ring: oklch(0.70 0.20 275);
+  --sidebar-primary: oklch(0.70 0.20 275);
+  --sidebar-primary-foreground: oklch(0.14 0.02 275);
+  --sidebar-ring: oklch(0.70 0.20 275);
+  --chart-1: oklch(0.70 0.20 275);
+}
+
+/* --- Verde Menta / Teal --- */
+[data-theme-color="teal"] {
+  --primary: oklch(0.48 0.15 185);
+  --primary-foreground: oklch(0.99 0 0);
+  --ring: oklch(0.48 0.15 185);
+  --sidebar-primary: oklch(0.48 0.15 185);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-ring: oklch(0.48 0.15 185);
+  --chart-1: oklch(0.48 0.15 185);
+}
+.dark[data-theme-color="teal"],
+.dark [data-theme-color="teal"] {
+  --primary: oklch(0.70 0.15 185);
+  --primary-foreground: oklch(0.14 0.02 185);
+  --ring: oklch(0.70 0.15 185);
+  --sidebar-primary: oklch(0.70 0.15 185);
+  --sidebar-primary-foreground: oklch(0.14 0.02 185);
+  --sidebar-ring: oklch(0.70 0.15 185);
+  --chart-1: oklch(0.70 0.15 185);
+}
+
+/* --- Rubí Borgoña --- */
+[data-theme-color="ruby"] {
+  --primary: oklch(0.46 0.22 350);
+  --primary-foreground: oklch(0.99 0 0);
+  --ring: oklch(0.46 0.22 350);
+  --sidebar-primary: oklch(0.46 0.22 350);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-ring: oklch(0.46 0.22 350);
+  --chart-1: oklch(0.46 0.22 350);
+}
+.dark[data-theme-color="ruby"],
+.dark [data-theme-color="ruby"] {
+  --primary: oklch(0.68 0.20 350);
+  --primary-foreground: oklch(0.14 0.02 350);
+  --ring: oklch(0.68 0.20 350);
+  --sidebar-primary: oklch(0.68 0.20 350);
+  --sidebar-primary-foreground: oklch(0.14 0.02 350);
+  --sidebar-ring: oklch(0.68 0.20 350);
+  --chart-1: oklch(0.68 0.20 350);
+}
+
 /* ==========================================================================
-   OPCIONES DE RADIO DE BORDE
+   OPCIONES DE RADIO DE BORDE (AMPLIADO)
    ========================================================================== */
+[data-theme-radius="none"] {
+  --radius: 0px;
+}
 [data-theme-radius="sm"] {
   --radius: 0.375rem;
 }
@@ -273,6 +633,9 @@
 }
 [data-theme-radius="xl"] {
   --radius: 1.25rem;
+}
+[data-theme-radius="full"] {
+  --radius: 9999px;
 }
 
 @theme inline {
