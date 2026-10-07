@@ -27,7 +27,6 @@ import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'lib-sidebar-07-nav-user',
-  standalone: true,
   imports: [RouterLink, ...ZardSidebarImports, ...ZardDropdownImports, ZardAvatarComponent, NgIcon],
   viewProviders: [
     provideIcons({
@@ -117,7 +116,6 @@ import { RouterLink } from '@angular/router';
       </li>
     </ul>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavUserComponent {
   private readonly sidebar = inject(ZardSidebarService);

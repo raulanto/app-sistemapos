@@ -26,7 +26,6 @@ import { ZardSeparatorComponent } from '../../../shared/components/separator/sep
 
 @Component({
   selector: 'app-theme-customizer',
-  standalone: true,
   imports: [
     CommonModule,
     NgIconComponent,

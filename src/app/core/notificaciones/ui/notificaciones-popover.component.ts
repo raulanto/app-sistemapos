@@ -12,7 +12,6 @@ import { ZardBadgeComponent } from '@/shared/components/badge/badge.component';
 
 @Component({
   selector: 'app-notificaciones-popover',
-  standalone: true,
   imports: [
     CommonModule,
     DatePipe,
@@ -136,7 +135,6 @@ import { ZardBadgeComponent } from '@/shared/components/badge/badge.component';
       </div>
     </ng-template>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotificacionesPopoverComponent implements OnInit {
   private notifService = inject(NotificacionService);

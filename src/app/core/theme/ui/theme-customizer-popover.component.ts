@@ -13,7 +13,6 @@ import { ZardPopoverImports } from '../../../shared/components/popover/popover.i
 
 @Component({
   selector: 'app-theme-customizer-popover',
-  standalone: true,
   imports: [
     CommonModule,
     NgIconComponent,

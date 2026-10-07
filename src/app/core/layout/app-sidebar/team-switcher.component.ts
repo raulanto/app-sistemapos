@@ -18,7 +18,6 @@ import { SucursalService } from '../../sucursal/sucursal.service';
 
 @Component({
   selector: 'lib-sidebar-07-team-switcher',
-  standalone: true,
   imports: [...ZardSidebarImports, ...ZardDropdownImports, NgIcon],
   viewProviders: [
     provideIcons({ lucideAudioWaveform, lucideChevronsUpDown, lucideCommand, lucideGalleryVerticalEnd, lucidePlus, lucideStore }),
@@ -75,7 +74,6 @@ import { SucursalService } from '../../sucursal/sucursal.service';
       </li>
     </ul>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TeamSwitcherComponent {
   private readonly sidebar = inject(ZardSidebarService);

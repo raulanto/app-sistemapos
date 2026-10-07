@@ -29,7 +29,6 @@ export interface Sidebar07NavItem {
  */
 @Directive({
   selector: '[navHover]',
-  standalone: true,
   exportAs: 'navHover',
   host: {
     '(mouseenter)': 'hovered.set(true)',
@@ -44,7 +43,6 @@ export class NavHoverDirective {
 
 @Component({
   selector: 'lib-sidebar-07-nav-main',
-  standalone: true,
   imports: [
     ...ZardSidebarImports,
     ...ZardCollapsibleImports,
@@ -64,7 +62,7 @@ export class NavHoverDirective {
         @for (item of items(); track item.title) {
           @if (item.items && item.items.length > 0) {
             <li z-sidebar-menu-item z-collapsible class="group/collapsible" [zOpen]="!!item.isActive">
-              <button z-collapsible-trigger z-sidebar-menu-button class="transition-colors text-sidebar-foreground dark:text-slate-200 hover:text-foreground" navHover #hov="navHover" [zTooltip]="item.title">
+              <button z-collapsible-trigger z-sidebar-menu-button class="transition-colors text-sidebar-foreground hover:text-sidebar-accent-foreground" navHover #hov="navHover" [zTooltip]="item.title">
                 <ng-container [ngComponentOutlet]="item.icon" [ngComponentOutletInputs]="{ size: 16, animate: hov.hovered() }" />
                 <span>{{ item.title }}</span>
                 <i-chevron-right
@@ -80,12 +78,12 @@ export class NavHoverDirective {
                     <li z-sidebar-menu-sub-item>
                       <a 
                         z-sidebar-menu-sub-button 
-                        class="transition-colors text-sidebar-foreground dark:text-neutral-300 hover:text-foreground" 
+                        class="transition-colors text-sidebar-foreground hover:text-sidebar-accent-foreground" 
                         navHover 
                         #hovSub="navHover" 
                         [routerLink]="subItem.url" 
                         #rlaSub="routerLinkActive"
-                        routerLinkActive="!bg-neutral-900 !text-white [&_svg]:!text-white [&_svg]:!stroke-white [&>ng-icon]:!text-white dark:!bg-white dark:!text-black dark:[&_svg]:!text-black dark:[&_svg]:!stroke-black dark:[&>ng-icon]:!text-black font-semibold shadow-sm" 
+                        routerLinkActive="!bg-primary !text-primary-foreground [&_svg]:!text-primary-foreground [&_svg]:!stroke-primary-foreground [&>ng-icon]:!text-primary-foreground font-semibold shadow-sm" 
                         [routerLinkActiveOptions]="{ exact: true }"
                         [zActive]="rlaSub.isActive"
                       >
@@ -101,13 +99,13 @@ export class NavHoverDirective {
             <li z-sidebar-menu-item>
               <a 
                 z-sidebar-menu-button 
-                class="transition-colors text-sidebar-foreground dark:text-neutral-300 hover:text-foreground" 
+                class="transition-colors text-sidebar-foreground hover:text-sidebar-accent-foreground" 
                 navHover 
                 #hov="navHover" 
                 [zTooltip]="item.title" 
                 [routerLink]="item.url" 
                 #rla="routerLinkActive"
-                routerLinkActive="!bg-neutral-900 !text-white [&_svg]:!text-white [&_svg]:!stroke-white [&>ng-icon]:!text-white dark:!bg-white dark:!text-black dark:[&_svg]:!text-black dark:[&_svg]:!stroke-black dark:[&>ng-icon]:!text-black font-semibold shadow-sm" 
+                routerLinkActive="!bg-primary !text-primary-foreground [&_svg]:!text-primary-foreground [&_svg]:!stroke-primary-foreground [&>ng-icon]:!text-primary-foreground font-semibold shadow-sm" 
                 [routerLinkActiveOptions]="{exact: item.url === '/'}"
                 [zActive]="rla.isActive"
               >

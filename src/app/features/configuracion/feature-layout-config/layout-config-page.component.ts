@@ -41,7 +41,6 @@ import { ZardSonnerService } from '@/shared/components/sonner/sonner.service';
 
 @Component({
   selector: 'app-layout-config-page',
-  standalone: true,
   imports: [
     CommonModule,
     FormsModule,
